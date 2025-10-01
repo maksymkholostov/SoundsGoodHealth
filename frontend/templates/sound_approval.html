@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Recording Approval - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+.mui-approval-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+    background-color: white;
+    overflow: hidden;
+}
+
+.mui-waveform-container {
+    height: 120px;
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    margin: 16px 0;
+}
+
+.mui-recording-item {
+    padding: 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: rgba(255,255,255,0.5);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.mui-recording-item:hover {
+    background-color: rgba(255,255,255,0.8);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mui-recording-item:last-child {
+    border-bottom: none;
+}
+
+.mui-recording-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mui-recording-class {
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.mui-recording-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.mui-recording-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.mui-recordings-container {
+    max-height: 75vh;
+    overflow-y: auto;
+    background-color: rgba(0,0,0,0.03);
+    border-radius: 8px;
+}
+
+.mui-class-badge {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    margin-right: 12px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.mui-class-badge .material-icons {
+    font-size: 16px;
+    margin-right: 4px;
+}
+
+.mui-grouped-heading {
+    padding: 12px 16px;
+    background-color: rgba(0,0,0,0.05);
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+}
+
+.mui-grouped-heading .material-icons {
+    margin-right: 8px;
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+.mui-loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 32px;
+}
+
+.mui-empty-message {
+    text-align: center;
+    padding: 48px 24px;
+    color: #666;
+}
+
+.mui-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    border: none;
+}
+
+.mui-button .material-icons {
+    font-size: 18px;
+    margin-right: 4px;
+}
+
+.mui-button-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.mui-button-primary:hover {
+    background-color: #303f9f;
+}
+
+.mui-button-outlined {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.mui-button-outlined:hover {
+    background-color: rgba(63, 81, 181, 0.1);
+}
+
+.mui-button-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.mui-button-success:hover {
+    background-color: #3d8b40;
+}
+
+.mui-button-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.mui-button-danger:hover {
+    background-color: #d32f2f;
+}
+
+.mui-button-sm {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+}
+
+.mui-breadcrumb {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    font-size: 0.875rem;
+}
+
+.mui-breadcrumb-item {
+    color: #666;
+}
+
+.mui-breadcrumb-item:not(:last-child)::after {
+    content: '/';
+    margin: 0 8px;
+    color: #ccc;
+}
+
+.mui-breadcrumb-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.mui-breadcrumb-item.active {
+    color: #333;
+}
+
+.mui-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(63, 81, 181, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.mui-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.mui-card-header-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.mui-card-header-title .material-icons {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+.mui-card-content {
+    padding: 16px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 24px">
+        <h1 class="page-title">
+            <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">check_circle</span>
+            Sound Recordings Approval
+        </h1>
+        <ul class="mui-breadcrumb">
+            <li class="mui-breadcrumb-item"><a href="{{ url_for('web_routes.index') }}">Dashboard</a></li>
+            <li class="mui-breadcrumb-item active">Sound Approval</li>
+        </ul>
+        <p style="color: #666; margin-top: 8px;">Review and approve recordings that are waiting for verification before they can be used for training</p>
+    </div>
+
+    <div class="mui-approval-card">
+        <div class="mui-card-header">
+            <h2 class="mui-card-header-title">
+                <span class="material-icons">music_note</span>
+                Pending Recordings
+            </h2>
+            <div>
+                <button id="refreshBtn" class="mui-button mui-button-outlined mui-button-sm">
+                    <span class="material-icons">refresh</span> Refresh
+                </button>
+                <a href="{{ url_for('web_routes.recordings_page') }}" class="mui-button mui-button-primary mui-button-sm" style="margin-left: 8px; text-decoration: none;">
+                    <span class="material-icons">mic</span> Record More
+                </a>
+            </div>
+        </div>
+        
+        <div class="mui-card-content">
+            <div class="mui-recordings-container">
+                <div id="loadingSpinner" class="mui-loading-spinner">
+                    <div class="mui-spinner"></div>
+                </div>
+                
+                <div id="emptyMessage" class="mui-empty-message" style="display: none;">
+                    <span class="material-icons" style="font-size: 48px; color: var(--primary-color); margin-bottom: 16px;">sentiment_satisfied_alt</span>
+                    <h3 style="margin: 0 0 8px;">All Caught Up!</h3>
+                    <p style="margin-bottom: 16px;">There are no pending recordings that need approval.</p>
+                    <a href="{{ url_for('web_routes.recordings_page') }}" class="mui-button mui-button-primary" style="text-decoration: none;">
+                        <span class="material-icons">mic</span> Record New Sounds
+                    </a>
+                </div>
+                
+                <div id="pendingRecordings">
+                    <!-- Will be populated with JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="submit-container text-center mt-4">
+        <button id="submitBtn" class="btn btn-primary" disabled>Approve Selected Segments</button>
+        <button id="rejectBtn" class="btn btn-danger ms-2" disabled>Reject Selected Segments</button>
+        {% if dictionary_identifier %}
+        <a href="{{ url_for('web_routes.sound_augmentation_page', dictionary_identifier=dictionary_identifier) }}" class="btn btn-secondary ms-2">
+            <i class="fas fa-magic me-1"></i> Augment Verified Sounds
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPendingRecordings();
+    
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        loadPendingRecordings();
+    });
+    
+    function loadPendingRecordings() {
+        const pendingContainer = document.getElementById('pendingRecordings');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const emptyMessage = document.getElementById('emptyMessage');
+        
+        // Show loading, hide others
+        loadingSpinner.style.display = 'flex';
+        pendingContainer.style.display = 'none';
+        emptyMessage.style.display = 'none';
+        
+        fetch('/api/sounds/pending/all')
+            .then(response => response.json())
+            .then(data => {
+                loadingSpinner.style.display = 'none';
+                
+                if (data.length === 0) {
+                    emptyMessage.style.display = 'block';
+                    return;
+                }
+                
+                pendingContainer.style.display = 'block';
+                pendingContainer.innerHTML = '';
+                
+                // Group recordings by sound class
+                const recordingsByClass = {};
+                data.forEach(recording => {
+                    if (!recordingsByClass[recording.class]) {
+                        recordingsByClass[recording.class] = [];
+                    }
+                    recordingsByClass[recording.class].push(recording);
+                });
+                
+                // Render grouped recordings
+                Object.keys(recordingsByClass).sort().forEach(soundClass => {
+                    const recordings = recordingsByClass[soundClass];
+                    
+                    // Add group heading
+                    const groupHeading = document.createElement('div');
+                    groupHeading.className = 'mui-grouped-heading';
+                    groupHeading.innerHTML = `
+                        <span class="material-icons">category</span>
+                        <span>${soundClass} (${recordings.length} pending)</span>
+                    `;
+                    pendingContainer.appendChild(groupHeading);
+                    
+                    // Add recordings
+                    recordings.forEach(recording => {
+                        const recordingItem = document.createElement('div');
+                        recordingItem.className = 'mui-recording-item';
+                        recordingItem.dataset.id = recording.id;
+
+                        // --- Label Generation Logic ---
+                        let displayLabel = '';
+                        let displayTime = 'Invalid Date';
+
+                        // Format Date Safely
+                        if (recording.timestamp) {
+                            try {
+                                const date = new Date(recording.timestamp);
+                                if (!isNaN(date.getTime())) { // Check if date is valid
+                                    displayTime = date.toLocaleString();
+                                }
+                            } catch (e) {
+                                console.error(`Error parsing timestamp for ${recording.id}: ${recording.timestamp}`, e);
+                            }
+                        }
+
+                        // Build Label based on type
+                        displayLabel += `${recording.class_name || recording.class || 'Unknown Class'} - ${displayTime}`;
+
+                        // Check if it's a pending segment and add segment number
+                        // Assuming recording.id format like Class_User_BaseUUID_pending_seg_Num
+                        // And recording_type is returned from the API
+                        if (recording.recording_type === 'PENDING') {
+                             const match = recording.id.match(/_pending_seg_(\d+)$/);
+                             if (match && match[1]) {
+                                 displayLabel += ` - pending segment ${match[1]}`;
+                             } else {
+                                 displayLabel += ` - pending`; // Fallback if pattern fails
+                             }
+                        } else if (recording.recording_type) {
+                            // Add other type names if needed
+                            displayLabel += ` - ${recording.recording_type}`;
+                        } 
+                        // --- End Label Generation Logic ---
+
+                        recordingItem.innerHTML = `
+                            <div class="mui-recording-info">
+                                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <span class="mui-class-badge">
+                                        <span class="material-icons">music_note</span>
+                                        <!-- Use the generated label -->
+                                        ${displayLabel}
+                                    </span>
+                                    <div class="mui-recording-duration">Duration: ${(recording.duration || 0).toFixed(1)}s</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mui-recording-controls" style="margin: 12px 0;">
+                                <!-- Audio player moved up here -->
+                                <audio controls src="/api/sounds/stream?id=${recording.id}" style="width: 100%;"></audio>
+                            </div>
+                            
+                            <div class="mui-waveform-container" id="waveform-${recording.id}"></div>
+                            
+                            <div class="mui-recording-actions" style="margin-top: 16px;">
+                                <button class="mui-button mui-button-success mui-button-sm approve-btn" data-id="${recording.id}">
+                                    <span class="material-icons">check</span> Approve
+                                </button>
+                                <button class="mui-button mui-button-danger mui-button-sm reject-btn" data-id="${recording.id}">
+                                    <span class="material-icons">close</span> Reject
+                                </button>
+                            </div>
+                        `;
+                        
+                        pendingContainer.appendChild(recordingItem);
+                        
+                        // Initialize waveform visualization
+                        // Pass the correct stream URL to the waveform loader
+                        renderWaveform(recording.id, `/api/sounds/stream?id=${recording.id}`);
+                    });
+                });
+                
+                // Add event listeners for approve/reject buttons
+                document.querySelectorAll('.approve-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        approveRecording(this.dataset.id);
+                    });
+                });
+                
+                document.querySelectorAll('.reject-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        rejectRecording(this.dataset.id);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading pending recordings:', error);
+                loadingSpinner.style.display = 'none';
+                pendingContainer.style.display = 'block';
+                pendingContainer.innerHTML = `
+                    <div class="mui-empty-message" style="color: var(--danger-color);">
+                        <span class="material-icons" style="font-size: 48px; margin-bottom: 16px;">error</span>
+                        <h3>Error Loading Recordings</h3>
+                        <p>There was a problem loading the pending recordings. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+    
+    // Update renderWaveform to accept the URL
+    function renderWaveform(id, audioUrl) { 
+        // Implement waveform visualization using wavesurfer.js or similar library
+        const container = document.getElementById(`waveform-${id}`);
+        if (window.WaveSurfer && container) {
+            try {
+                 // Clear previous waveform if any
+                 container.innerHTML = ''; 
+
+                 const wavesurfer = WaveSurfer.create({
+                    container: container,
+                    waveColor: 'rgba(63, 81, 181, 0.4)',
+                    progressColor: 'rgba(63, 81, 181, 0.8)',
+                    cursorColor: 'transparent',
+                    barWidth: 2,
+                    barGap: 1,
+                    height: 120,
+                    responsive: true
+                 });
+                
+                // Load audio from the correct stream URL
+                 wavesurfer.load(audioUrl);
+
+                 wavesurfer.on('error', function (err) {
+                     console.error('Wavesurfer error:', err);
+                     container.innerHTML = '<p style="color: red; padding: 10px;">Error loading waveform.</p>';
+                 });
+                 wavesurfer.on('ready', function () {
+                    // Optional: Do something when waveform is ready
+                 });
+            
+            } catch (e) {
+                 console.error("Error initializing WaveSurfer for", id, e);
+                 container.innerHTML = '<p style="color: red; padding: 10px;">Error initializing waveform display.</p>';
+            }
+        }
+    }
+    
+    function approveRecording(id) {
+        const recordingElement = document.querySelector(`.mui-recording-item[data-id="${id}"]`);
+        if (!recordingElement) return;
+        
+        recordingElement.style.opacity = '0.5';
+        recordingElement.style.pointerEvents = 'none';
+        
+        fetch(`/api/sounds/approve/${id}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    recordingElement.style.height = '0';
+                    recordingElement.style.padding = '0';
+                    recordingElement.style.margin = '0';
+                    recordingElement.style.overflow = 'hidden';
+                    recordingElement.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        recordingElement.remove();
+                        
+                        // Check if there are no more recordings
+                        const pendingContainer = document.getElementById('pendingRecordings');
+                        if (pendingContainer.children.length === 0) {
+                            document.getElementById('emptyMessage').style.display = 'block';
+                        }
+                    }, 500);
+                } else {
+                    recordingElement.style.opacity = '1';
+                    recordingElement.style.pointerEvents = 'auto';
+                    alert('Error approving recording: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error approving recording:', error);
+                recordingElement.style.opacity = '1';
+                recordingElement.style.pointerEvents = 'auto';
+                alert('Error approving recording. Please try again.');
+            });
+    }
+    
+    function rejectRecording(id) {
+        const recordingElement = document.querySelector(`.mui-recording-item[data-id="${id}"]`);
+        if (!recordingElement) return;
+        
+        if (!confirm('Are you sure you want to reject this recording? This action cannot be undone.')) {
+            return;
+        }
+        
+        recordingElement.style.opacity = '0.5';
+        recordingElement.style.pointerEvents = 'none';
+        
+        fetch(`/api/sounds/reject/${id}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    recordingElement.style.height = '0';
+                    recordingElement.style.padding = '0';
+                    recordingElement.style.margin = '0';
+                    recordingElement.style.overflow = 'hidden';
+                    recordingElement.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        recordingElement.remove();
+                        
+                        // Check if there are no more recordings
+                        const pendingContainer = document.getElementById('pendingRecordings');
+                        if (pendingContainer.children.length === 0) {
+                            document.getElementById('emptyMessage').style.display = 'block';
+                        }
+                    }, 500);
+                } else {
+                    recordingElement.style.opacity = '1';
+                    recordingElement.style.pointerEvents = 'auto';
+                    alert('Error rejecting recording: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error rejecting recording:', error);
+                recordingElement.style.opacity = '1';
+                recordingElement.style.pointerEvents = 'auto';
+                alert('Error rejecting recording. Please try again.');
+            });
+    }
+});
+</script>
+{% endblock %} 

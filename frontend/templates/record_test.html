@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Recording Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 200px;
+        }
+        select {
+            padding: 8px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Recording Test</h1>
+    
+    <div>
+        <label for="classSelect">Select Class:</label>
+        <select id="classSelect"></select>
+        <div id="classStatus"></div>
+    </div>
+    
+    <button id="recordBtn">Record (3 seconds)</button>
+    <button id="testAPIBtn">Test API Connection</button>
+    
+    <div class="output" id="output">Output will appear here...</div>
+    
+    <!-- Simple file upload form that bypasses all JS recording -->
+    <div style="margin-top: 20px; padding: 15px; border: 2px solid #007bff; border-radius: 5px;">
+        <h3>Direct File Upload</h3>
+        <p>If recording doesn't work, try uploading a WAV file directly:</p>
+        
+        <form action="/api/ml/record" method="post" enctype="multipart/form-data" id="directUploadForm">
+            <div style="margin-bottom: 10px;">
+                <label for="soundClass">Sound Class:</label>
+                <select name="sound" id="soundClass" required style="padding: 5px; width: 200px;">
+                    <!-- Will be populated with JavaScript -->
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label for="audioFile">Audio File (WAV):</label>
+                <input type="file" name="audio" id="audioFile" accept="audio/wav" required style="padding: 5px;">
+            </div>
+            
+            <button type="submit" style="background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px;">
+                Upload Audio File
+            </button>
+        </form>
+        
+        <div id="uploadResult" style="margin-top: 10px;"></div>
+    </div>
+    
+    <script>
+        // Get DOM elements
+        const classSelect = document.getElementById('classSelect');
+        const classStatus = document.getElementById('classStatus');
+        const recordBtn = document.getElementById('recordBtn');
+        const testAPIBtn = document.getElementById('testAPIBtn');
+        const output = document.getElementById('output');
+        
+        // Direct upload form elements
+        const directUploadForm = document.getElementById('directUploadForm');
+        const soundClassSelect = document.getElementById('soundClass');
+        const uploadResult = document.getElementById('uploadResult');
+        
+        // Load available classes
+        window.addEventListener('DOMContentLoaded', function() {
+            loadClasses();
+            
+            // Set up direct upload form handler
+            if (directUploadForm) {
+                directUploadForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    uploadResult.innerHTML = '<div style="color: blue;">Uploading file...</div>';
+                    
+                    const formData = new FormData(this);
+                    
+                    fetch('/api/ml/record', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Upload response:', data);
+                        
+                        if (data.success) {
+                            uploadResult.innerHTML = `
+                                <div style="color: green;">
+                                    <strong>Success!</strong> 
+                                    ${data.segment_count} segments extracted.
+                                </div>
+                            `;
+                            
+                            // Refresh pending recordings for this class
+                            const selectedClass = soundClassSelect.value;
+                            if (selectedClass) {
+                                fetch(`/api/sounds/pending/${selectedClass}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success && data.recordings && data.recordings.length > 0) {
+                                            let html = '<div style="margin-top: 10px;"><strong>Pending Recordings:</strong><ul>';
+                                            data.recordings.forEach(rec => {
+                                                html += `<li>${rec.filename} - <a href="${rec.url}" target="_blank">Listen</a></li>`;
+                                            });
+                                            html += '</ul></div>';
+                                            
+                                            uploadResult.innerHTML += html;
+                                        }
+                                    });
+                            }
+                        } else {
+                            uploadResult.innerHTML = `
+                                <div style="color: red;">
+                                    <strong>Error:</strong> 
+                                    ${data.error || 'Unknown error'}
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Upload error:', error);
+                        uploadResult.innerHTML = `
+                            <div style="color: red;">
+                                <strong>Error:</strong> 
+                                ${error.message || 'Failed to upload file'}
+                            </div>
+                        `;
+                    });
+                });
+            }
+        });
+        
+        // Load classes from API
+        function loadClasses() {
+            output.innerHTML = 'Loading classes...';
+            
+            fetch('/api/sounds/classes')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.classes) {
+                        // Populate select dropdowns
+                        classSelect.innerHTML = '';
+                        soundClassSelect.innerHTML = '';  // Also populate direct upload form
+                        
+                        data.classes.forEach(cls => {
+                            // For main dropdown
+                            const option = document.createElement('option');
+                            option.value = cls.name;
+                            option.textContent = `${cls.name} (${cls.sample_count || 0} samples)`;
+                            classSelect.appendChild(option);
+                            
+                            // For direct upload form dropdown
+                            const option2 = document.createElement('option');
+                            option2.value = cls.name;
+                            option2.textContent = cls.name;
+                            soundClassSelect.appendChild(option2);
+                        });
+                        
+                        classStatus.innerHTML = `Found ${data.classes.length} classes`;
+                        output.innerHTML = `Successfully loaded ${data.classes.length} classes`;
+                    } else {
+                        classStatus.innerHTML = 'No classes found or error';
+                        output.innerHTML = 'Error loading classes: ' + (data.error || 'Unknown error');
+                    }
+                })
+                .catch(error => {
+                    classStatus.innerHTML = 'Error loading classes';
+                    output.innerHTML = 'Error loading classes: ' + error.message;
+                    console.error('Error loading classes:', error);
+                });
+        }
+        
+        // Record audio for 3 seconds
+        recordBtn.addEventListener('click', function() {
+            const selectedClass = classSelect.value;
+            
+            if (!selectedClass) {
+                output.innerHTML = 'Please select a class first!';
+                return;
+            }
+            
+            output.innerHTML = 'Requesting microphone access...';
+            this.disabled = true;
+            
+            // Request microphone access
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    output.innerHTML += '<br>Recording started (3 seconds)...';
+                    
+                    // Create audio chunks array
+                    const chunks = [];
+                    
+                    // Initialize MediaRecorder
+                    const recorder = new MediaRecorder(stream);
+                    
+                    // Set up data handler
+                    recorder.ondataavailable = e => {
+                        console.log('Data available:', e.data.size, 'bytes');
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                            output.innerHTML += `<br>Data chunk received: ${e.data.size} bytes`;
+                        }
+                    };
+                    
+                    // Set up stop handler
+                    recorder.onstop = () => {
+                        output.innerHTML += '<br>Recording stopped, processing...';
+                        
+                        // Create a WAV blob from the chunks
+                        const blob = new Blob(chunks, { type: 'audio/wav' });
+                        output.innerHTML += `<br>Created blob: ${blob.size} bytes, type: ${blob.type}`;
+                        
+                        // Create FormData for uploading
+                        const formData = new FormData();
+                        formData.append('audio', blob, selectedClass + '_test.wav');
+                        formData.append('sound', selectedClass);
+                        
+                        // Send to server
+                        output.innerHTML += '<br>Sending to server...';
+                        
+                        fetch('/api/ml/record', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            output.innerHTML += `<br>Server response: ${response.status} ${response.statusText}`;
+                            return response.json();
+                        })
+                        .then(data => {
+                            output.innerHTML += `<br>Server data: ${JSON.stringify(data)}`;
+                            
+                            if (data.success) {
+                                output.innerHTML += '<br><strong>Recording successful!</strong>';
+                                
+                                // Check for pending recordings
+                                return fetch(`/api/sounds/pending/${selectedClass}`);
+                            } else {
+                                throw new Error(data.error || 'Unknown error');
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.recordings) {
+                                output.innerHTML += `<br>Found ${data.recordings.length} pending recordings`;
+                                
+                                if (data.recordings.length > 0) {
+                                    // Create a playback section for the recordings
+                                    output.innerHTML += '<br><br><strong>Recordings:</strong>';
+                                    data.recordings.forEach((rec, i) => {
+                                        output.innerHTML += `
+                                            <div style="margin-top: 10px; padding: 5px; border: 1px solid #eee;">
+                                                <div>Recording ${i+1}: ${rec.filename}</div>
+                                                <audio controls src="${rec.url}" style="width: 100%; max-width: 300px;"></audio>
+                                                <div>
+                                                    <button onclick="approveRecording('${rec.filename}')">Approve</button>
+                                                    <button onclick="discardRecording('${rec.filename}')">Discard</button>
+                                                </div>
+                                            </div>
+                                        `;
+                                    });
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            output.innerHTML += `<br>Error: ${error.message}`;
+                            console.error('Upload error:', error);
+                        })
+                        .finally(() => {
+                            this.disabled = false;
+                        });
+                    };
+                    
+                    // Start recording with 1s chunks
+                    recorder.start(1000);
+                    
+                    // Stop after 3 seconds
+                    setTimeout(() => {
+                        recorder.stop();
+                        stream.getTracks().forEach(track => track.stop());
+                    }, 3000);
+                })
+                .catch(error => {
+                    output.innerHTML = `Error accessing microphone: ${error.message}`;
+                    console.error('Microphone error:', error);
+                    this.disabled = false;
+                });
+        });
+        
+        // Test API connection
+        testAPIBtn.addEventListener('click', function() {
+            output.innerHTML = 'Testing API connections...';
+            this.disabled = true;
+            
+            fetch('/api/sounds/classes')
+                .then(response => {
+                    output.innerHTML += `<br>Classes API: ${response.status} ${response.ok ? '✓' : '✗'}`;
+                    return response.json();
+                })
+                .then(data => {
+                    const hasClasses = data.success && data.classes && data.classes.length > 0;
+                    output.innerHTML += `<br>Classes data: ${hasClasses ? `${data.classes.length} classes found ✓` : 'No classes ✗'}`;
+                    
+                    if (hasClasses) {
+                        const firstClass = data.classes[0].name;
+                        return fetch(`/api/sounds/pending/${firstClass}`)
+                            .then(response => {
+                                output.innerHTML += `<br>Pending API: ${response.status} ${response.ok ? '✓' : '✗'}`;
+                                return response.json();
+                            })
+                            .then(data => {
+                                output.innerHTML += `<br>Pending data: ${data.success ? '✓' : '✗'}`;
+                                return fetch('/api/ml/record', { method: 'HEAD' });
+                            });
+                    } else {
+                        return Promise.reject(new Error('No classes available'));
+                    }
+                })
+                .then(response => {
+                    output.innerHTML += `<br>Record API: ${response.status} ${response.status < 500 ? '✓' : '✗'}`;
+                    output.innerHTML += '<br><br>All API endpoints accessible! ✓';
+                })
+                .catch(error => {
+                    output.innerHTML += `<br>Error: ${error.message} ✗`;
+                    console.error('API test error:', error);
+                })
+                .finally(() => {
+                    this.disabled = false;
+                });
+        });
+        
+        // Approve recording
+        window.approveRecording = function(filename) {
+            const selectedClass = classSelect.value;
+            if (!selectedClass) return;
+            
+            fetch('/api/sounds/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: filename,
+                    keep: true,
+                    class_name: selectedClass
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    output.innerHTML += `<br>Recording ${filename} approved ✓`;
+                    // Refresh pending recordings
+                    fetch(`/api/sounds/pending/${selectedClass}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.recordings) {
+                                output.innerHTML += `<br>Remaining: ${data.recordings.length} pending recordings`;
+                            }
+                        });
+                } else {
+                    output.innerHTML += `<br>Error approving: ${data.error || 'Unknown error'} ✗`;
+                }
+            })
+            .catch(error => {
+                output.innerHTML += `<br>Error approving: ${error.message} ✗`;
+            });
+        };
+        
+        // Discard recording
+        window.discardRecording = function(filename) {
+            const selectedClass = classSelect.value;
+            if (!selectedClass) return;
+            
+            fetch('/api/sounds/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: filename,
+                    keep: false,
+                    class_name: selectedClass
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    output.innerHTML += `<br>Recording ${filename} discarded ✓`;
+                    // Refresh pending recordings
+                    fetch(`/api/sounds/pending/${selectedClass}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.recordings) {
+                                output.innerHTML += `<br>Remaining: ${data.recordings.length} pending recordings`;
+                            }
+                        });
+                } else {
+                    output.innerHTML += `<br>Error discarding: ${data.error || 'Unknown error'} ✗`;
+                }
+            })
+            .catch(error => {
+                output.innerHTML += `<br>Error discarding: ${error.message} ✗`;
+            });
+        };
+    </script>
+</body>
+</html> 

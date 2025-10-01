@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}{{ dictionary.name }} - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Modern dictionary detail page styles */
+.dictionary-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 0;
+    margin-bottom: 40px;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    opacity: 0.9;
+}
+
+.breadcrumb a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.dictionary-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.dictionary-title h1 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.header-btn.danger {
+    background: rgba(239, 68, 68, 0.8);
+}
+
+.header-btn.danger:hover {
+    background: rgba(220, 38, 38, 0.9);
+}
+
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+}
+
+.info-card h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.classes-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 32px;
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.class-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.class-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.class-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.class-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.class-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.stat .material-icons {
+    font-size: 18px;
+    color: #667eea;
+}
+
+.stat strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.remove-btn {
+    background: #ef4444;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s ease;
+}
+
+.remove-btn:hover {
+    background: #dc2626;
+}
+
+.stats-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 32px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+}
+
+.empty-state .material-icons {
+    font-size: 64px;
+    color: #e0e0e0;
+    margin-bottom: 16px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 1px solid #667eea;
+}
+
+.btn-secondary:hover {
+    background: #f3f4f6;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dictionary-header">
+    <div class="header-content">
+        <div class="breadcrumb">
+            <a href="/dictionaries">
+                <span class="material-icons" style="font-size: 20px;">arrow_back</span>
+                Back to Dictionaries
+            </a>
+            <span class="material-icons" style="font-size: 16px; opacity: 0.6;">chevron_right</span>
+            <span>{{ dictionary.name }}</span>
+        </div>
+        
+        <div class="dictionary-title">
+            <h1>
+                <span class="material-icons" style="font-size: 48px;">library_books</span>
+                {{ dictionary.name }}
+            </h1>
+            <div class="header-actions">
+                <a href="{{ url_for('training_web.training_page', dictionary=dictionary.name) }}" class="header-btn">
+                    <span class="material-icons">model_training</span>
+                    Train Model
+                </a>
+                <a href="{{ url_for('recording_web.recordings_page') }}" class="header-btn">
+                    <span class="material-icons">mic</span>
+                    Record Sounds
+                </a>
+                <a href="{{ url_for('augmentation.augmentation_landing_page') }}" class="header-btn">
+                    <span class="material-icons">auto_fix_high</span>
+                    Approve Sounds
+                </a>
+                <a href="#" onclick="return confirmDelete();" class="header-btn danger">
+                    <span class="material-icons">delete</span>
+                    Delete Dictionary
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <div class="info-grid">
+        <div class="info-card">
+            <h2>
+                <span class="material-icons" style="color: #667eea;">info</span>
+                Dictionary Information
+            </h2>
+            <div class="info-item">
+                <span class="info-label">ID</span>
+                <span class="info-value">{{ dictionary.id }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Description</span>
+                <span class="info-value">{{ dictionary.description or 'No description provided' }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Created By</span>
+                <span class="info-value">{{ dictionary.creator_user_id }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Created At</span>
+                <span class="info-value">{{ dictionary.created_at[:10] if dictionary.created_at else 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Last Updated</span>
+                <span class="info-value">{{ dictionary.updated_at[:10] if dictionary.updated_at else 'N/A' }}</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2>
+                <span class="material-icons" style="color: #667eea;">analytics</span>
+                Training Status
+            </h2>
+            <div class="info-item">
+                <span class="info-label">Models Trained</span>
+                <span class="info-value">{{ models_trained }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Total Classes</span>
+                <span class="info-value">{{ class_count }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Total Samples</span>
+                <span class="info-value">{{ (dictionary.get('total_sound_counts', {}).get('gold', 0)) + (dictionary.get('total_sound_counts', {}).get('augmented', 0)) }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Ready for Training</span>
+                <span class="info-value">
+                    {% if ((dictionary.get('total_sound_counts', {}).get('gold', 0)) + (dictionary.get('total_sound_counts', {}).get('augmented', 0))) > 0 %}
+                        <span style="color: #10b981;">Yes</span>
+                    {% else %}
+                        <span style="color: #ef4444;">No (Need samples)</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="classes-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="material-icons" style="color: #667eea;">category</span>
+                Classes and Sound Samples
+            </h2>
+        </div>
+
+        {% if dictionary.get('classes_details') %}
+        <div class="classes-grid">
+            {% for class_info in dictionary.get('classes_details', []) %}
+            <div class="class-card">
+                <div class="class-header">
+                    <span class="class-name">{{ class_info.name }}</span>
+                    <button class="remove-btn" onclick="removeClassFromDictionary('{{ class_info.id }}')">
+                        <span class="material-icons" style="font-size: 16px;">close</span>
+                        Remove
+                    </button>
+                </div>
+                <div class="class-stats">
+                    <div class="stat">
+                        <span class="material-icons">check_circle</span>
+                        <span>Verified: <strong>{{ class_info.gold_count }}</strong></span>
+                    </div>
+                    <div class="stat">
+                        <span class="material-icons">auto_awesome</span>
+                        <span>Augmented: <strong>{{ class_info.augmented_count }}</strong></span>
+                    </div>
+                    <div class="stat">
+                        <span class="material-icons">pending</span>
+                        <span>Pending: <strong>{{ class_info.pending_count }}</strong></span>
+                    </div>
+                    <div class="stat">
+                        <span class="material-icons">radio_button_unchecked</span>
+                        <span>Raw: <strong>{{ class_info.raw_count }}</strong></span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons">folder_off</span>
+            <p>No classes added to this dictionary yet.</p>
+            <div class="action-buttons">
+                <a href="{{ url_for('dictionary_web.manage_dictionary_classes', dictionary_id=dictionary.id) }}" class="btn btn-primary">
+                    <span class="material-icons">add</span>
+                    Add Classes
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="stats-section">
+        <h2 class="section-title">
+            <span class="material-icons" style="color: #667eea;">bar_chart</span>
+            Dictionary Statistics
+        </h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ (dictionary.get('total_sound_counts', {}).get('gold', 0)) + (dictionary.get('total_sound_counts', {}).get('augmented', 0)) }}</div>
+                <div class="stat-label">Total Samples</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dictionary.get('total_sound_counts', {}).get('gold', 0) }}</div>
+                <div class="stat-label">Verified Sounds</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dictionary.get('total_sound_counts', {}).get('augmented', 0) }}</div>
+                <div class="stat-label">Augmented</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dictionary.get('total_sound_counts', {}).get('pending', 0) }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ dictionary.get('total_sound_counts', {}).get('raw', 0) }}</div>
+                <div class="stat-label">Raw</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    if (confirm('Are you sure you want to delete this dictionary? This action cannot be undone.')) {
+        // Call API DELETE endpoint then redirect on success
+        fetch("{{ url_for('dictionary_web.api_delete_dictionary', dictionary_id=dictionary.id) }}", {
+            method: 'DELETE'
+        })
+        .then(resp => resp.ok ? resp.json() : resp.json().catch(() => ({ success: false, error: resp.statusText })))
+        .then(data => {
+            if (data && data.success) {
+                window.location.href = "{{ url_for('dictionary_web.dictionaries_page') }}";
+            } else {
+                alert('Failed to delete dictionary: ' + (data && data.error ? data.error : 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error deleting dictionary: ' + err);
+        });
+    }
+    return false;
+}
+
+function removeClassFromDictionary(classId) {
+    if (confirm('Are you sure you want to remove this class from the dictionary?')) {
+        // Make API call to remove class
+        fetch(`/api/dictionary/{{ dictionary.id }}/remove-class/${classId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to remove class: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error removing class: ' + error);
+        });
+    }
+}
+</script>
+{% endblock %}

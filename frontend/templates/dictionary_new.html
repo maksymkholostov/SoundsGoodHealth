@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Dictionary{% endblock %}
+
+{% block custom_styles %}
+<style>
+.mui-page-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 24px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mui-form-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.mui-form-field {
+    margin-bottom: 24px;
+}
+
+.mui-form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--dark-color);
+}
+
+.mui-form-label .required-star {
+    color: var(--danger-color);
+    margin-left: 4px;
+}
+
+.mui-form-input, .mui-form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.mui-form-input:focus, .mui-form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+}
+
+.mui-form-helper-text {
+    font-size: 0.8rem;
+    color: rgba(0,0,0,0.6);
+    margin-top: 4px;
+}
+
+.mui-form-error {
+    background-color: rgba(244, 67, 54, 0.1);
+    border-left: 4px solid var(--danger-color);
+    color: var(--danger-color);
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.mui-form-section-title {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-top: 32px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+}
+
+.mui-form-section-title .material-icons {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+.mui-button {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.mui-button-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.mui-button-primary:hover {
+    background-color: #303f9f;
+}
+
+.mui-button-secondary {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.mui-button-secondary:hover {
+    background-color: rgba(63, 81, 181, 0.08);
+}
+
+.mui-button .material-icons {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.mui-new-class-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.mui-new-class-row .mui-form-input {
+    flex: 1;
+}
+
+.mui-new-class-row .mui-class-remove-button {
+    background: transparent;
+    border: none;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--danger-color);
+    border-radius: 50%;
+    padding: 0;
+}
+
+.mui-new-class-row .mui-class-remove-button:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+.mui-new-class-row .mui-class-remove-button .material-icons {
+    font-size: 20px;
+    margin: 0;
+}
+
+.mui-existing-class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.mui-existing-class-item {
+    background-color: white;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.2s;
+}
+
+.mui-existing-class-item:hover {
+    border-color: var(--primary-color);
+}
+
+.mui-existing-class-checkbox {
+    margin-right: 12px;
+    flex-shrink: 0;
+    accent-color: var(--primary-color);
+    width: 18px;
+    height: 18px;
+}
+
+.mui-existing-class-label {
+    flex: 1;
+    font-weight: 400;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
+.mui-existing-class-name {
+    font-weight: 500;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+}
+
+.mui-existing-class-name .material-icons {
+    margin-right: 8px;
+    color: var(--primary-color);
+    font-size: 18px;
+}
+
+.mui-existing-class-desc {
+    font-size: 0.85rem;
+    color: rgba(0,0,0,0.6);
+    margin-top: 4px;
+    padding-left: 26px;
+}
+
+.mui-form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 24px; margin-bottom: 24px;">
+    <nav aria-label="breadcrumb" style="margin-bottom: 16px;">
+        <ol style="list-style: none; padding: 0; margin: 0; display: flex; gap: 8px; font-size: 0.9rem; color: rgba(0,0,0,0.7);">
+            <li><a href="{{ url_for('dictionary_web.dictionaries_page') }}" style="color: var(--primary-color); text-decoration: none;">Dictionaries</a></li>
+            <li> / </li>
+            <li aria-current="page" style="color: rgba(0,0,0,0.5);">Create New</li>
+        </ol>
+    </nav>
+
+    <div class="mui-page-header">
+        <h1 style="font-size: 1.8rem; font-weight: 500; margin: 0;">Create New Sound Dictionary</h1>
+    </div>
+
+    <div class="mui-form-container">
+        <form id="create-dictionary-form" action="{{ url_for('dictionary_web.api_create_dictionary_with_classes') }}" method="POST" novalidate>
+            
+            {% if form and form.csrf_token %}
+                {{ form.csrf_token }}
+            {% endif %}
+
+            <div class="mui-form-field">
+                <label for="name" class="mui-form-label">Dictionary Name <span class="required-star">*</span></label>
+                {% if form and form.name %}
+                    {{ form.name(class="mui-form-input" + (" is-invalid" if form.name.errors else ""), placeholder="e.g., Vowel Sounds Practice", required=true, **{"aria-describedby": "name-help"}) }}
+                    {% if form.name.errors %}
+                        <div class="mui-form-error">{{ form.name.errors[0] }}</div>
+                    {% endif %}
+                {% else %}
+                    <input type="text" class="mui-form-input" id="name" name="name" required placeholder="e.g., Vowel Sounds Practice" aria-describedby="name-help">
+                    <div class="mui-form-error" style="display: none;" id="name-error"></div>
+                {% endif %}
+                <small id="name-help" class="mui-form-helper-text">A descriptive name for your sound collection.</small>
+            </div>
+
+            <div class="mui-form-field">
+                <label for="description" class="mui-form-label">Description</label>
+                {% if form and form.description %}
+                     {{ form.description(class="mui-form-textarea", rows="3", placeholder="Optional: Describe the purpose or contents of this dictionary.") }}
+                     {% if form.description.errors %}
+                        <div class="mui-form-error">{{ form.description.errors[0] }}</div>
+                     {% endif %}
+                {% else %}
+                    <textarea class="mui-form-textarea" id="description" name="description" rows="3" placeholder="Optional: Describe the purpose or contents of this dictionary."></textarea>
+                {% endif %}
+            </div>
+
+            <div class="mui-form-section-title">
+                <span class="material-icons">category</span> Add Sound Classes
+            </div>
+            <p class="mui-form-helper-text" style="margin-bottom: 16px;">Select existing global classes or define new ones to include in this dictionary.</p>
+
+            <div class="mui-form-field">
+                <label class="mui-form-label">Select Existing Classes:</label>
+                {% if existing_classes %}
+                    <div class="mui-existing-class-grid">
+                        {% for cls in existing_classes %}
+                        <div class="mui-existing-class-item">
+                            <input class="mui-existing-class-checkbox" type="checkbox" name="existing_classes[]" value="{{ cls.id }}" id="class-{{ cls.id }}">
+                            <label class="mui-existing-class-label" for="class-{{ cls.id }}">
+                                <span class="mui-existing-class-name">
+                                    <span class="material-icons">volume_up</span>
+                                    {{ cls.name }}
+                                </span>
+                                {% if cls.description %}
+                                    <span class="mui-existing-class-desc">{{ cls.description | truncate(80) }}</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mui-form-helper-text" style="font-style: italic;">No existing global classes found.</p>
+                {% endif %}
+            </div>
+
+            <div class="mui-form-field">
+                <label class="mui-form-label">Define New Classes (Optional):</label>
+                <div id="new-classes-container">
+                    <div class="mui-new-class-row">
+                        <input type="text" class="mui-form-input" name="classes[]" placeholder="New Class Name">
+                        <input type="text" class="mui-form-input" name="new_class_descriptions[]" placeholder="Optional Description">
+                        <div style="width: 36px; height: 36px; flex-shrink: 0;"></div>
+                    </div>
+                </div>
+                <button type="button" id="add-new-class-btn" class="mui-button mui-button-secondary" style="margin-top: 12px;">
+                    <span class="material-icons">add</span> Add Another Class
+                </button>
+            </div>
+
+            <div class="mui-form-buttons">
+                <a href="{{ url_for('dictionary_web.dictionaries_page') }}" class="mui-button mui-button-secondary">Cancel</a>
+                <button type="submit" class="mui-button mui-button-primary">Create Dictionary</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+const addClassBtn = document.getElementById('add-new-class-btn');
+const newClassesContainer = document.getElementById('new-classes-container');
+let classIndex = 1;
+
+if (addClassBtn && newClassesContainer) {
+    addClassBtn.addEventListener('click', function() {
+        const newRow = document.createElement('div');
+        newRow.classList.add('mui-new-class-row');
+
+        newRow.innerHTML = `
+            <input type="text" class="mui-form-input" name="classes[]" placeholder="New Class Name">
+            <input type="text" class="mui-form-input" name="new_class_descriptions[]" placeholder="Optional Description">
+            <button type="button" class="mui-class-remove-button" title="Remove Class">
+                <span class="material-icons">remove_circle_outline</span>
+            </button>
+        `;
+        newClassesContainer.appendChild(newRow);
+
+        newRow.querySelector('.mui-class-remove-button').addEventListener('click', function() {
+            this.closest('.mui-new-class-row').remove();
+        });
+
+        classIndex++;
+    });
+}
+
+const form = document.getElementById('create-dictionary-form');
+if(form) {
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default browser submission
+
+        let isValid = true;
+        const nameInput = form.querySelector('#name');
+        const nameError = form.querySelector('#name-error');
+        if (nameInput && !nameInput.value.trim()) {
+            nameInput.style.borderColor = 'var(--danger-color)';
+            if (nameError) {
+                 nameError.textContent = 'Dictionary name is required.';
+                 nameError.style.display = 'block';
+            }
+            isValid = false;
+        } else if (nameInput) {
+            nameInput.style.borderColor = 'rgba(0,0,0,0.2)';
+             if (nameError) nameError.style.display = 'none';
+        }
+        
+        // TODO: Add validation for at least one class selected/entered
+        // Example (very basic):
+        const existingChecked = form.querySelector('input[name="existing_classes[]"]:checked');
+        const newClassNameInputs = form.querySelectorAll('input[name="classes[]"]');
+        let hasNewClass = false;
+        newClassNameInputs.forEach(input => {
+             if (input.value.trim()) hasNewClass = true;
+        });
+        if (!existingChecked && !hasNewClass) {
+             alert('Please select at least one existing class or define a new one.'); // Replace with better UI feedback
+             isValid = false;
+        }
+        
+
+        if (!isValid) {
+            // Stop if validation fails
+            return; 
+        } 
+        
+        // If valid, proceed with async submission
+        const submitButton = form.querySelector('button[type="submit"]');
+        const formData = new FormData(form);
+        const action = form.action;
+        
+        // Disable button and show loading state (optional)
+        if(submitButton) submitButton.disabled = true;
+        // Add a spinner or change button text here if desired
+
+        fetch(action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect on success
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    // Fallback if redirect URL isn't provided (e.g., back to list)
+                    window.location.href = "{{ url_for('dictionary_web.dictionaries_page') }}";
+                }
+                // Optionally show a success flash message before redirecting if your system supports it.
+            } else {
+                // Show error message (e.g., in an alert or a dedicated div)
+                alert('Error creating dictionary: ' + (data.error || 'Unknown error')); 
+                if(submitButton) submitButton.disabled = false; // Re-enable button on error
+            }
+        })
+        .catch(error => {
+            console.error('Form submission error:', error);
+            alert('An unexpected error occurred during submission.');
+            if(submitButton) submitButton.disabled = false; // Re-enable button on error
+        });
+    });
+}
+</script>
+{% endblock %}

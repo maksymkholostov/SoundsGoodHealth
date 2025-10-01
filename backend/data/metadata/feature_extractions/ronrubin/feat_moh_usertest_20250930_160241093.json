@@ -1,0 +1,16 @@
+{
+  "id": "feat_moh_usertest_20250930_160241093",
+  "recording_id": "aug_moh_usertest_20250930_132307748",
+  "feature_set_id": "v0.1",
+  "filename": "features\\v0.1\\usertest\\augmented\\Moh\\aug_moh_usertest_20250930_132307748_features.npz",
+  "metadata": {
+    "dictionary_id": "dict_mohmoo",
+    "class_id": "cls_moh",
+    "class_name": "Moh",
+    "recording_type": "augmented",
+    "subset": "augmented",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-09-30T16:02:41.093060"
+}

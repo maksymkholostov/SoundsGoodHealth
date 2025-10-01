@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Error Analysis - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Error Analysis Dashboard</h1>
+            
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white">
+                    <h5 class="mb-0">Error Analysis ({{ error_count }} errors captured)</h5>
+                    <div>
+                        <button id="copyPromptBtn" class="btn btn-sm btn-outline-light me-2">
+                            <i class="fas fa-copy"></i> Copy for Analysis
+                        </button>
+                        <form method="POST" action="{{ url_for('admin_clear_error_buffer') }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i> Clear Buffer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if prompt == "No errors have been captured yet." %}
+                        <div class="alert alert-info">
+                            No errors have been captured yet. Errors will appear here when they occur.
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <p>This prompt is formatted for AI analysis. Copy and paste it directly into your preferred AI tool to get insights on the errors.</p>
+                        </div>
+                        <div class="border p-3 bg-light">
+                            <pre id="promptContent" style="white-space: pre-wrap;">{{ prompt }}</pre>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Using Error Analysis with AI</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Click <strong>Copy for Analysis</strong> to copy the formatted error log</li>
+                        <li>You can paste the error log into an AI like <a href="https://claude.ai/" target="_blank">claude.ai</a> to get insights on the errors</li>
+                        <li>Paste the error log and add any additional context</li>
+                        <li>The AI will help you analyze the errors and suggest solutions</li>
+                    </ol>
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> The error buffer stores up to 20 most recent errors. After that, older errors are removed.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="{{ url_for('web_routes.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('copyPromptBtn').addEventListener('click', function() {
+    var promptContent = document.getElementById('promptContent');
+    
+    // Create a temporary textarea element
+    var textarea = document.createElement('textarea');
+    textarea.value = promptContent.textContent;
+    document.body.appendChild(textarea);
+    
+    // Select and copy the content
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Remove the temporary element
+    document.body.removeChild(textarea);
+    
+    // Show feedback
+    var originalText = this.innerHTML;
+    this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    
+    setTimeout(() => {
+        this.innerHTML = originalText;
+    }, 2000);
+});
+</script>
+{% endblock %} 

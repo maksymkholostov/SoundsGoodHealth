@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400">
+  <!-- Background -->
+  <rect x="0" y="0" width="500" height="400" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <text x="250" y="40" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#333">Sound Classes</text>
+  
+  <!-- Central Class Container -->
+  <rect x="100" y="60" width="300" height="300" fill="white" stroke="#ddd" stroke-width="2" rx="10" ry="10"/>
+  
+  <!-- Class Icons -->
+  <!-- Class 1: "Ah" Sound -->
+  <circle cx="180" cy="120" r="30" fill="#FF6B6B"/>
+  <text x="180" y="125" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="white">Ah</text>
+  
+  <!-- Class 2: "Ee" Sound -->
+  <circle cx="320" cy="120" r="30" fill="#4ECDC4"/>
+  <text x="320" y="125" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="white">Ee</text>
+  
+  <!-- Class 3: "Oh" Sound -->
+  <circle cx="180" cy="220" r="30" fill="#FFD166"/>
+  <text x="180" y="225" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="white">Oh</text>
+  
+  <!-- Class 4: "Sh" Sound -->
+  <circle cx="320" cy="220" r="30" fill="#6A0572"/>
+  <text x="320" y="225" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="white">Sh</text>
+  
+  <!-- Class 5: "K" Sound -->
+  <circle cx="250" cy="300" r="30" fill="#1A535C"/>
+  <text x="250" y="305" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="white">K</text>
+  
+  <!-- Connecting lines -->
+  <line x1="180" y1="150" x2="180" y2="190" stroke="#ddd" stroke-width="2"/>
+  <line x1="320" y1="150" x2="320" y2="190" stroke="#ddd" stroke-width="2"/>
+  <line x1="180" y1="250" x2="235" y2="280" stroke="#ddd" stroke-width="2"/>
+  <line x1="320" y1="250" x2="265" y2="280" stroke="#ddd" stroke-width="2"/>
+  
+  <!-- Animation for pulsing effect -->
+  <style>
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    circle {
+      animation: pulse 3s infinite;
+      transform-origin: center;
+      animation-delay: calc(var(--i) * 0.5s);
+    }
+    circle:nth-child(2) { --i: 1; }
+    circle:nth-child(4) { --i: 2; }
+    circle:nth-child(6) { --i: 3; }
+    circle:nth-child(8) { --i: 4; }
+    circle:nth-child(10) { --i: 5; }
+  </style>
+</svg> 

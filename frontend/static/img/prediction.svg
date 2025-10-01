@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400">
+  <!-- Background -->
+  <rect x="0" y="0" width="500" height="400" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <text x="250" y="40" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#333">Prediction Results</text>
+  
+  <!-- Microphone -->
+  <g transform="translate(100, 140)">
+    <rect x="-20" y="-40" width="40" height="80" fill="#3B2667" rx="5" ry="5"/>
+    <circle cx="0" cy="-20" r="15" fill="#BC78EC"/>
+    <rect x="-5" y="40" width="10" height="30" fill="#3B2667"/>
+    <rect x="-15" y="70" width="30" height="5" fill="#3B2667" rx="2" ry="2"/>
+    
+    <!-- Sound Waves -->
+    <circle cx="0" cy="-20" r="3" fill="#f8f9fa" class="wave" style="--i: 0;"/>
+    <circle cx="0" cy="-20" r="8" fill="none" stroke="#f8f9fa" stroke-width="1" class="wave" style="--i: 1;"/>
+    <circle cx="0" cy="-20" r="15" fill="none" stroke="#f8f9fa" stroke-width="1" class="wave" style="--i: 2;"/>
+    <circle cx="0" cy="-20" r="25" fill="none" stroke="#f8f9fa" stroke-width="1" class="wave" style="--i: 3;"/>
+  </g>
+  
+  <!-- Arrow indicating flow -->
+  <g transform="translate(180, 140)">
+    <line x1="0" y1="0" x2="60" y2="0" stroke="#666" stroke-width="2"/>
+    <polygon points="60,0 50,-5 50,5" fill="#666"/>
+  </g>
+  
+  <!-- Processing Brain/Model -->
+  <g transform="translate(250, 140)">
+    <ellipse cx="0" cy="0" rx="30" ry="25" fill="#BC78EC"/>
+    <path d="M-15,-10 Q0,-25 15,-10 Q25,0 15,10 Q0,25 -15,10 Q-25,0 -15,-10" fill="none" stroke="#3B2667" stroke-width="2"/>
+    
+    <!-- Synapse animation -->
+    <circle cx="-8" cy="-5" r="2" fill="white" class="synapse" style="--i: 0;"/>
+    <circle cx="8" cy="-5" r="2" fill="white" class="synapse" style="--i: 1;"/>
+    <circle cx="0" cy="5" r="2" fill="white" class="synapse" style="--i: 2;"/>
+  </g>
+  
+  <!-- Arrow indicating flow -->
+  <g transform="translate(320, 140)">
+    <line x1="0" y1="0" x2="60" y2="0" stroke="#666" stroke-width="2"/>
+    <polygon points="60,0 50,-5 50,5" fill="#666"/>
+  </g>
+  
+  <!-- Results Panel -->
+  <g transform="translate(400, 140)">
+    <rect x="-30" y="-80" width="130" height="160" fill="white" stroke="#ddd" stroke-width="2" rx="5" ry="5"/>
+    <text x="35" y="-60" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#333">Results</text>
+    
+    <line x1="-30" y1="-45" x2="100" y2="-45" stroke="#ddd" stroke-width="1"/>
+    
+    <!-- Result for "Ah" sound -->
+    <text x="-20" y="-20" font-family="Arial, sans-serif" font-size="14" text-anchor="start" fill="#333">"Ah"</text>
+    
+    <!-- Progress bar for "Ah" -->
+    <rect x="20" y="-30" width="70" height="15" fill="#f5f5f5" rx="3" ry="3"/>
+    <rect x="20" y="-30" width="65" height="15" fill="#4361EE" rx="3" ry="3" class="progress-bar" style="--progress: 92;"/>
+    <text x="55" y="-18" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white">92%</text>
+    
+    <!-- Result for "Ee" sound -->
+    <text x="-20" y="10" font-family="Arial, sans-serif" font-size="14" text-anchor="start" fill="#333">"Ee"</text>
+    
+    <!-- Progress bar for "Ee" -->
+    <rect x="20" y="0" width="70" height="15" fill="#f5f5f5" rx="3" ry="3"/>
+    <rect x="20" y="0" width="5" height="15" fill="#4361EE" rx="3" ry="3" class="progress-bar" style="--progress: 7;"/>
+    <text x="28" y="12" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white">7%</text>
+    
+    <!-- Result for "Oh" sound -->
+    <text x="-20" y="40" font-family="Arial, sans-serif" font-size="14" text-anchor="start" fill="#333">"Oh"</text>
+    
+    <!-- Progress bar for "Oh" -->
+    <rect x="20" y="30" width="70" height="15" fill="#f5f5f5" rx="3" ry="3"/>
+    <rect x="20" y="30" width="1" height="15" fill="#4361EE" rx="3" ry="3" class="progress-bar" style="--progress: 1;"/>
+    <text x="26" y="42" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="white">1%</text>
+  </g>
+  
+  <!-- Prediction Message -->
+  <g transform="translate(250, 300)">
+    <rect x="-150" y="-20" width="300" height="40" fill="#4361EE" rx="20" ry="20" class="prediction-message"/>
+    <text x="0" y="5" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Prediction: "Ah" Sound</text>
+  </g>
+  
+  <!-- Animation -->
+  <style>
+    @keyframes wave-animation {
+      0% { opacity: 0.8; transform: scale(0.8); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+      100% { opacity: 0; transform: scale(1.6); }
+    }
+    
+    @keyframes synapse-pulse {
+      0% { opacity: 0.2; }
+      50% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    
+    @keyframes progress-animation {
+      0% { width: 0; }
+      100% { width: calc(var(--progress) * 0.7px); }
+    }
+    
+    @keyframes message-pulse {
+      0% { transform: scale(1); box-shadow: 0 0 10px rgba(67, 97, 238, 0.3); }
+      50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(67, 97, 238, 0.5); }
+      100% { transform: scale(1); box-shadow: 0 0 10px rgba(67, 97, 238, 0.3); }
+    }
+    
+    .wave {
+      animation: wave-animation 2s infinite;
+      transform-origin: center;
+      animation-delay: calc(var(--i) * 0.3s);
+      opacity: 0;
+    }
+    
+    .synapse {
+      animation: synapse-pulse 1.5s infinite;
+      animation-delay: calc(var(--i) * 0.5s);
+    }
+    
+    .progress-bar {
+      animation: progress-animation 2s forwards;
+    }
+    
+    .prediction-message {
+      animation: message-pulse 2s infinite;
+    }
+  </style>
+</svg> 

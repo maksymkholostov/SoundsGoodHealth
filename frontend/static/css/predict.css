@@ -1,0 +1,1232 @@
+/* SoundsGood - Prediction Page Styling */
+
+/* CSS Variables */
+:root {
+    --bg-gradient-light: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    --card-gradient: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.98));
+    --highlight-line: rgba(63, 81, 181, 0.15);
+    --subtle-pattern: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%233f51b5' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1.5'/%3E%3Ccircle cx='13' cy='13' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Main container - MAKE IT MUCH WIDER */
+.mui-predict-container {
+    max-width: 1400px;  /* Changed from 900px to 1400px */
+    margin: 2rem auto;
+    padding: 2rem 1rem;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+}
+.mui-predict-container::before {
+    display: none;
+}
+
+/* ============================================
+   Card sizing - Different heights for different cards
+   ============================================ */
+   
+/* Card 1: Dictionary selection - make it thin */
+.mui-steps-grid > div:first-child .mui-model-card {
+    min-height: 120px;
+    max-height: 150px;
+}
+
+/* Card 2: Model selection - make it tall and FULL WIDTH */
+#modelSelectionCard {
+    width: 100% !important;
+}
+
+#modelSelectionCard .mui-model-card {
+    min-height: 400px !important;
+    max-height: none !important; /* No max height - let it expand */
+    width: 100% !important;
+}
+
+/* Card 3: Predictor interface - make it thin */
+#predictorInterfaceCard .mui-model-card {
+    min-height: 180px;
+    max-height: 220px;
+}
+
+/* Other cards default height */
+.mui-model-card,
+#latestPrediction,
+#predictionHistoryCard {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.mui-card-content {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto; /* Allow scrolling if content is too tall */
+}
+
+/* Models list container - no scrolling, expand to fit, FULL WIDTH */
+#modelsList {
+    min-height: 200px;
+    max-height: none; /* No max height - show all models */
+    overflow-y: visible; /* No scrolling */
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 10px;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ============================================
+   Page header centering & spacing
+   ============================================ */
+.mui-page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.mui-page-title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: .25rem;
+}
+.mui-page-subtitle {
+    color: #555;
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   Keep your existing grid, but tighten gaps
+   ============================================ */
+.mui-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ============================================
+   Pull in your regular dashboard button style
+   ============================================ */
+.mui-button#predictButton {
+    margin: 1rem auto 0;
+    display: block;
+    width: 140px;
+}
+
+/* ==== Card & Grid styling ==== */
+/* Common card look: white, rounded, subtle shadow */
+.mui-model-card,
+#latestPrediction,
+#predictionHistoryCard {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* Accent the header area of each card */
+.mui-card-header {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 0.75rem 1rem;
+}
+.mui-card-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+.mui-card-header .material-icons {
+    margin-right: 8px;
+}
+
+/* Full-width cards span entire grid */
+.mui-full-width {
+    grid-column: 1 / -1;
+}
+
+/* ==== Form & helper text ==== */
+.mui-helper-text {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+/* ==== Buttons ==== */
+.mui-button {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.mui-button:hover {
+    background-color: var(--primary-dark-color);
+}
+
+/* Danger button style for delete actions */
+.mui-button-danger {
+    background-color: #dc3545;
+    color: #fff;
+}
+.mui-button-danger:hover {
+    background-color: #c82333;
+}
+
+/* Small delete button style */
+.delete-model-btn {
+    background-color: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    padding: 6px 10px;
+    min-width: auto;
+}
+.delete-model-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+.delete-model-btn .material-icons {
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+/* ==== Prediction Mode Columns ==== */
+.mui-prediction-mode-options .mui-option-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Preserve existing visuals for waveform/history cards */
+#latestPrediction .mui-prediction-result,
+#predictionHistoryCard .mui-prediction-history {
+    padding: 1rem;
+}
+
+.mui-card-content::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle at bottom right, 
+                               rgba(63, 81, 181, 0.03) 0%, 
+                               rgba(63, 81, 181, 0) 70%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Form elements styling */
+
+
+.mui-form-select:focus {
+    border-color: var(--input-focus-border-color, #3f51b5);
+    box-shadow: var(--input-focus-shadow, 0 0 0 3px rgba(63, 81, 181, 0.25));
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.mui-form-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    color: var(--primary-dark-color, #303f9f);
+    position: relative;
+    padding-left: 0.5rem;
+}
+
+.mui-form-label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.15rem;
+    height: 70%;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--primary-color), rgba(63, 81, 181, 0.3));
+    border-radius: 3px;
+}
+
+/* Sound classes styling */
+.mui-sounds-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.mui-sound-badge {
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.12), rgba(63, 81, 181, 0.08));
+    color: var(--primary-color);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid rgba(63, 81, 181, 0.15);
+    transition: all 0.3s ease;
+}
+
+.mui-sound-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.18), rgba(63, 81, 181, 0.12));
+}
+
+.mui-sound-badge .material-icons {
+    font-size: 16px;
+    margin-right: 6px;
+}
+
+/* Recording controls */
+.mui-recording-controls {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.mui-waveform-container {
+    height: 120px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.03));
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 8px;
+    margin: 1.25rem 0;
+    width: 100%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+.mui-waveform-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 20px,
+        rgba(63, 81, 181, 0.02) 20px,
+        rgba(63, 81, 181, 0.02) 40px
+    );
+    pointer-events: none;
+}
+
+
+
+/* Toggle switches */
+.mui-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding: 1.75rem;
+    background: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04));
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.mui-controls-wrapper::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(63, 81, 181, 0.03) 0%, rgba(63, 81, 181, 0) 60%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.mui-control-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background-color: white;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.07);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.mui-control-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+}
+
+.mui-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.mui-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mui-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, #ccc, #ddd);
+    transition: .4s;
+    border-radius: 24px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mui-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+input:checked + .mui-switch-slider {
+    background: linear-gradient(to right, var(--primary-color), rgba(63, 81, 181, 0.8));
+}
+
+input:focus + .mui-switch-slider {
+    box-shadow: 0 0 1px var(--primary-color);
+}
+
+input:checked + .mui-switch-slider:before {
+    transform: translateX(20px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.mui-control-label {
+    font-size: 1rem;
+    color: var(--primary-dark-color);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    line-height: 1.3;
+}
+
+.mui-control-status {
+    margin-left: auto;
+    padding: 0.35rem 0.85rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+/* Status indicators for toggles */
+#ambientNoiseStatus {
+    background: rgba(0,0,0,0.05);
+    color: var(--text-muted-color);
+}
+
+#ambientNoiseStatus.active {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+}
+
+#predictionModeStatus {
+    background: rgba(0,0,0,0.05);
+    color: var(--text-muted-color);
+}
+
+#predictionModeStatus.active {
+    background: rgba(63, 81, 181, 0.1);
+    color: var(--primary-color);
+}
+
+/* Prediction results */
+.mui-prediction-result {
+    background: var(--card-gradient);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.mui-prediction-result::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: linear-gradient(to right, var(--primary-color), rgba(63, 81, 181, 0.2), var(--primary-color));
+}
+
+.mui-prediction-display {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.08), rgba(63, 81, 181, 0.03));
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    border: 1px solid rgba(63, 81, 181, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.mui-prediction-display::after {
+    content: "";
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(63, 81, 181, 0.1) 0%, rgba(63, 81, 181, 0) 70%);
+    border-radius: 50%;
+}
+
+.mui-predicted-class {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    position: relative;
+    display: inline-block;
+}
+
+.mui-predicted-class::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background: linear-gradient(to right, rgba(63, 81, 181, 0), var(--primary-color), rgba(63, 81, 181, 0));
+}
+
+.mui-confidence {
+    font-size: 1rem;
+    color: var(--text-muted-color);
+    background: rgba(0,0,0,0.05);
+    display: inline-block;
+    padding: 0.35rem 1rem;
+    border-radius: 16px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Feedback section */
+.mui-feedback-section {
+    margin-top: 1.5rem;
+}
+
+.mui-feedback-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+}
+
+.mui-feedback-form {
+    background-color: rgba(0,0,0,0.02);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.mui-feedback-options {
+    display: block !important;
+    visibility: visible !important;
+    min-height: 50px !important;
+    margin-bottom: 15px !important;
+    width: 100% !important;
+}
+
+.feedback-buttons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+}
+
+.feedback-sound-btn {
+    min-width: 60px !important;
+    margin: 5px !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    cursor: pointer !important;
+}
+
+.feedback-skip-btn {
+    margin-left: auto !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Prediction history */
+.mui-prediction-history {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+.mui-prediction-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+.mui-prediction-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.mui-prediction-item .sound {
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.mui-prediction-item .confidence {
+    color: var(--text-muted-color);
+    font-size: 0.875rem;
+}
+
+/* Model list styling - FIXED for clickability and WIDTH */
+.mui-model-item {
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    background: var(--card-gradient, white);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Fix internal layout of model items */
+.mui-model-item > div {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Model info section */
+.mui-model-item h5 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.mui-model-item small {
+    display: block;
+    color: #666;
+}
+
+/* Checkbox and button alignment */
+.mui-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.mui-model-item .select-model-btn {
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.mui-model-item::before,
+.mui-model-item::after {
+    content: none; /* Remove any pseudo elements that might block clicks */
+}
+
+.mui-model-item:hover {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.05), rgba(63, 81, 181, 0.02));
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.mui-model-item.active {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.08), rgba(76, 175, 80, 0.04));
+    border-left: 4px solid var(--success-color, #4CAF50);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+    position: relative;
+}
+
+.mui-model-item.active::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--success-color, #4CAF50);
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* Button - make sure it's properly clickable */
+.select-model-btn {
+    cursor: pointer !important;
+    z-index: 10 !important; /* Ensure button is above any other elements */
+    position: relative;
+    pointer-events: auto !important; /* Force pointer events */
+}
+
+/* Fix button stacking in model lists */
+.mui-model-item .mui-button,
+.mui-model-item .select-model-btn {
+    position: relative;
+    z-index: 5;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+/* Model type chips */
+
+.mui-chip-cnn {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #0d6efd;
+    border: 1px solid rgba(33, 150, 243, 0.2);
+}
+
+.mui-chip-rf {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #198754;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.mui-chip-ensemble {
+    background-color: rgba(156, 39, 176, 0.1);
+    color: #9c27b0;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+}
+
+/* Debug button styles */
+.mui-debug-button {
+    background-color: #ffc107;
+    color: #212529;
+    border: none;
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mui-debug-button:hover {
+    background-color: #ffca2c;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+/* Prediction Results Table */
+.mui-prediction-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+}
+
+.mui-prediction-table th {
+    background: #3f51b5;
+    color: white;
+    font-weight: 600;
+    padding: 12px 10px;
+    border: 1px solid #2c387e;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    min-width: 100px;
+}
+
+.mui-prediction-table th:first-child {
+    background: #303f9f;
+    min-width: 150px;
+    text-align: left;
+}
+
+.mui-prediction-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    min-width: 100px;
+}
+
+/* Model name cells (first column) */
+.mui-prediction-table td:first-child {
+    font-weight: 600;
+    text-align: left;
+    background: #f5f5f5;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    border-right: 2px solid #ccc;
+    min-width: 150px;
+}
+
+/* Alternating row colors for each model pair */
+.mui-prediction-table tbody tr:nth-child(4n+1),
+.mui-prediction-table tbody tr:nth-child(4n+2) {
+    background: white;
+}
+
+.mui-prediction-table tbody tr:nth-child(4n+3),
+.mui-prediction-table tbody tr:nth-child(4n+4) {
+    background: #f9f9f9;
+}
+
+/* Prediction class row */
+.prediction-class-row td {
+    font-weight: 600;
+    color: #1976D2;
+    font-size: 1.1rem;
+}
+
+.prediction-class-row td:first-child {
+    color: #333;
+    font-size: 0.95rem;
+}
+
+/* Confidence percentage row */
+.prediction-confidence-row td {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.prediction-confidence-row td:first-child {
+    color: #333;
+    font-size: 0.95rem;
+}
+
+/* High confidence highlighting */
+.high-confidence {
+    background: rgba(76, 175, 80, 0.2) !important;
+    color: #2e7d32;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Container for the table */
+#predictionTableContainer {
+    width: 100%;
+    overflow-x: auto;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+}
+
+/* Utility classes */
+
+/* Prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .mui-predict-container,
+    .mui-button::after,
+    .mui-model-card:hover,
+    .mui-button:hover {
+        animation: none;
+        transition: none;
+        transform: none;
+    }
+    
+    @keyframes pulse {
+        0%, 70%, 100% {
+            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+        }
+    }
+}
+
+/* Dark mode hints - these won't take effect but show we're thinking about it */
+@media (prefers-color-scheme: dark) {
+    /* These are commented out but indicate we've considered dark mode */
+    /*
+    :root {
+        --bg-gradient-light: linear-gradient(135deg, #1e1e1e 0%, #262626 100%);
+        --card-gradient: linear-gradient(to bottom, rgba(30,30,30,0.95), rgba(40,40,40,0.98));
+        --highlight-line: rgba(126, 138, 206, 0.2);
+        --primary-color: #6e7dd7;
+        --dark-color: #e0e0e0;
+        --text-muted-color: #a0a0a0;
+    }
+}
+
+/* Model Info section enhancement */
+#modelInfo {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.05), rgba(63, 81, 181, 0.02));
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-top: 1rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(63, 81, 181, 0.1);
+}
+
+#modelInfo h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--primary-dark-color);
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+#modelInfo h3::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+#modelInfo p {
+    margin-bottom: 0.5rem;
+}
+
+#modelInfo strong {
+    color: var(--primary-dark-color);
+    font-weight: 500;
+}
+
+/* Improved table styling with sticky Model column */
+.mui-prediction-table {
+    font-size: 14px;
+}
+
+.mui-prediction-table td:first-child,
+.mui-prediction-table th:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 5;
+    border-right: 2px solid #ddd;
+    font-weight: 600;
+    min-width: 150px;
+}
+
+.mui-prediction-table tbody td:first-child {
+    background: #f9f9f9;
+}
+
+.mui-prediction-table .prediction-class-cell {
+    color: #2196F3;
+    font-weight: 600;
+}
+
+.mui-prediction-table .high-confidence {
+    font-weight: 600;
+}
+
+#predictionTableContainer {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Speech detection indicators */
+.mui-listening-active {
+    padding: 0.85rem 1.25rem;
+    background: linear-gradient(to right, rgba(76, 175, 80, 0.12), rgba(76, 175, 80, 0.08));
+    border-radius: 12px;
+    color: var(--success-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    animation: pulse 1.5s infinite;
+    margin-top: 1rem;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 3px 8px rgba(76, 175, 80, 0.1);
+}
+
+.mui-speech-detected {
+    padding: 0.85rem 1.25rem;
+    background: linear-gradient(to right, rgba(255, 152, 0, 0.12), rgba(255, 152, 0, 0.08));
+    border-radius: 12px;
+    color: var(--warning-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    margin-top: 0.75rem;
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 3px 8px rgba(255, 152, 0, 0.1);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4), inset 0 0 0 0 rgba(76, 175, 80, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(76, 175, 80, 0), inset 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0), inset 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+/* Style for the selected button */
+.selected-button {
+    background: linear-gradient(to right, var(--success-color, #4CAF50), #81C784) !important; 
+    color: white !important;
+    box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3) !important;
+    transform: translateY(0) !important;
+}
+
+.selected-button:hover {
+    background: linear-gradient(to right, #2E7D32, var(--success-color, #4CAF50)) !important;
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4) !important;
+}
+
+/* Face styles for game mode */
+.face-container {
+    position: relative !important;
+    height: 200px !important;
+    width: 200px !important;
+    margin: 0 auto !important;
+    display: block !important;
+    min-height: 200px !important;
+    visibility: visible !important;
+    z-index: 10 !important;
+}
+
+.face {
+    position: absolute !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #FFEB3B !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+    transition: all 0.3s ease !important;
+    min-height: 100% !important;
+}
+
+.face-neutral {
+    background-color: #FFEB3B !important;
+}
+
+.face-happy, .face-grimace {
+    background-color: #FFEB3B !important;
+}
+
+.eye {
+    position: absolute !important;
+    width: 30px !important;
+    height: 30px !important;
+    background-color: #212121 !important;
+    border-radius: 50% !important;
+    top: 60px !important;
+}
+
+.eye-left {
+    left: 50px !important;
+}
+
+.eye-right {
+    right: 50px !important;
+}
+
+.mouth {
+    position: absolute !important;
+    bottom: 60px !important;
+    left: 50px !important;
+    right: 50px !important;
+    height: 20px !important;
+    background-color: #212121 !important;
+    border-radius: 10px !important;
+}
+
+.mouth-neutral {
+    height: 10px !important;
+    width: 50% !important;
+    margin: 0 auto !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+.mouth-happy {
+    height: 30px !important;
+    border-radius: 0 0 50px 50px !important;
+    border-top: none !important;
+}
+
+.class-display {
+    font-size: 24px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    margin: 20px 0 !important;
+    color: var(--primary-color) !important;
+}
+
+/* Add shake animation for grimace face */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.5s !important;
+}
+
+/* === mode-cards row === */
+.mui-mode-cards-row {
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+.mode-card {
+    position: relative;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0.5rem 0.5rem 0.5rem 2.5rem;
+    text-align: left;
+    margin-bottom: 0.75rem;
+    display: block;
+    box-shadow: none;
+}
+
+.mode-card input[type="radio"] {
+    position: absolute;
+    top: 0.9rem;
+    left: 0.5rem;
+}
+
+.mode-card .material-icons {
+    position: absolute;
+    left: 1.75rem;
+    top: 0.65rem;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+}
+
+.mode-title {
+    display: block;
+    margin-top: 0;
+    margin-left: 1.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.mode-desc {
+    display: block;
+    margin-top: 0.1rem;
+    margin-left: 1.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* === ambient noise switch row === */
+.mui-ambient-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 1.5rem 0 0.25rem;
+}
+.ambient-label {
+    font-size: 0.95rem;
+    color: #333;
+}
+.ambient-helper {
+    font-size: 0.85rem;
+    color: #555;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* === session button centering === */
+.session-btn {
+    display: block;
+    margin: 0 auto;
+    width: 140px;
+}
+
+/* Style radio options in third card as a vertical bullet list */
+#predictorInterfaceCard .mui-mode-cards-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+#predictorInterfaceCard .mode-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#predictorInterfaceCard .mode-card input[type="radio"] {
+  margin-top: 0.25rem;
+  margin-right: 0.5rem;
+}
+
+#predictorInterfaceCard .mode-card .material-icons {
+  margin-right: 0.5rem;
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+#predictorInterfaceCard .mode-title, 
+#predictorInterfaceCard .mode-desc {
+  display: block;
+  text-align: left;
+}
+
+#predictorInterfaceCard .mode-desc {
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.9rem;
+} 

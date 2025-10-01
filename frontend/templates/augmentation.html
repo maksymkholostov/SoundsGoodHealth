@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Audio Augmentation{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Add any specific styles for this page if needed */
+.mui-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.mui-card:hover {
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.mui-card-content {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mui-card-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #424242;
+}
+
+.mui-card-subtitle {
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin-top: 4px;
+}
+
+.mui-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem; /* Smaller padding */
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 0.8rem; /* Smaller font size */
+}
+
+.mui-button-primary {
+    background: linear-gradient(135deg, #3f51b5, #3949ab);
+    color: white;
+    box-shadow: 0 2px 6px rgba(63, 81, 181, 0.3);
+}
+
+.mui-button-primary:hover {
+    background: linear-gradient(135deg, #3949ab, #303f9f);
+    box-shadow: 0 4px 8px rgba(63, 81, 181, 0.4);
+}</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mui-header mb-4">
+        <h1>Audio Augmentation</h1>
+        <p class="text-muted">Select a dictionary to manage its augmented sound data.</p>
+    </div>
+
+    {% if user_dictionaries %}
+        <div class="row">
+            {% for dictionary in user_dictionaries %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="mui-card">
+                        <div class="mui-card-content">
+                            <div>
+                                <h2 class="mui-card-title">{{ dictionary.name }}</h2>
+                                <p class="mui-card-subtitle">
+                                    {{ dictionary.classes|length }} class{% if dictionary.classes|length != 1 %}es{% endif %}
+                                    {# Placeholder for augmentation status - ideally fetched from backend #}
+                                    {# <br> <span class="badge bg-secondary">Status: Not Augmented</span> #}
+                                </p>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('web_routes.sound_augmentation_page', dictionary_identifier=dictionary.id) }}" class="mui-button mui-button-primary">
+                                    Manage
+                                    <span class="material-icons" style="font-size: 1.1em; margin-left: 6px;">chevron_right</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            You haven't created any dictionaries yet. Please <a href="{{ url_for('web_routes.create_dictionary_page') }}">create a dictionary</a> first to start augmenting sounds.
+        </div>
+    {% endif %}
+</div>
+
+<style>
+/* Reusing styles similar to sound_augmentation for consistency */
+.mui-header {
+    background: linear-gradient(135deg, #3f51b5, #2196F3);
+    color: white;
+    padding: 1.5rem; /* Adjusted padding */
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+.mui-header h1 {
+    margin-bottom: 0.5rem;
+    font-size: 1.75rem; /* Adjusted size */
+}
+.mui-header p {
+    margin-bottom: 0;
+    opacity: 0.9;
+}
+</style>
+{% endblock %} 

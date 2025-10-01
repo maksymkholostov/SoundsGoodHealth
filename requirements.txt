@@ -1,0 +1,65 @@
+# Flask and extensions
+Flask
+Flask-WTF
+Flask-Login
+Flask-RESTful
+flask-jwt-extended
+Flask-SQLAlchemy
+flask_login
+flask_moment
+
+# Core dependencies
+Werkzeug==2.3.8
+itsdangerous==2.1.2
+Jinja2==3.1.2
+
+# Data processing and ML
+numpy==1.23.5
+scipy==1.10.1
+librosa==0.11.0
+soundfile==0.13.1
+scikit-learn==1.6.1
+tensorflow==2.15.0
+# tensorflow-macos==2.15.0  # Uncomment for Apple Silicon
+
+# Visualization
+matplotlib==3.9.4
+
+# Utilities
+joblib==1.4.2
+
+# Data handling and processing
+pandas==1.5.3
+PyWavelets==1.4.1
+
+# Machine learning libraries
+
+# Audio processing
+pyaudio==0.2.13
+pydub==0.25.1
+resampy==0.4.2
+pyloudnorm>=0.1.0
+
+# Storage and serialization
+h5py==3.8.0
+PyYAML==6.0
+
+# Development tools
+python-dotenv==1.0.0
+pytest==7.3.1
+black==23.3.0
+flake8==6.0.0
+
+# Visualization
+seaborn==0.12.2
+
+# New dependencies
+flask_moment
+
+# For noise reduction based on profile
+noisereduce
+
+# Production server
+gunicorn
+
+# Remove WeasyPrint from requirements

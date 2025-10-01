@@ -1,0 +1,62 @@
+# Docker ignore file
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+logs/
+flask_app.log
+terminallog.log
+migration.log
+data_migration.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Exclude runtime data from images (will live on volume in production)
+backend/data/sounds/
+backend/data/features/
+backend/data/models/
+backend/data/inference/
+backend/data/users/
+backend/data/logs/
+backend/data_backup_*/
+data_backup_*/
+logs/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Docker-specific
+.docker/
+Dockerfile
+.dockerignore
+
+# Railway-specific
+railway.json
+railway.gitignore
+railway_deployment_guide.md
+RAILWAY_README.md
+
+# Other
+*.db
+*.sqlite
+*.sqlite3 

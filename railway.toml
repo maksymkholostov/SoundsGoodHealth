@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "gunicorn -w 1 -k gthread --threads 4 --timeout 0 wsgi:app"
+healthcheckPath = "/api/healthz"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE" 

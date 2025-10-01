@@ -1,0 +1,16 @@
+{
+  "id": "feat_oo_ronrubin_20250811_072439884",
+  "recording_id": "aug_oo_ronrubin_20250811_071233189",
+  "feature_set_id": "v0.1",
+  "filename": "features/v0.1/ronrubin/augmented/Oo/aug_oo_ronrubin_20250811_071233189_features.npz",
+  "metadata": {
+    "dictionary_id": null,
+    "class_id": "cls_oo",
+    "class_name": "Oo",
+    "recording_type": "augmented",
+    "subset": "augmented",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-08-11T07:24:39.884169"
+}

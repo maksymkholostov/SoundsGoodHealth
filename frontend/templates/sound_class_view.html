@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}{{ class_name }} - Sound Class - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Styles specific to the Sound Class View page - Refined Aesthetics */
+
+/* MUI-like Tabs */
+.mui-tabs-container {
+    display: flex;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    margin-bottom: 1.5rem;
+}
+
+.mui-tab {
+    padding: 10px 16px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+    font-size: 0.88rem; /* Slightly adjust size */
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s ease, border-bottom-color 0.2s ease, background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px; /* Slightly reduced gap */
+}
+.mui-tab .material-icons {
+    font-size: 1.05rem; /* Further adjust icon size */
+    line-height: 1; /* Ensure vertical alignment */
+}
+
+.mui-tab:hover {
+    color: var(--primary-color, #3f51b5);
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.mui-tab.active {
+    color: var(--primary-color, #3f51b5);
+    border-bottom-color: var(--primary-color, #3f51b5);
+}
+
+/* MUI-like Badge */
+.mui-tab .badge {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.7);
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    margin-left: 5px;
+    font-weight: 500;
+}
+.mui-tab.active .badge {
+    background-color: var(--primary-color, #3f51b5);
+    color: white;
+}
+
+/* MUI-like List Item Styling */
+.recording-list-container {
+    overflow: hidden;
+}
+
+.recording-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1.2rem; /* Adjusted padding */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    gap: 1rem;
+    transition: background-color 0.15s ease-in-out;
+}
+.recording-list-container > .recording-item:last-child {
+    border-bottom: none;
+}
+.recording-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.recording-info {
+    flex-grow: 1;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.recording-info > div {
+    line-height: 1.4; /* Increased slightly */
+    font-size: 0.875rem; /* Adjusted size */
+    display: flex; /* Align label and value */
+    align-items: baseline;
+}
+.recording-info strong {
+    font-weight: 500;
+    color: rgba(0,0,0,0.6);
+    min-width: 75px; /* Align labels */
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+.recording-info small {
+    color: rgba(0,0,0,0.85);
+}
+
+.recording-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    min-width: fit-content;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.audio-player-container {
+    display: flex;
+    align-items: center; /* Key for vertical alignment */
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+.audio-player {
+   height: 35px;
+   flex-grow: 0;
+   flex-shrink: 0;
+   width: 200px;
+   vertical-align: middle; /* Help alignment */
+}
+/* Ensure download button aligns with player */
+.audio-player-container .mui-button {
+    height: 35px; /* Match player height */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem !important; /* Tighten padding */
+}
+.audio-player-container .mui-button .material-icons {
+    font-size: 1.2rem; /* Icon size for download */
+    margin-right: 0;
+    vertical-align: middle;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    align-items: center; /* Align buttons vertically */
+}
+
+/* MUI-style button adjustments for actions */
+.action-buttons .mui-button {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.78rem;
+    min-width: auto;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center; /* Align icon/text */
+    justify-content: center;
+}
+.action-buttons .mui-button .material-icons {
+    font-size: 1rem; /* Adjust icon size */
+    margin-right: 5px;
+    vertical-align: middle; /* Help alignment */
+}
+
+/* MUI-like Empty State */
+.mui-empty-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    margin-top: 1rem;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+.mui-empty-state .material-icons {
+    font-size: 3rem;
+    color: rgba(0, 0, 0, 0.3);
+    margin-bottom: 1rem;
+}
+.mui-empty-state p {
+    color: rgba(0, 0, 0, 0.55);
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+/* Ensure alignment in empty state button */
+.mui-empty-state .mui-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.mui-empty-state .mui-button .material-icons {
+     font-size: 1.1rem;
+     vertical-align: middle;
+}</style>
+
+
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Back Button (MUI Style) -->
+    <a href="{{ url_for('sound_class.sound_classes_page') }}" class="mui-button mui-button-outlined" style="margin-bottom: 1rem; display: inline-flex; align-items: center;">
+        <span class="material-icons" style="margin-right: 6px; font-size: 1.1rem;">arrow_back</span> Back to Sound Classes
+    </a>
+
+    <!-- Card Wrapper (MUI Style) -->
+    <div class="mui-card" style="margin-bottom: 1.5rem;">
+        <!-- Card Header (MUI Style with subtle background) -->
+        <div class="mui-card-header" style="background-color: rgba(63, 81, 181, 0.05);"> {# Slightly stronger primary color hint #}
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 500;">Sound Class: <span style="font-weight: 600;">{{ class_name }}</span></h2>
+            {% if sound_class %}
+                <p style="margin: 0.3rem 0 0 0; color: rgba(0,0,0,0.75); font-size: 0.9rem;">Description: {{ sound_class.description or 'No description provided.' }}</p>
+                <p style="margin: 0.2rem 0 0 0; color: rgba(0,0,0,0.55); font-size: 0.8rem;">Created by: {{ sound_class.creator_user_id }} | ID: {{ sound_class.id }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Card Body (MUI Style) -->
+        <div class="mui-card-content" style="padding: 1rem 1.5rem;"> {# Adjusted padding #}
+            <!-- Tab Navigation (MUI Style) -->
+            <div class="mui-tabs-container" id="recordingTabs">
+                <button class="mui-tab active" data-target="#pending-tab-pane" type="button">
+                    <span class="material-icons">hourglass_empty</span> Pending <span class="badge" id="badge-pending-count">{{ pending_recordings | length }}</span>
+                </button>
+                <button class="mui-tab" data-target="#approved-tab-pane" type="button">
+                    <span class="material-icons">check_circle</span> Approved <span class="badge" id="badge-approved-count">{{ approved_recordings | length }}</span>
+                </button>
+                <button class="mui-tab" data-target="#raw-tab-pane" type="button">
+                    <span class="material-icons">raw_on</span> Raw <span class="badge" id="badge-raw-count">{{ raw_recordings | length }}</span>
+                </button>
+            </div>
+
+            <!-- Tab Content (Refactored to MUI style) -->
+            <div class="tab-content" id="recordingTabsContent">
+                <!-- Pending Recordings Tab -->
+                <div class="tab-pane show active" id="pending-tab-pane">
+                    {% if pending_recordings %}
+                    <div class="recording-list-container" id="pendingRecordingsList">
+                        {% for recording in pending_recordings %}
+                        <div class="recording-item" data-file="{{ recording.filename }}" {% if recording.path %}data-path="{{ recording.path }}"{% endif %}>
+                            <div class="recording-info">
+                                <div><strong>ID:</strong> <small>{{ recording.id | truncate(15, True) }}</small></div>
+                                <div><strong>Segment:</strong> <small>{{ recording.segment_index + 1 if recording.segment_index is defined else 'N/A' }}</small></div>
+                                <div><strong>Timestamp:</strong> <small>{{ recording.timestamp if recording.timestamp else 'N/A' }}</small></div>
+                                <div><strong>User:</strong> <small>{{ recording.user_id | truncate(15, True) if recording.user_id else 'N/A' }}</small></div>
+                            </div>
+                            <div class="recording-actions">
+                                <div class="audio-player-container">
+                                    <audio controls controlsList="nodownload" preload="metadata" class="audio-player" data-file="{{ recording.filename }}" data-url="{{ recording.url }}">
+                                        <source src="{{ recording.url }}" type="audio/wav">
+                                        Your browser doesn't support HTML5 audio.
+                                    </audio>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="mui-button keep-recording" style="background-color: var(--success-color, #4CAF50); color: white;" data-file="{{ recording.filename }}" data-path="{{ recording.path }}" title="Approve for Training">
+                                        <span class="material-icons">check</span> Approve
+                                    </button>
+                                    <button class="mui-button discard-recording" style="background-color: var(--warning-color, #ff9800); color: white;" data-file="{{ recording.filename }}" data-path="{{ recording.path }}" title="Discard this recording">
+                                        <span class="material-icons">delete_outline</span> Discard {# Changed icon & color #}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mui-empty-state">
+                        <span class="material-icons">inbox</span>
+                        <p>No recordings pending review for "{{ class_name }}".</p>
+                        <a href="{{ url_for('recording_web.recordings_page', class_name=class_name) }}" class="mui-button" style="background-color: var(--primary-color); color: white;">
+                            <span class="material-icons" style="margin-right: 8px; color: white;">mic</span>Record New Samples
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Approved Recordings Tab -->
+                <div class="tab-pane" id="approved-tab-pane">
+                    {% if approved_recordings %}
+                    <div class="recording-list-container" id="approvedRecordingsList">
+                        {% for recording in approved_recordings %}
+                        <div class="recording-item" data-file="{{ recording.filename }}" {% if recording.path %}data-path="{{ recording.path }}"{% endif %}>
+                            <div class="recording-info">
+                                <div><strong>ID:</strong> <small>{{ recording.id | truncate(15, True) }}</small></div>
+                                <div><strong>Timestamp:</strong> <small>{{ recording.timestamp if recording.timestamp else 'N/A' }}</small></div>
+                                <div><strong>User:</strong> <small>{{ recording.user_id | truncate(15, True) if recording.user_id else 'N/A' }}</small></div>
+                            </div>
+                            <div class="recording-actions">
+                                <div class="audio-player-container">
+                                    <audio controls controlsList="nodownload" preload="metadata" class="audio-player" data-file="{{ recording.filename }}" data-url="{{ recording.url }}">
+                                        <source src="{{ recording.url }}" type="audio/wav">
+                                        Your browser doesn't support HTML5 audio.
+                                    </audio>
+                                    <a href="{{ recording.url }}" download="{{ recording.filename }}" class="mui-button mui-button-outlined" title="Download WAV">
+                                        <span class="material-icons">download</span>
+                                    </a>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="mui-button mui-button-outlined delete-approved-recording" style="color: var(--danger-color, #f44336); border-color: var(--danger-color, #f44336);">
+                                        <span class="material-icons">delete_forever</span> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mui-empty-state">
+                        <span class="material-icons">check_circle_outline</span>
+                        <p>No recordings approved for training for "{{ class_name }}".</p>
+                        <p style="font-size: 0.9rem; color: rgba(0,0,0,0.5); margin-top: -0.5rem;">Review recordings in the 'Pending' tab to approve them.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Raw Recordings Tab -->
+                <div class="tab-pane" id="raw-tab-pane">
+                     {% if raw_recordings %}
+                    <div class="recording-list-container" id="rawRecordingsList">
+                        {% for recording in raw_recordings %}
+                        <div class="recording-item" data-file="{{ recording.filename }}" {% if recording.path %}data-path="{{ recording.path }}"{% endif %}>
+                            <div class="recording-info">
+                                <div><strong>ID:</strong> <small>{{ recording.id | truncate(15, True) }}</small></div>
+                                <div><strong>Timestamp:</strong> <small>{{ recording.timestamp if recording.timestamp else 'N/A' }}</small></div>
+                                <div><strong>User:</strong> <small>{{ recording.user_id | truncate(15, True) if recording.user_id else 'N/A' }}</small></div>
+                            </div>
+                            <div class="recording-actions">
+                                <div class="audio-player-container">
+                                    <audio controls controlsList="nodownload" preload="metadata" class="audio-player" data-file="{{ recording.filename }}" data-url="{{ recording.url }}">
+                                        <source src="{{ recording.url }}" type="audio/wav">
+                                        Your browser doesn't support HTML5 audio.
+                                    </audio>
+                                    <a href="{{ recording.url }}" download="{{ recording.filename }}" class="mui-button mui-button-outlined" title="Download Raw WAV">
+                                        <span class="material-icons">download</span>
+                                    </a>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="mui-button mui-button-outlined delete-raw-recording disabled" style="color: var(--danger-color, #f44336); border-color: var(--danger-color, #f44336); opacity: 0.5; cursor: not-allowed;">
+                                        <span class="material-icons">delete</span> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mui-empty-state">
+                         <span class="material-icons">receipt_long</span>
+                        <p>No raw audio uploads found for "{{ class_name }}".</p>
+                         <p style="font-size: 0.9rem; color: rgba(0,0,0,0.5); margin-top: -0.5rem;">Raw recordings are usually processed into 'Pending' segments automatically.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                 <!-- Augmented Recordings Tab Placeholder -->
+                 {# REMOVING Augmented Tab Content Placeholder #}
+                 {#
+                <div class="tab-pane" id="augmented-tab-pane">
+                    <div class="mui-empty-state">
+                         <span class="material-icons">auto_fix_high</span>
+                        <p>Augmented recordings view not yet implemented.</p>
+                    </div>
+                </div>
+                 #}
+
+            </div> {# End Tab Content #}
+        </div> {# End Card Body #}
+    </div> {# End Card #}
+</div> {# End Container #}
+
+<!-- Toast Container for Notifications (MUI Style) -->
+<div id="toastContainer" style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.5rem;">
+    {# Toasts will be injected here by JS #}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // --- MUI-Style Toast Function ---
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                console.error("Toast container not found!");
+                return;
+            }
+            // Map type to MUI alert severity
+            const severityClass = {
+                success: 'mui-alert-success',
+                danger: 'mui-alert-error',
+                warning: 'mui-alert-warning',
+                info: 'mui-alert-info'
+            }[type] || 'mui-alert-info'; // Default to info
+
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="mui-alert ${severityClass}" style="box-shadow: 0 3px 8px rgba(0,0,0,0.15); display: flex; align-items: center; min-width: 250px;">
+                    <span style="flex-grow: 1;">${message}</span>
+                    <button class="close-toast" style="margin-left: auto; background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">
+                        <span class="material-icons" style="font-size: 1.2rem;">close</span>
+                    </button>
+                </div>`;
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            const newToastEl = document.getElementById(toastId);
+
+            // Auto-dismiss
+            const timer = setTimeout(() => {
+                removeToast(newToastEl);
+            }, 5000);
+
+            // Close button listener
+            newToastEl.querySelector('.close-toast').addEventListener('click', () => {
+                clearTimeout(timer);
+                removeToast(newToastEl);
+            });
+        }
+
+        function removeToast(toastElement) {
+            if (!toastElement) return;
+            toastElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toastElement.style.opacity = '0';
+            toastElement.style.transform = 'translateX(100%)'; // Slide out
+            setTimeout(() => {
+                toastElement.remove();
+            }, 300);
+        }
+
+        // --- API Call Helper ---
+        async function apiCall(endpoint, method, body) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body ? JSON.stringify(body) : null
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error ${response.status}`);
+                }
+                return data;
+            } catch (error) {
+                console.error(`API call to ${endpoint} (${method}) failed:`, error);
+                showToast(`Error: ${error.message}`, 'danger');
+                throw error;
+            }
+        }
+
+        // --- Update UI Functions ---
+        function removeRecordingElement(listContainerId, fileId) {
+             const listContainer = document.getElementById(listContainerId);
+             const recordingElement = listContainer?.querySelector(`.recording-item[data-file="${fileId}"]`);
+             if (recordingElement) {
+                 recordingElement.style.transition = 'opacity 0.3s ease-out, height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out, border 0.3s ease-out';
+                 recordingElement.style.opacity = '0';
+                 recordingElement.style.height = '0px';
+                 recordingElement.style.marginTop = '0';
+                 recordingElement.style.marginBottom = '0';
+                 recordingElement.style.paddingTop = '0';
+                 recordingElement.style.paddingBottom = '0';
+                 recordingElement.style.border = 'none';
+
+                 setTimeout(() => {
+                     recordingElement.remove();
+                     checkEmptyState(listContainerId); // Pass container ID
+                     updateCounts();
+                 }, 300);
+             }
+        }
+
+        function checkEmptyState(listContainerId) {
+            const listContainer = document.getElementById(listContainerId);
+            const parentPane = listContainer?.closest('.tab-pane'); // Get parent tab pane
+            if (listContainer && parentPane && listContainer.children.length === 0) {
+                let emptyIcon = 'help_outline'; // Material icon name
+                let emptyMessage = '<p>No items found.</p>';
+                let recordButtonHTML = `<a href="{{ url_for('recording_web.recordings_page', class_name=class_name) }}" class="mui-button"><span class="material-icons" style="margin-right: 8px;">mic</span>Record New Samples</a>`;
+                const className = {{ class_name | tojson }};
+
+                if (listContainerId === 'pendingRecordingsList') {
+                     emptyIcon = 'inbox';
+                     emptyMessage = `<p>No recordings pending review for "${className}".</p>${recordButtonHTML}`;
+                } else if (listContainerId === 'approvedRecordingsList') {
+                    emptyIcon = 'check_circle_outline';
+                    emptyMessage = `<p>No recordings approved for training for "${className}".</p><p style="font-size: 0.9rem; color: rgba(0,0,0,0.5); margin-top: -0.5rem;">Review recordings in the 'Pending' tab to approve them.</p>`;
+                } else if (listContainerId === 'rawRecordingsList') {
+                     emptyIcon = 'receipt_long';
+                     emptyMessage = `<p>No raw audio uploads found for "${className}".</p><p style="font-size: 0.9rem; color: rgba(0,0,0,0.5); margin-top: -0.5rem;">Raw recordings are usually processed into 'Pending' segments automatically.</p>`;
+                }
+                // Replace list container content with empty state
+                listContainer.remove(); // Remove the empty list container
+                parentPane.innerHTML = `<div class="mui-empty-state"><span class="material-icons">${emptyIcon}</span>${emptyMessage}</div>`;
+            }
+        }
+
+       function updateCounts() {
+            const pendingCount = document.getElementById('pendingRecordingsList')?.children.length || 0;
+            const approvedCount = document.getElementById('approvedRecordingsList')?.children.length || 0;
+            const rawCount = document.getElementById('rawRecordingsList')?.children.length || 0;
+            // Assuming no stats cards on this page anymore
+
+            // Update Tab Badges
+            document.getElementById('badge-pending-count').textContent = pendingCount;
+            document.getElementById('badge-approved-count').textContent = approvedCount;
+            document.getElementById('badge-raw-count').textContent = rawCount;
+       }
+
+        function setLoadingState(button, isLoading, loadingText = 'Processing...') {
+            if (!button) return;
+            const originalContent = button.dataset.originalContent || button.innerHTML;
+            if (isLoading) {
+                button.dataset.originalContent = originalContent;
+                button.disabled = true;
+                // Simple text loading state for MUI
+                button.innerHTML = `<span class="material-icons" style="font-size: 1rem; margin-right: 4px; animation: spin 1s linear infinite;">autorenew</span> ${loadingText}`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = button.dataset.originalContent || originalContent;
+                delete button.dataset.originalContent;
+            }
+        }
+        // Add spin animation for loading icon
+        const styleSheet = document.createElement("style");
+        styleSheet.type = "text/css";
+        styleSheet.innerText = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+        document.head.appendChild(styleSheet);
+
+
+        // --- Event Listeners (Updated for MUI buttons) ---
+        const tabsContent = document.getElementById('recordingTabsContent');
+
+        if (tabsContent) {
+            tabsContent.addEventListener('click', function(event) {
+                const button = event.target.closest('.mui-button');
+                if (!button) return;
+
+                const recordingItem = button.closest('.recording-item');
+                const filename = recordingItem?.dataset.file;
+                const path = recordingItem?.dataset.path;
+                const listContainerId = recordingItem?.parentElement.id;
+                const className = {{ class_name | tojson }};
+
+                if (!filename || !recordingItem || !listContainerId) {
+                     console.warn('Missing data for action:', { filename, path, listContainerId });
+                     return;
+                }
+
+                // --- Pending Actions ---
+                if (button.classList.contains('keep-recording')) {
+                    setLoadingState(button, true, 'Approving...');
+                    apiCall('/api/sounds/verify', 'POST', { filename, keep: true, path, class_name: className })
+                        .then(data => {
+                            showToast(data.message || 'Recording approved!', 'success');
+                            removeRecordingElement(listContainerId, filename);
+                        })
+                        .catch(() => {}) // Error handled by apiCall
+                        .finally(() => setLoadingState(button, false));
+                }
+                else if (button.classList.contains('discard-recording')) {
+                    if (!confirm('Are you sure you want to discard this pending recording?')) return;
+                    setLoadingState(button, true, 'Discarding...');
+                    apiCall('/api/sounds/verify', 'POST', { filename, keep: false, path, class_name: className })
+                        .then(data => {
+                            showToast(data.message || 'Recording discarded.', 'info');
+                            removeRecordingElement(listContainerId, filename);
+                        })
+                        .catch(() => {}) // Error handled by apiCall
+                        .finally(() => setLoadingState(button, false));
+                }
+                // --- Approved Actions ---
+                else if (button.classList.contains('delete-approved-recording')) {
+                    if (!path) {
+                        showToast('Error: Path information missing for deletion.', 'warning');
+                        return;
+                    }
+                    if (!confirm('Are you sure you want to permanently delete this approved recording? This cannot be undone.')) return;
+                    setLoadingState(button, true, 'Deleting...');
+                    apiCall('/api/sounds/verify', 'POST', { filename, keep: false, path, class_name: className })
+                        .then(data => {
+                            showToast(data.message || 'Approved recording deleted.', 'success');
+                            removeRecordingElement(listContainerId, filename);
+                        })
+                        .catch(() => {}) // Error handled by apiCall
+                        .finally(() => setLoadingState(button, false));
+                }
+                // --- Raw Actions ---
+                else if (button.classList.contains('delete-raw-recording')) {
+                     if (!path) {
+                        showToast('Error: Path information missing for deletion.', 'warning');
+                        return;
+                    }
+                    if (!confirm('Are you sure you want to permanently delete this raw recording? This cannot be undone.')) return;
+                    setLoadingState(button, true, 'Deleting...');
+                    showToast('Delete action for raw files is not fully implemented yet.', 'warning');
+                    setTimeout(() => setLoadingState(button, false), 500);
+                }
+            });
+        } // end if(tabsContent)
+
+        // --- Initial UI setup ---
+        checkEmptyState('pendingRecordingsList');
+        checkEmptyState('approvedRecordingsList');
+        checkEmptyState('rawRecordingsList');
+        updateCounts();
+
+        // Tab Switching Logic (Updated to manually show/hide panes)
+        const tabContainer = document.getElementById('recordingTabs');
+        const contentContainer = document.getElementById('recordingTabsContent');
+        if (tabContainer && contentContainer) {
+            const tabs = tabContainer.querySelectorAll('.mui-tab');
+            const panes = contentContainer.querySelectorAll('.tab-pane');
+
+            // Function to show a pane and hide others
+            function showPane(targetId) {
+                panes.forEach(p => {
+                    if ('#' + p.id === targetId) {
+                        p.style.display = 'block';
+                    } else {
+                        p.style.display = 'none';
+                    }
+                });
+            }
+
+            // Initial setup: Hide all panes except the active one
+            let activePaneId = tabContainer.querySelector('.mui-tab.active')?.dataset.target;
+            if (!activePaneId) {
+                 const firstTab = tabContainer.querySelector('.mui-tab');
+                 if (firstTab) {
+                      firstTab.classList.add('active');
+                      activePaneId = firstTab.dataset.target;
+                 }
+            }
+            if (activePaneId) {
+                 showPane(activePaneId);
+            } else {
+                 panes.forEach(p => p.style.display = 'none');
+            }
+
+            // Add click listeners
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const targetPaneId = this.dataset.target;
+                    showPane(targetPaneId);
+                });
+            });
+        }
+
+    }); // End DOMContentLoaded
+</script>
+{% endblock %}

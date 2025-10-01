@@ -1,0 +1,976 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Features | SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Custom styles for this page - can be moved to style.css later if needed */
+.mui-stat-card {
+    border-radius: var(--card-border-radius);
+    padding: 1.25rem 1rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Ensure cards in a row have same height */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--card-shadow);
+}
+.mui-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-hover-shadow);
+}
+.mui-stat-card h6 {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0.9;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.mui-stat-card h3 {
+    margin-bottom: 0;
+    font-size: 2rem; /* Larger number */
+    font-weight: 600;
+    text-align: right; /* Align number to the right */
+}
+.mui-stat-card .material-icons {
+    font-size: 1.1rem; /* Adjust icon size in title */
+}
+/* Specific background colors for stat cards */
+.mui-stat-card-total {
+    background: linear-gradient(135deg, #4a5cde, #647dee); /* Primary blue */
+}
+.mui-stat-card-extracted {
+    background: linear-gradient(135deg, #4CAF50, #66BB6A); /* Success green */
+}
+.mui-stat-card-missing {
+    background: linear-gradient(135deg, #ff9800, #FFB74D); /* Warning orange */
+}
+.mui-stat-card-sets {
+    background: linear-gradient(135deg, #ab47bc, #ce93d8); /* Purple */
+}
+.mui-list-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0; /* Only top/bottom padding */
+    border-bottom: 1px solid var(--card-border-color);
+}
+.mui-list-item:last-child {
+    border-bottom: none;
+}
+.mui-list-item:hover {
+    background-color: rgba(0,0,0,0.03);
+}
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+}
+.status-extracted {
+    background-color: var(--success-color);
+}
+.status-missing {
+    background-color: var(--warning-color);
+}
+.mui-feature-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px; /* Pill shape */
+    font-weight: 500;
+    margin-left: auto; /* Push badge to the right */
+    margin-right: 0.75rem;
+}
+.mui-badge-success {
+    background-color: var(--alert-success-bg);
+    color: var(--success-color);
+}
+.mui-badge-warning {
+    background-color: var(--alert-warning-bg);
+    color: var(--warning-color);
+}
+.mui-play-button {
+    padding: 0.25rem !important; /* Smaller padding */
+    min-width: auto !important; /* Allow button to shrink */
+    line-height: 1 !important;
+    background-color: transparent !important;
+    color: var(--primary-color) !important;
+    border: 1px solid var(--primary-color) !important;
+}
+.mui-play-button .material-icons {
+    font-size: 1rem !important; /* Smaller icon */
+}
+
+/* Grid layout for stats cards */
+.mui-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 1rem; /* Adjusted margin */
+}
+
+@media (max-width: 1024px) { /* Tablet breakpoint */
+    .mui-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) { /* Mobile breakpoint */
+    .mui-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Basic Modal Styles (Replace Bootstrap JS dependency) */
+.modal-backdrop-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 1040; /* Below modal, above content */
+    display: none; /* Hidden by default */
+}
+.modal-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+}
+.modal-custom.show {
+    display: flex; /* Use flex to enable centering */
+}
+.modal-content-custom {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 90%; /* Responsive width */
+    max-width: 800px; /* Max width for large modal */
+    pointer-events: auto;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: var(--dialog-border-radius, 8px);
+    box-shadow: var(--dialog-shadow, 0 5px 15px rgba(0,0,0,0.2));
+    outline: 0;
+    max-height: 90vh; /* Limit height */
+}
+.modal-header-custom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: calc(var(--dialog-border-radius, 8px) - 1px);
+    border-top-right-radius: calc(var(--dialog-border-radius, 8px) - 1px);
+}
+.modal-body-custom {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 1rem;
+    overflow-y: auto; /* Allow body scroll */
+}
+.modal-footer-custom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0.75rem;
+    border-top: 1px solid #dee2e6;
+    border-bottom-right-radius: calc(var(--dialog-border-radius, 8px) - 1px);
+    border-bottom-left-radius: calc(var(--dialog-border-radius, 8px) - 1px);
+    gap: 0.5rem;
+}
+.btn-close-custom {
+    box-sizing: content-box;
+    width: 1em;
+    height: 1em;
+    padding: 0.25em 0.25em;
+    color: #000;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+    border: 0;
+    border-radius: 0.25rem;
+    opacity: .5;
+    cursor: pointer;
+}
+.btn-close-custom:hover {
+    opacity: .75;
+}</style>
+
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div style="margin-bottom: 2rem;">
+    <h1 style="display: flex; align-items: center; gap: 0.75rem; font-weight: 500; color: var(--dark-color);">
+        <span class="material-icons" style="font-size: 2.5rem; color: var(--primary-color);">analytics</span>
+        Sound Features
+    </h1>
+    <p style="color: var(--text-muted-color); margin-top: 0.5rem;">Extract and manage features from your audio samples for use in model training</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="mui-stats-grid mb-4">
+    <div class="mui-stat-card mui-stat-card-total h-100">
+        <h6><span class="material-icons">library_music</span>Total Sounds</h6>
+        <h3 id="total-sounds">{{ total_sounds|default(0) }}</h3>
+    </div>
+    <div class="mui-stat-card mui-stat-card-extracted h-100">
+        <h6><span class="material-icons">check_circle</span>With Features</h6>
+        <h3 id="sounds-with-features">{{ sounds_with_features|default(0) }}</h3>
+    </div>
+    <div class="mui-stat-card mui-stat-card-missing h-100">
+        <h6><span class="material-icons">warning</span>Missing Features</h6>
+        <h3 id="sounds-missing-features">{{ sounds_missing_features|default(0) }}</h3>
+    </div>
+    <div class="mui-stat-card mui-stat-card-sets h-100">
+        <h6><span class="material-icons">schema</span>Feature Sets</h6>
+        <h3 id="feature-sets">{{ feature_sets|default(0) }}</h3>
+    </div>
+</div> 
+
+<!-- Sounds Missing Features Card -->
+<div class="mui-card mb-4">
+    <div class="mui-card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="font-weight: 500; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-icons" style="color: var(--warning-color);">playlist_add_check</span> Sounds Missing Features
+            </h5>
+            <div>
+                <label style="margin-right: 1rem; font-size: 0.9em;">
+                    <input type="checkbox" id="select-all-missing" style="margin-right: 0.3rem; vertical-align: middle;">
+                    Select All
+                </label>
+                <button class="mui-button" id="extract-selected-btn" disabled>
+                    <span class="material-icons">auto_fix_high</span> Extract for Selected
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="mui-card-content" style="padding: 0 1.5rem;"> 
+        <div id="sounds-missing-container">
+            {% if sounds_missing_features_list %}
+                {% for sound in sounds_missing_features_list %}
+                <div class="mui-list-item">
+                    <input type="checkbox" class="missing-feature-checkbox" data-recording-id="{{ sound.id }}" style="margin-right: 1rem;">
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: 500;">
+                            {{ sound.id }} <!-- Display ID for clarity -->
+                            <span class="badge bg-light text-dark ms-2">{{ sound.metadata.get('class_name', 'N/A') }}</span> 
+                            {% if sound.recording_type == RecordingType.AUGMENTED %}
+                                <span class="badge bg-info text-white">Augmented</span>
+                            {% else %}
+                                <span class="badge bg-secondary text-white">{{ sound.recording_type.value }}</span>
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted-color); margin-top: 0.25rem;">
+                           Rel Path: {{ sound.relative_wav_path | truncate(60, True) }}
+                        </div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <button class="mui-button mui-button-outlined mui-play-button play-sound-btn" data-sound-path="{{ sound.relative_wav_path }}" title="Play sound">
+                        <span class="material-icons">play_arrow</span>
+                    </button>
+                    <button class="mui-button mui-button-outlined view-details-btn" data-recording-id="{{ sound.id }}" title="View Details" style="margin-left: 0.5rem;">
+                        <span class="material-icons">description</span>
+                    </button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted-color);">
+                    <span class="material-icons" style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--success-color);">check_circle_outline</span>
+                    <p>All sounds have features extracted!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Sounds With Features Card -->
+<div class="mui-card mb-4">
+    <div class="mui-card-header">
+        <h5 style="font-weight: 500; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <span class="material-icons" style="color: var(--success-color);">playlist_add_check_circle</span> Sounds With Features
+        </h5>
+    </div>
+    <div class="mui-card-content" style="padding: 0 1.5rem;"> 
+        <div id="sounds-extracted-container">
+            {% if sounds_with_features_list %}
+                <div class="mui-table-container" style="margin-top: 2rem;">
+                    <h3 class="mui-table-title">Sounds With Features Extracted ({{ sounds_with_features_list|length }})</h3>
+                    <table class="mui-table" style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%; padding: 8px;">Class</th>
+                                <th style="width: 15%; text-align: center; padding: 8px;">Sound Data</th>
+                                <th style="width: 20%; text-align: center; padding: 8px;">Feature Set</th>
+                                <th style="width: 40%; padding: 8px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sound in sounds_with_features_list %}
+                                <tr style="vertical-align: middle;">
+                                    <td style="padding: 8px; text-align: center;">
+                                        {{ sound.class_name | default('N/A') }}
+                                    </td>
+                                    <td style="text-align: center; padding: 8px;">
+                                        <button class="mui-button mui-button-icon view-details-btn" 
+                                                data-recording-id="{{ sound.id }}" 
+                                                title="View Sound Metadata JSON">
+                                            <span class="material-icons">description</span>
+                                        </button>
+                                    </td>
+                                    <td style="text-align: center; padding: 8px;">
+                                        {% if sound.extracted_feature_sets %}
+                                            {% for set_info in sound.extracted_feature_sets %}
+                                                <button class="mui-button mui-button-outlined mui-button-small" 
+                                                        onclick="showFeatureSetDetails('{{ set_info.id }}')" 
+                                                        title="View Feature Set Definition: {{ set_info.id }}">
+                                                    <span class="material-icons">schema</span> {{ set_info.id }}
+                                                </button>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="mui-chip mui-chip-warning">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 8px;">
+                                        <div style="display: flex; gap: 8px; justify-content: flex-start;">
+                                            <button class="mui-button mui-button-outlined mui-button-small" 
+                                                    onclick="triggerSingleExtraction('{{ sound.id }}')" 
+                                                    title="Re-extract features for this sound">
+                                                <span class="material-icons">refresh</span> Re-extract
+                                            </button>
+                                             <button class="mui-button mui-button-outlined mui-button-small play-sound-btn" 
+                                                     data-sound-id="{{ sound.id }}" 
+                                                     data-audio-path="{{ sound.relative_wav_path }}" 
+                                                     title="Play original sound">
+                                                 <span class="material-icons">play_arrow</span> Play
+                                             </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px;">No sounds found with extracted features.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted-color);">
+                     <span class="material-icons" style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--text-muted-color);">hourglass_empty</span>
+                    <p>No sounds have features extracted yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Feature extraction progress modal (Using Custom CSS/JS) -->
+<div class="modal-backdrop-custom" id="modal-backdrop"></div> <!-- Added backdrop -->
+<div class="modal-custom" id="extraction-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-content-custom"> <!-- Changed class -->
+        <div class="modal-header-custom"> <!-- Changed class -->
+            <h5 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-icons">hourglass_top</span> Extracting Features
+            </h5>
+            <button type="button" class="btn-close-custom close-modal-btn" aria-label="Close"></button> <!-- Changed class -->
+        </div>
+        <div class="modal-body-custom"> <!-- Changed class -->
+            <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; background-color: var(--primary-color);"></div>
+            </div>
+            <p id="extraction-status" style="text-align: center; margin-bottom: 1rem;">Preparing to extract features...</p>
+            <div id="extraction-log" style="max-height: 200px; overflow-y: auto; background-color: #f1f1f1; border-radius: 4px; padding: 0.5rem; font-size: 0.8rem; font-family: monospace;">
+                <!-- Log messages -->
+            </div>
+        </div>
+        <div class="modal-footer-custom"> <!-- Changed class -->
+            <button type="button" class="mui-button mui-button-outlined close-modal-btn">Close</button> <!-- Changed class -->
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal (Using Custom CSS/JS) -->
+<div class="modal-custom" id="details-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-content-custom"> <!-- Changed class -->
+        <div class="modal-header-custom"> <!-- Changed class -->
+            <h5 class="modal-title" id="details-modal-title">Recording Details</h5>
+            <button type="button" class="btn-close-custom close-modal-btn" aria-label="Close"></button> <!-- Changed class -->
+        </div>
+        <div class="modal-body-custom"> <!-- Changed class -->
+            <pre><code id="details-modal-content" style="font-size: 0.8rem; background-color: #f1f1f1; padding: 1rem; border-radius: 4px; display: block; white-space: pre-wrap; word-break: break-all;">Loading...</code></pre>
+        </div>
+         <div class="modal-footer-custom"> <!-- Added footer for consistency -->
+            <button type="button" class="mui-button mui-button-outlined close-modal-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADDED: Feature Sets Info Modal (Using Custom CSS/JS) -->
+<div class="modal-custom" id="feature-set-info-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-content-custom">
+        <div class="modal-header-custom">
+            <h5 class="modal-title" id="feature-set-info-modal-title">Extracted Feature Sets</h5>
+            <button type="button" class="btn-close-custom close-modal-btn" aria-label="Close"></button>
+        </div>
+        <div class="modal-body-custom" id="feature-set-info-body">
+            <p>Loading details...</p>
+        </div>
+        <div class="modal-footer-custom"> 
+            <div style="text-align: left; font-size: 0.85em; color: #555; width: 100%; margin-bottom: 0.5rem;">
+                <hr>
+                <strong>Summary:</strong> These features represent different acoustic aspects. MFCCs capture timbre, Chroma focuses on pitch classes (harmony), Spectral features describe the frequency distribution, and Temporal features capture timing aspects. They help models distinguish sounds.
+            </div>
+            <button type="button" class="mui-button mui-button-outlined close-modal-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Feature extraction page loaded - Custom Modal Style - Feature Set Details Logic Added');
+    
+    // Get modal elements
+    const extractionModal = document.getElementById('extraction-modal');
+    const detailsModal = document.getElementById('details-modal');
+    const featureSetInfoModal = document.getElementById('feature-set-info-modal');
+    const backdrop = document.getElementById('modal-backdrop');
+
+    // --- Modal Helper Functions (Keep existing) ---
+    function showModal(modalElement) {
+        if (modalElement && backdrop) {
+            backdrop.style.display = 'block';
+            modalElement.style.display = 'flex'; // Use flex for centering
+            // Simple fade-in (optional)
+            requestAnimationFrame(() => {
+                backdrop.style.opacity = 1;
+                modalElement.style.opacity = 1;
+            });
+        }
+    }
+    
+    function hideModal(modalElement) {
+        if (modalElement && backdrop) {
+             // Simple fade-out (optional)
+             backdrop.style.opacity = 0;
+             modalElement.style.opacity = 0;
+             // Hide after transition (adjust timeout if using CSS transitions)
+             setTimeout(() => { 
+                modalElement.style.display = 'none';
+                backdrop.style.display = 'none';
+             }, 200); // Match potential transition time
+        }
+    }
+    
+    function updateExtractionModal(statusText, progressPercent = 0, isError = false, isWarning = false, logHtml = null) {
+        // (Keep existing update logic - targets elements by ID)
+        const statusEl = document.getElementById('extraction-status');
+        const progressEl = document.querySelector('#extraction-modal .progress-bar');
+        const logEl = document.getElementById('extraction-log');
+        if (statusEl) statusEl.textContent = statusText;
+        if (progressEl) {
+            progressEl.style.width = `${progressPercent}%`;
+            progressEl.classList.remove('bg-danger', 'bg-warning');
+            if (isError) progressEl.classList.add('bg-danger');
+            else if (isWarning) progressEl.classList.add('bg-warning');
+            else progressEl.classList.remove('progress-bar-striped', 'progress-bar-animated'); 
+        }
+        if (logEl && logHtml !== null) logEl.innerHTML = logHtml;
+    }
+
+    function addExtractionModalReloadButton() { 
+        const footerDiv = extractionModal.querySelector('.modal-footer-custom');
+        if (!footerDiv) return;
+        const existingReload = footerDiv.querySelector('.reload-page-btn');
+        if (existingReload) existingReload.remove();
+        const reloadBtn = document.createElement('button');
+        reloadBtn.className = 'mui-button reload-page-btn'; 
+        reloadBtn.textContent = 'Reload Page';
+        reloadBtn.onclick = () => window.location.reload();
+        footerDiv.prepend(reloadBtn);
+     }
+    // --- End Modal Helpers ---
+
+    // --- Setup Modal Close Buttons (Ensure it closes the new modal too) ---
+    document.querySelectorAll('.modal-custom .close-modal-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('.modal-custom');
+            if (modal) {
+                hideModal(modal);
+            }
+        });
+    });
+    if (backdrop) {
+        backdrop.addEventListener('click', () => {
+             hideModal(extractionModal);
+             hideModal(detailsModal);
+             hideModal(featureSetInfoModal);
+        });
+    }
+
+    // --- Select All Logic (Keep existing) ---
+    const selectAllCheckbox = document.getElementById('select-all-missing');
+    const extractSelectedBtn = document.getElementById('extract-selected-btn');
+    const missingCheckboxesContainer = document.getElementById('sounds-missing-container'); // Get the container
+
+    function toggleExtractButton() {
+        // Ensure the container exists before querying inside it
+        const anyChecked = missingCheckboxesContainer ? missingCheckboxesContainer.querySelectorAll('.missing-feature-checkbox:checked').length > 0 : false;
+        if (extractSelectedBtn) {
+             extractSelectedBtn.disabled = !anyChecked;
+        }
+    }
+
+    if (selectAllCheckbox && missingCheckboxesContainer) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxesInContainer = missingCheckboxesContainer.querySelectorAll('.missing-feature-checkbox');
+            checkboxesInContainer.forEach(cb => cb.checked = this.checked);
+            toggleExtractButton();
+        });
+
+        // Also add listeners to individual checkboxes within the container
+        missingCheckboxesContainer.addEventListener('change', function(event) {
+            if (event.target.classList.contains('missing-feature-checkbox')) {
+                const allCheckboxes = missingCheckboxesContainer.querySelectorAll('.missing-feature-checkbox');
+                const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                const someChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+                // Set indeterminate state if some but not all are checked (visual cue)
+                selectAllCheckbox.indeterminate = someChecked && !allChecked; 
+                toggleExtractButton();
+            }
+        });
+    }
+    toggleExtractButton(); // Initial check
+
+    // --- API Call Function (Keep existing) ---
+    async function callApi(url, method = 'GET', body = null) {
+        try {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
+                throw new Error(errorData.error || `HTTP error ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API Call Error:', error);
+            throw error; // Re-throw to be caught by caller
+        }
+    }
+
+    // --- Button Actions --- 
+
+    // Extract Selected Button
+    if (extractSelectedBtn) {
+        extractSelectedBtn.addEventListener('click', async function() {
+            const selectedIds = Array.from(document.querySelectorAll('.missing-feature-checkbox:checked'))
+                                     .map(cb => cb.dataset.recordingId);
+            if (selectedIds.length === 0) {
+                alert('Please select at least one sound to extract features for.');
+                return;
+            }
+
+            showModal(extractionModal); // Use generic showModal
+            updateExtractionModal(`Starting extraction for ${selectedIds.length} sounds...`, 10);
+
+            try {
+                // TODO: Define this API endpoint in the backend
+                const result = await callApi('/api/features/extract', 'POST', { recording_ids: selectedIds }); 
+                updateExtractionModal(
+                    `Extraction complete. Processed: ${result.processed_count || 0}, Failed: ${result.failed_count || 0}`,
+                    100,
+                    (result.failed_count || 0) > 0, // Mark as error if any failed
+                    false,
+                    result.log ? result.log.join('<br>') : 'No details.'
+                );
+                addExtractionModalReloadButton();
+            } catch (error) {
+                updateExtractionModal(`Error: ${error.message}`, 50, true);
+            }
+        });
+    }
+
+    // Re-extract Button (Event Delegation)
+    document.getElementById('sounds-extracted-container').addEventListener('click', async function(event) {
+        const reExtractBtn = event.target.closest('.re-extract-btn');
+        if (reExtractBtn) {
+            const recordingId = reExtractBtn.dataset.recordingId;
+            if (!recordingId || !confirm(`Re-extract features for ${recordingId}? Existing features will be overwritten.`)) {
+                return;
+            }
+
+            showModal(extractionModal); // Use generic showModal
+            updateExtractionModal(`Starting re-extraction for ${recordingId}...`, 10);
+            
+            try {
+                 // Use the same endpoint as batch, just with one ID
+                const result = await callApi('/api/features/extract', 'POST', { recording_ids: [recordingId] });
+                updateExtractionModal(
+                    `Re-extraction complete for ${recordingId}. Status: ${result.success ? 'Success' : 'Failed'}`,
+                    100,
+                    !result.success,
+                    false,
+                    result.log ? result.log.join('<br>') : 'No details.'
+                );
+                 addExtractionModalReloadButton();
+            } catch (error) {
+                updateExtractionModal(`Error: ${error.message}`, 50, true);
+            }
+        }
+    });
+
+    // View Details Button (Event Delegation)
+    ['sounds-missing-container', 'sounds-extracted-container'].forEach(containerId => {
+        document.getElementById(containerId)?.addEventListener('click', async function(event) {
+            const detailsBtn = event.target.closest('.view-details-btn');
+            if (detailsBtn) {
+                const recordingId = detailsBtn.dataset.recordingId;
+                const modalTitle = document.getElementById('details-modal-title');
+                const modalContent = document.getElementById('details-modal-content');
+                
+                if (!recordingId || !detailsModal || !modalTitle || !modalContent) return;
+
+                modalTitle.textContent = `Details for ${recordingId}`;
+                modalContent.textContent = 'Loading...';
+                showModal(detailsModal); // Use generic showModal
+
+                try {
+                    // *** FIXED: Use actual API call ***
+                    const data = await callApi(`/api/recordings/${recordingId}`); 
+                    if (data.success && data.recording) {
+                        modalContent.textContent = JSON.stringify(data.recording, null, 2); // Pretty print
+                    } else {
+                        modalContent.textContent = `Error: ${data.error || 'Could not load details.'}`;
+                    }
+                } catch (error) {
+                    modalContent.textContent = `Error loading details: ${error.message}`;
+                }
+            }
+        });
+    });
+    
+    // Play Sound Button (Keep existing)
+    document.body.addEventListener('click', function(event) {
+        const playBtn = event.target.closest('.play-sound-btn');
+        if (playBtn) {
+            const soundPath = playBtn.dataset.soundPath;
+            // Use the existing sound serving route
+            // IMPORTANT: Ensure the path is correctly formatted for the route
+            // Assuming the route expects a path relative to the 'data/sounds' dir?
+            // If soundPath is like 'sounds/Class/User/type/file.wav', remove the leading 'sounds/'
+            const relativePathForUrl = soundPath.startsWith('sounds/') ? soundPath.substring(7) : soundPath;
+            const soundUrl = `/sounds/${relativePathForUrl}`; 
+            const audio = new Audio(soundUrl);
+            
+            // Simple play/pause toggle
+            if (playBtn._audio && !playBtn._audio.paused) {
+                playBtn._audio.pause();
+                playBtn.querySelector('.material-icons').textContent = 'play_arrow';
+                delete playBtn._audio;
+            } else {
+                // Pause any other playing audio
+                document.querySelectorAll('.play-sound-btn').forEach(btn => {
+                    if (btn._audio) {
+                        btn._audio.pause();
+                        btn.querySelector('.material-icons').textContent = 'play_arrow';
+                        delete btn._audio;
+                    }
+                });
+                
+                audio.play().then(() => {
+                    playBtn.querySelector('.material-icons').textContent = 'pause';
+                    playBtn._audio = audio; // Store audio element on button
+                    audio.onended = () => {
+                         playBtn.querySelector('.material-icons').textContent = 'play_arrow';
+                         delete playBtn._audio;
+                    };
+                }).catch(e => {
+                    console.error('Error playing sound:', e);
+                    alert('Could not play sound: ' + e.message);
+                });
+            }
+        }
+    });
+
+    // --- ADDED: Event listener for View Feature Sets button --- 
+    document.getElementById('sounds-extracted-container')?.addEventListener('click', async function(event) {
+        const featureSetBtn = event.target.closest('.view-feature-sets-btn');
+        if (featureSetBtn) {
+            const recordingId = featureSetBtn.dataset.recordingId;
+            const featureSetsJson = featureSetBtn.dataset.featureSets;
+            const modalTitle = document.getElementById('feature-set-info-modal-title');
+            const modalBody = document.getElementById('feature-set-info-body');
+            const modalElement = document.getElementById('feature-set-info-modal');
+
+            if (!recordingId || !featureSetsJson || !modalTitle || !modalBody || !modalElement) {
+                console.error('Missing elements for feature set modal');
+                return;
+            }
+
+            modalTitle.textContent = `Feature Details for ${recordingId}`;
+            modalBody.innerHTML = '<p>Loading definition and data stats...</p>'; // Initial loading message
+            showModal(modalElement); // Show modal early
+
+            // --- Predefined Feature Explanations (Keep existing) ---
+            const featureExplanations = {
+                'mfcc': 'Mel-Frequency Cepstral Coefficients: Represent the short-term power spectrum, commonly used for timbre.',
+                'mfcc_delta': 'Rate of change of MFCCs (first derivative).',
+                'mfcc_delta2': 'Rate of change of MFCC Deltas (second derivative).',
+                'mel_spectrogram': 'Spectrogram computed on a Mel scale, related to human pitch perception.',
+                'spectral_centroid': 'Indicates the "center of mass" of the spectrum, related to brightness.',
+                'spectral_bandwidth': 'Measures the width of the spectral band around the centroid.',
+                'spectral_rolloff': 'Frequency below which a specified percentage of spectral energy lies.',
+                'zero_crossing_rate': 'Rate at which the signal changes sign, related to noisiness/percussiveness.',
+                'rms_energy': 'Root Mean Square energy, related to loudness.',
+                'tonnetz': 'Tonal Centroid features, represent harmonic content.',
+                'spectral_contrast': 'Difference between spectral peaks and valleys, related to harmonic richness.'
+                // Add more as needed
+            };
+
+            try {
+                // Parse the feature set definition passed from the button
+                const featureSets = JSON.parse(featureSetsJson);
+                
+                // Fetch the data stats from the new API endpoint
+                const statsResponse = await callApi(`/api/features/data/${recordingId}`);
+                const featureStats = statsResponse.success ? statsResponse.feature_stats : null;
+                if (!featureStats) {
+                    modalBody.innerHTML = `<p class="text-danger">Error loading feature data statistics: ${statsResponse.error || 'Unknown error'}</p>`;
+                    return; // Stop if stats failed to load
+                }
+
+                // --- Build the modal content ---
+                modalBody.innerHTML = ''; // Clear loading message
+
+                if (featureSets && featureSets.length > 0) {
+                    featureSets.forEach(setInfo => {
+                        // Section for this Feature Set Definition
+                        const setContainer = document.createElement('div');
+                        setContainer.style.marginBottom = '1.5rem'; // Space between sets if multiple
+
+                        const setTitle = document.createElement('h6');
+                        setTitle.textContent = `${setInfo.name} (Set ID: ${setInfo.id})`;
+                        setTitle.style.borderBottom = '1px solid #eee';
+                        setTitle.style.paddingBottom = '0.3rem';
+                        setTitle.style.marginBottom = '0.5rem';
+                        setContainer.appendChild(setTitle);
+                        
+                        const setDescription = document.createElement('p');
+                        setDescription.style.fontSize = '0.9em';
+                        setDescription.textContent = setInfo.description || 'No description provided.';
+                        setContainer.appendChild(setDescription);
+                        
+                        // Table for Features and their Stats
+                        const featuresTable = document.createElement('table');
+                        featuresTable.className = 'mui-table mui-table-sm'; // Simple table style
+                        featuresTable.style.fontSize = '0.85em';
+
+                        const thead = document.createElement('thead');
+                        thead.innerHTML = `
+                            <tr>
+                                <th>Feature</th>
+                                <th>Shape</th>
+                                <th>Time Frames</th>
+                                <th>Total Elements</th>
+                                <th>Zeros</th>
+                                <th>Data Type</th>
+                                <th>Description</th>
+                            </tr>
+                        `;
+                        featuresTable.appendChild(thead);
+
+                        const tbody = document.createElement('tbody');
+                        if (setInfo.features && setInfo.features.length > 0) {
+                            setInfo.features.forEach(featureName => {
+                                const stats = featureStats[featureName]; // Get stats for this feature
+                                const tr = document.createElement('tr');
+                                
+                                const explanation = featureExplanations[featureName] || 'General acoustic feature.';
+                                
+                                if (stats && !stats.error) {
+                                    tr.innerHTML = `
+                                        <td><strong>${featureName}</strong></td>
+                                        <td>${stats.shape}</td>
+                                        <td>${stats.time_frames}</td>
+                                        <td>${stats.total_elements}</td>
+                                        <td>${stats.zeros}</td>
+                                        <td>${stats.dtype}</td>
+                                        <td>${explanation}</td>
+                                    `;
+                                } else {
+                                    // Handle case where feature is in set but stats are missing/error
+                                     tr.innerHTML = `
+                                        <td><strong>${featureName}</strong></td>
+                                        <td colspan="5" style="color: red;">${stats ? stats.error : 'Data statistics not found'}</td>
+                                        <td>${explanation}</td>
+                                    `;
+                                }
+                                tbody.appendChild(tr);
+                            });
+                        } else {
+                            tbody.innerHTML = '<tr><td colspan="7">No specific features listed in this set definition.</td></tr>';
+                        }
+                        featuresTable.appendChild(tbody);
+                        setContainer.appendChild(featuresTable);
+                        modalBody.appendChild(setContainer); // Add this set's section to modal body
+                    }); // End forEach featureSet
+
+                } else {
+                    modalBody.innerHTML = '<p>No feature set definitions found for this recording.</p>';
+                }
+
+                // Add note about potential discrepancies if necessary
+                const setFeatureNames = new Set(featureSets.flatMap(s => s.features));
+                const dataFeatureNames = new Set(Object.keys(featureStats));
+                if (setFeatureNames.size !== dataFeatureNames.size || ![...setFeatureNames].every(name => dataFeatureNames.has(name))) {
+                    const warningNote = document.createElement('p');
+                    warningNote.style.fontSize = '0.8em';
+                    warningNote.style.color = 'orange';
+                    warningNote.innerHTML = '<strong>Note:</strong> There might be a mismatch between features defined in the set and features found in the data file.';
+                    modalBody.appendChild(warningNote);
+                }
+
+            } catch (error) {
+                console.error('Error processing feature set info or stats:', error);
+                modalBody.innerHTML = `<p class="text-danger">Error displaying feature details: ${error.message}</p>`;
+            }
+        }
+    });
+
+});
+
+// Toast Notification Function
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) return;
+
+    const toastId = `toast-${Date.now()}`;
+    const toastElement = document.createElement('div');
+    toastElement.id = toastId;
+    toastElement.className = `toast align-items-center text-white bg-${type} border-0`; // Use Bootstrap toast classes
+    toastElement.setAttribute('role', 'alert');
+    toastElement.setAttribute('aria-live', 'assertive');
+    toastElement.setAttribute('aria-atomic', 'true');
+
+    let icon = 'info';
+    if (type === 'success') icon = 'check_circle';
+    if (type === 'danger') icon = 'error';
+    if (type === 'warning') icon = 'warning';
+
+    toastElement.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body" style="display: flex; align-items: center;">
+                <span class="material-icons" style="margin-right: 8px;">${icon}</span>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+    toastContainer.appendChild(toastElement);
+
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+
+    // Remove toast from DOM after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function () {
+        toastElement.remove();
+    });
+}
+
+// --- NEW: Function to show Sound Data JSON --- 
+async function showSoundData(recordingId) {
+    console.log(`Requesting sound data for ID: ${recordingId}`);
+    const modal = document.getElementById('details-modal');
+    const title = document.getElementById('details-modal-title');
+    const content = document.getElementById('details-modal-content');
+    if (!modal || !title || !content) return;
+
+    title.textContent = `Metadata for Recording: ${recordingId}`;
+    content.textContent = 'Loading...';
+    showModal(modal); // Assumes showModal function exists
+
+    try {
+        // *** FIXED: Use actual API call ***
+        const data = await callApi(`/api/recordings/${recordingId}`); 
+        // Removed mock data simulation
+        
+        if (data.success && data.recording) {
+            content.textContent = JSON.stringify(data.recording, null, 2); // Pretty print
+        } else {
+            content.textContent = `Error loading data: ${data.error || 'Could not load details.'}`;
+        }
+    } catch (error) {
+        content.textContent = `Error loading data: ${error.message}`;
+    }
+}
+
+// --- NEW: Function to show Feature Set Details JSON --- 
+async function showFeatureSetDetails(featureSetId) {
+    console.log(`Requesting feature set details for ID: ${featureSetId}`);
+    const modal = document.getElementById('feature-set-info-modal');
+    const title = document.getElementById('feature-set-info-modal-title');
+    const body = document.getElementById('feature-set-info-body');
+    if (!modal || !title || !body) return;
+
+    title.textContent = `Details for Feature Set: ${featureSetId}`;
+    body.innerHTML = '<p>Loading definition...</p>'; 
+    showModal(modal); // Assumes showModal function exists
+
+    try {
+        // *** FIXED: Use actual API call ***
+        const data = await callApi(`/api/features/sets/${featureSetId}`); 
+        // Removed mock data simulation
+        
+        if (data.success && data.feature_set) {
+            // Display as preformatted JSON
+            const pre = document.createElement('pre');
+            const code = document.createElement('code');
+            code.style.fontSize = '0.8rem'; 
+            code.style.backgroundColor = '#f1f1f1'; 
+            code.style.padding = '1rem'; 
+            code.style.borderRadius = '4px'; 
+            code.style.display = 'block'; 
+            code.style.whiteSpace = 'pre-wrap'; 
+            code.style.wordBreak = 'break-all';
+            code.textContent = JSON.stringify(data.feature_set, null, 2); // Pretty print JSON
+            pre.appendChild(code);
+            body.innerHTML = ''; // Clear loading message
+            body.appendChild(pre);
+        } else {
+            body.innerHTML = `<p class="text-danger">Error loading definition: ${data.error || 'Unknown error'}</p>`;
+        }
+    } catch (error) {
+         body.innerHTML = `<p class="text-danger">Error loading definition: ${error.message}</p>`;
+    }
+}
+
+</script>
+{% endblock %} 

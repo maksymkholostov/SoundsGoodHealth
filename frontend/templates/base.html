@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sound Classifier{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    
+    <!-- Bootstrap 5 CSS (REMOVING) -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> -->
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> -->
+    
+    <!-- Material UI CSS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    
+    <!-- Material UI Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    
+    <!-- Material UI CSS Framework -->
+    <link href="https://unpkg.com/@mui/material@latest/dist/mui-material.min.css" rel="stylesheet">
+    
+    <!-- Custom fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Link Shared Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Add noUiSlider CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" rel="stylesheet">
+
+    <style>
+        /* REMOVE Variables and common component styles - Defined in style.css */
+        /* :root { ... } */
+        /* body { ... } */
+        /* .container { ... } */
+        /* .mui-card { ... } */
+        /* .mui-button { ... } */
+        /* .mui-button-outlined { ... } */
+        /* .mui-alert { ... } */
+        /* .mui-alert-* { ... } */
+
+        /* KEEP Navbar specific styles */
+        .app-bar {
+            background: linear-gradient(135deg, #3949AB, #2196F3, #03A9F4, #4FC3F7);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 0.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar-brand {
+            font-weight: 500;
+            color: white !important;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        /* ... other navbar/dropdown styles ... */
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-toggle {
+            cursor: pointer;
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            display: none;
+            min-width: 200px;
+            padding: 0.5rem 0;
+            margin: 0;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            list-style: none;
+        }
+        .dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            color: var(--dark-color);
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+        .dropdown-item:hover {
+            background-color: rgba(33, 150, 243, 0.1);
+            color: var(--primary-color);
+        }
+        /* KEEP Footer styles */
+        .footer {
+            background-color: var(--light-color);
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--dark-color);
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        /* Keep fade-in animation if needed */
+        /* .fade-in { ... } */
+        /* @keyframes fadeIn { ... } */
+    </style>
+    
+    <!-- Simple direct include of custom styles block (still needed for child templates) -->
+    {% block custom_styles %}{% endblock %}
+    
+    {% block additional_head %}{% endblock %}
+</head>
+<body>
+    <!-- Top navbar -->
+    <div class="app-bar">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <!-- Left side - Brand -->
+                <a class="navbar-brand" href="/" data-tooltip="Home">
+                    <span class="material-icons brand-icon" style="margin-right: 8px; font-size: 32px; color: #FFD700;">graphic_eq</span>
+                    <span style="font-size: 1.5rem;">SoundsGood</span>
+                </a>
+
+                <!-- Right side - Icons -->
+                <div class="nav-icons" style="display: flex; align-items: center; gap: 1.8rem;">
+                    <!-- Data Dropdown -->
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="dataDropdown" role="button" data-tooltip="Data">
+                            <span class="material-icons" style="font-size: 32px; color: #FFFFFF;">folder_open</span>
+                            <span class="material-icons" style="font-size: 32px; color: #FFFFFF;">arrow_drop_down</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('dictionary_web.dictionaries_page') }}">
+                                <span class="material-icons">category</span> Dictionaries
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('sound_class.sound_classes_page') }}">
+                                <span class="material-icons">album</span> Sound Classes
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('core_web.training_sounds_page') }}">
+                                <span class="material-icons">list_alt</span> Training Sounds
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('core_web.trained_models_page') }}">
+                                <span class="material-icons">model_training</span> Trained Models
+                            </a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Play - Keep bright pink -->
+                    <!-- COMMENTED OUT GAMES ICON
+                    <a href="{{ url_for('core_web.play_page') }}" class="nav-link" data-tooltip="Play Learning Games">
+                        <span class="material-icons" style="font-size: 32px; color: #FF4081;">sports_esports</span>
+                    </a>
+                    -->
+
+                    <!-- Predict - Bright yellow -->
+                    <a href="{{ url_for('inference_web.inference_page') }}" class="nav-link" data-tooltip="Make Predictions">
+                        <span class="material-icons" style="font-size: 32px; color: #FFE500;">psychology</span>
+                    </a>
+                    
+                    <!-- Tools Dropdown (including Augmentation) -->
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-tooltip="Tools">
+                            <span class="material-icons" style="font-size: 32px; color: #FFFFFF;">build</span> <!-- Example: Tools icon -->
+                            <span class="material-icons" style="font-size: 32px; color: #FFFFFF;">arrow_drop_down</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('augmentation.augmentation_landing_page') }}">
+                                <span class="material-icons">auto_awesome</span> Augment Sounds
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('recording_web.recordings_page') }}">
+                                <span class="material-icons">mic</span> Record Sounds
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('recording_web.upload_sounds_page') }}">
+                                <span class="material-icons">upload_file</span> Upload Sounds
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('recording_web.verify_sounds_page') }}">
+                                <span class="material-icons">check_circle</span> Verify Sounds
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('training_web.training_page') }}">
+                                <span class="material-icons">account_tree</span> Train Models
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('core_web.developer_downloads_quickstart') }}">
+                                <span class="material-icons">code</span> Developer Tools
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('core_web.developer_guide') }}">
+                                <span class="material-icons">integration_instructions</span> Developer Guide
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth_web.logout') }}">
+                                <span class="material-icons">logout</span> Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- View Mode Toggle (Admin/Configured) -->
+                    <!-- COMMENTED OUT TOGGLE SWITCH
+                    {% if can_toggle_view %}
+                    <div style="display: flex; align-items: center; color: #E0E0E0; margin-right: 1rem;">
+                        <label for="globalViewAllToggle" style="margin-right: 8px; font-size: 0.9rem; cursor: pointer;">
+                           {% if current_view_all_mode %}All Users{% else %}My Data{% endif %}
+                        </label>
+                        <div style="position: relative; display: inline-block; width: 40px; height: 20px;">
+                            <input type="checkbox" id="globalViewAllToggle" 
+                                   {% if current_view_all_mode %}checked{% endif %} 
+                                   style="opacity: 0; width: 0; height: 0;">
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 20px; transition: .4s;"
+                                  onclick="document.getElementById('globalViewAllToggle').click();">
+                                <span style="position: absolute; content: ''; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; transform: {% if current_view_all_mode %}translateX(20px){% else %}translateX(0px){% endif %}"></span>
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Profile - Bright lime -->
+                    <a href="{{ url_for('auth_web.profile_page') }}" class="nav-link" data-tooltip="User Profile">
+                        <span class="material-icons" style="font-size: 32px; color: #AEEA00;">person</span>
+                    </a>
+                    
+                    <!-- Logout - Bright red -->
+                    <a href="{{ url_for('auth_web.logout') }}" class="nav-link" data-tooltip="Logout">
+                        <span class="material-icons" style="font-size: 32px; color: #FF1744;">logout</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash messages -->
+    <div class="container" style="margin-top: 1rem;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mui-alert mui-alert-{{ category if category != 'danger' else 'error' }}">
+                        {{ message }}
+                        <button style="margin-left: auto; background: none; border: none; cursor: pointer;">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main content -->
+    <div class="container fade-in">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-1">&copy; 2025 SoundsGood. All rights reserved.</p>
+            <p style="color: #666; font-size: 0.875rem;">A powerful speech recognition application for speech therapy</p>
+        </div>
+    </footer>
+
+    <!-- Material UI JavaScript -->
+    <script src="https://unpkg.com/@mui/material@latest/dist/mui-material.min.js"></script>
+    
+    <!-- Add noUiSlider JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+
+    <!-- Load ONNX Runtime Web and VAD library -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.12/dist/bundle.min.js"></script>
+
+    <!-- WaveSurfer.js Core (If needed by other pages) -->
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+
+    <!-- Additional custom scripts defined by child templates -->
+    <!-- Additional scripts -->
+    {% block scripts %}{% endblock %}
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const globalToggle = document.getElementById('globalViewAllToggle');
+
+        // --- Helper function to update toggle visuals ---
+        function updateToggleVisuals(isChecked) {
+            const iconSpan = globalToggle.closest('div[style*="display: flex"]').querySelector('span.material-icons');
+            const labelSpan = globalToggle.closest('div[style*="display: flex"]').querySelector('label');
+            const switchInnerCircle = globalToggle.nextElementSibling.querySelector('span[style*="position: absolute"]'); // The sliding circle
+
+            if (iconSpan) {
+                iconSpan.textContent = isChecked ? 'visibility' : 'visibility_off';
+            }
+            if (labelSpan) {
+                labelSpan.textContent = isChecked ? 'All Users' : 'My Data';
+            }
+            if (switchInnerCircle) {
+                 // Update the transform based on the new state
+                 switchInnerCircle.style.transform = isChecked ? 'translateX(20px)' : 'translateX(0px)';
+            }
+        }
+        // --- End Helper Function ---
+
+
+        if (globalToggle) {
+            globalToggle.addEventListener('change', async function() {
+                const viewAll = this.checked;
+                console.log(`Global toggle changed. Requesting view_all_mode: ${viewAll}`);
+
+                try {
+                    const response = await fetch('/user/api/preferences/view_mode', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ view_all: viewAll })
+                    });
+
+                    const result = await response.json(); 
+
+                    if (result.success) {
+                        console.log('View mode updated successfully in session.');
+                        // --- REMOVED window.location.reload(); ---
+                        
+                        // --- ADDED: Update visuals directly ---
+                        updateToggleVisuals(viewAll); 
+                        // --- END ADDED ---
+
+                    } else {
+                        console.error('Failed to update view mode setting:', result.error);
+                        // Revert the toggle checkbox state visually AND update visuals back
+                        this.checked = !viewAll; 
+                        updateToggleVisuals(!viewAll); // Update icon/label back
+                        alert(`Error updating view setting: ${result.error || 'Unknown error'}`);
+                    }
+                } catch (error) {
+                     console.error('Network error updating view mode setting:', error);
+                     // Revert the toggle checkbox state visually AND update visuals back
+                     this.checked = !viewAll;
+                     updateToggleVisuals(!viewAll); // Update icon/label back
+                     alert(`Network error updating view setting: ${error}`);
+                }
+            }); 
+        }
+    });
+    </script>
+
+    <!-- Script for handling custom dropdown toggle -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Custom Dropdown Toggle Logic ---
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+
+        dropdownToggles.forEach(function(toggle) {
+            toggle.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default link behavior
+                event.stopPropagation(); // Prevent click from bubbling up to window listener
+
+                const menu = this.nextElementSibling; // Get the sibling ul.dropdown-menu
+                
+                // Close other open dropdowns first
+                document.querySelectorAll('.dropdown-menu.show').forEach(function(openMenu) {
+                    if (openMenu !== menu) {
+                        openMenu.classList.remove('show');
+                    }
+                });
+
+                // Toggle the current dropdown
+                if (menu && menu.classList.contains('dropdown-menu')) {
+                    menu.classList.toggle('show');
+                }
+            });
+        });
+
+        // Close dropdown if clicking outside
+        window.addEventListener('click', function(event) {
+            // Check if the click was outside a dropdown toggle or menu
+            let isOutside = true;
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                 if (dropdown.contains(event.target)) {
+                     isOutside = false;
+                 }
+            });
+
+            if (isOutside) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(function(openMenu) {
+                    openMenu.classList.remove('show');
+                });
+            }
+        });
+        // --- End Custom Dropdown Toggle Logic ---
+    });
+    </script>
+
+    <!-- Add these additional styles back -->
+    <style>
+    .nav-link {
+        color: rgba(255,255,255,0.85) !important;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .nav-link:hover {
+        transform: translateY(-2px);
+    }
+
+    .nav-icons .material-icons {
+        transition: all 0.3s ease;
+    }
+
+    .nav-link:hover .material-icons {
+        transform: scale(1.2);
+        filter: brightness(1.2);
+    }
+
+    /* Enhanced tooltips */
+    [data-tooltip] {
+        position: relative;
+    }
+
+    [data-tooltip]:before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%) scale(0.8);
+        padding: 7px 12px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    [data-tooltip]:after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%) scale(0.8);
+        border: 6px solid transparent;
+        border-bottom-color: rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 1000;
+    }
+
+    [data-tooltip]:hover:before,
+    [data-tooltip]:hover:after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) scale(1);
+    }
+
+    /* Dropdown enhancements */
+    .dropdown-menu {
+        right: 0;
+        left: auto;
+        margin-top: 0.5rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        padding: 0.5rem 0;
+    }
+
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: rgba(0,0,0,0.05);
+    }
+
+    .dropdown-item .material-icons {
+        transition: transform 0.2s ease;
+    }
+
+    .dropdown-item:hover .material-icons {
+        transform: scale(1.1);
+    }
+
+    /* Brand hover effect */
+    .navbar-brand {
+        transition: all 0.3s ease;
+    }
+
+    .navbar-brand:hover {
+        transform: scale(1.05);
+    }
+
+    .brand-icon {
+        transition: all 0.3s ease;
+    }
+
+    .navbar-brand:hover .brand-icon {
+        transform: rotate(180deg);
+    }
+    </style>
+
+    <!-- Include the ID Mapper scripts -->
+    <script src="{{ url_for('core_web.static', filename='js/utils/idMapper.js') }}"></script>
+    <script src="{{ url_for('core_web.static', filename='js/components/idDisplay.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+web: gunicorn -w 1 -k gthread --threads 4 --timeout 0 wsgi:app

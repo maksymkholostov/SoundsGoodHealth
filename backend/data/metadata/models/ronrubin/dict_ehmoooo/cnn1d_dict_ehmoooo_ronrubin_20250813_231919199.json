@@ -1,0 +1,33 @@
+{
+  "id": "cnn1d_dict_ehmoooo_ronrubin_20250813_231919199",
+  "dictionary_id": "dict_ehmoooo",
+  "feature_set_id": "v0.1",
+  "user_id": "ronrubin",
+  "name": "cnn1d_model",
+  "type": "cnn1d",
+  "version": "16",
+  "parameters": {
+    "model_type": "cnn1d",
+    "epochs": 100,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "n_estimators": 100,
+    "rf_weight": 0.5,
+    "use_class_weights": "on"
+  },
+  "metrics": {},
+  "filename": "cnn1d_v16",
+  "status": "failed",
+  "classes": [
+    "cls_eh",
+    "cls_moo",
+    "cls_oo"
+  ],
+  "training_ids": [],
+  "validation_ids": [],
+  "metadata": {
+    "error": "Training interrupted - cleared stuck status"
+  },
+  "created_at": "2025-08-13T23:19:19.199051",
+  "updated_at": "2025-08-14T06:24:05.923306"
+}

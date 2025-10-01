@@ -1,0 +1,1707 @@
+/**
+ * predict_api.js
+ * Handles API communication, sending predictions to server, and processing responses
+ */
+
+// State variables
+let selectedModelId = '';
+let selectedModelType = '';
+let selectedDictionaryId = null;
+let currentDictionaryId = null;
+let availableModels = [];
+let soundClasses = [];
+let selectedModelIds = []; // For multi-model comparison
+
+/**
+ * Submit audio data for prediction to the backend API
+ * @param {ArrayBuffer} wavBytes - WAV file as ArrayBuffer
+ * @param {number} audioLength - Number of audio samples
+ * @param {number} sampleRate - Sample rate of audio
+ */
+async function submitPrediction(wavBytes, audioLength, sampleRate) {
+    // Check if multiple models are selected for comparison (must be MORE than 1)
+    if (window.selectedModelIds && window.selectedModelIds.length > 1) {
+        console.log(`Using multi-model comparison with ${window.selectedModelIds.length} models`);
+        return await submitMultiModelPrediction(wavBytes, audioLength, sampleRate);
+    }
+    
+    if (!window.selectedModelId || !currentDictionaryId) {
+        console.error("Cannot submit prediction: No model or dictionary selected", {
+            windowSelectedModelId: window.selectedModelId,
+            currentDictionaryId: currentDictionaryId
+        });
+        return;
+    }
+    
+    console.log(`Submitting single model prediction with model: ${window.selectedModelId}, dictionary: ${currentDictionaryId}`);
+
+    try {
+        // Create a Blob and FormData for submission
+        const wavBlob = new Blob([wavBytes], { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append('audio', wavBlob, `prediction_${Date.now()}.wav`);
+        formData.append('model_id', window.selectedModelId);
+        formData.append('dictionary_id', currentDictionaryId);
+        
+        // REMOVED storing audio blob and sample rate for history playback
+        const audioId = `audio_${Date.now()}`; // Keep ID for response matching
+        // if (typeof window.predictionAudioDataMap !== 'undefined') {
+        //     window.predictionAudioDataMap[audioId] = wavBlob;
+        // }
+        // if (typeof window.predictionAudioSampleRates !== 'undefined') {
+        //     window.predictionAudioSampleRates[audioId] = sampleRate;
+        // }
+        
+        console.log(`Sending prediction request to server (Model: ${window.selectedModelId}, Audio ID: ${audioId})`);
+        
+        // Send to server
+        const response = await fetch('/api/inference/classify', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server error (${response.status}): ${errorText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || "Unknown API error");
+        }
+        
+        processPredictionResponse(result, audioId);
+        
+        // Table update is already handled inside processPredictionResponse
+        // No need to call updatePredictionTable again here
+        
+    } catch (error) {
+        console.error("Error submitting prediction:", error);
+        
+        // Update UI to show error
+        const listeningIndicator = document.getElementById('listeningIndicator');
+        if (listeningIndicator && window.isListening) {
+            listeningIndicator.innerHTML = '<span class="material-icons">error_outline</span> Error: ' + error.message;
+        }
+        
+        window.showToast("Prediction error: " + error.message, "error");
+    }
+}
+
+// Keep track of prediction instances for the table
+let predictionInstances = [];
+let currentPredictionColumn = 0;
+
+/**
+ * Update the prediction table with multiple model results in a single column
+ * @param {Array} results - Array of results from multiple models
+ */
+function updatePredictionTableMultiModel(results) {
+    console.log('updatePredictionTableMultiModel called with:', results);
+    
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    const historyCard = document.getElementById('predictionHistoryCard');
+    const container = document.getElementById('predictionTableContainer');
+    
+    if (!tableHeader || !tableBody) {
+        console.error('Table elements not found');
+        return;
+    }
+    
+    // Show the history card
+    if (historyCard) historyCard.style.display = 'block';
+    
+    // Initialize table header if empty
+    if (tableHeader.children.length === 0) {
+        const modelTh = document.createElement('th');
+        modelTh.textContent = 'Model';
+        modelTh.style.cssText = 'text-align: left; padding: 10px; border-bottom: 2px solid #333; min-width: 150px; position: sticky; left: 0; background: white; z-index: 10;';
+        tableHeader.appendChild(modelTh);
+    }
+    
+    // Add ONE new column header for this prediction instance
+    currentPredictionColumn++;
+    const th = document.createElement('th');
+    th.innerHTML = `${currentPredictionColumn}`;
+    th.style.cssText = 'padding: 4px; border-bottom: 2px solid #333; min-width: 40px; text-align: center; font-size: 0.85rem;';
+    
+    // Insert as second column (after Model column)
+    if (tableHeader.children.length > 1) {
+        tableHeader.insertBefore(th, tableHeader.children[1]);
+    } else {
+        tableHeader.appendChild(th);
+    }
+    
+    // Initialize rows if needed
+    if (tableBody.children.length === 0) {
+        // Get all model IDs from results
+        const modelIds = results.map(r => r.modelId);
+        
+        modelIds.forEach(modelId => {
+            const model = availableModels.find(m => m.id === modelId);
+            const modelName = model ? `${model.type?.toUpperCase()}` : modelId.split('_').pop().slice(0, 8);
+            
+            // Class prediction row
+            const classRow = document.createElement('tr');
+            classRow.className = 'prediction-class-row';
+            classRow.dataset.modelId = modelId;
+            classRow.dataset.rowType = 'class';
+            
+            const classLabel = document.createElement('td');
+            classLabel.textContent = `${modelName} - Class`;
+            classLabel.style.cssText = 'font-weight: 600; padding: 10px; background: #f9f9f9; border-right: 2px solid #ddd; position: sticky; left: 0;';
+            classRow.appendChild(classLabel);
+            
+            tableBody.appendChild(classRow);
+            
+            // Confidence percentage row
+            const confRow = document.createElement('tr');
+            confRow.className = 'prediction-confidence-row';
+            confRow.dataset.modelId = modelId;
+            confRow.dataset.rowType = 'confidence';
+            
+            const confLabel = document.createElement('td');
+            confLabel.textContent = `${modelName} - Conf %`;
+            confLabel.style.cssText = 'font-weight: 600; padding: 10px; background: #f9f9f9; border-right: 2px solid #ddd; position: sticky; left: 0;';
+            confRow.appendChild(confLabel);
+            
+            tableBody.appendChild(confRow);
+        });
+    }
+    
+    // Add prediction data for ALL models in ONE column
+    Array.from(tableBody.children).forEach(row => {
+        const td = document.createElement('td');
+        td.style.cssText = 'padding: 8px; border-bottom: 1px solid #eee;';
+        const rowModelId = row.dataset.modelId;
+        const rowType = row.dataset.rowType;
+        
+        // Find the result for this model
+        const modelResult = results.find(r => r.modelId === rowModelId);
+        
+        if (modelResult && modelResult.success && modelResult.result?.predictions?.[0]) {
+            const prediction = modelResult.result.predictions[0];
+            if (rowType === 'class') {
+                td.textContent = prediction.class || '-';
+                td.className = 'prediction-class-cell';
+                td.style.cssText += 'font-weight: 500; color: #2196F3;';
+            } else if (rowType === 'confidence') {
+                const conf = prediction.confidence ? (prediction.confidence * 100).toFixed(1) : 0;
+                td.textContent = `${conf}%`;
+                if (conf > 80) {
+                    td.style.cssText += 'font-weight: 600; color: #4CAF50;';
+                }
+            }
+        } else {
+            td.textContent = '-';
+            td.style.color = '#ccc';
+        }
+        
+        // Insert as second column (after Model label)
+        if (row.children.length > 1) {
+            row.insertBefore(td, row.children[1]);
+        } else {
+            row.appendChild(td);
+        }
+    });
+    
+    // Scroll to the left to show newest predictions
+    if (container) {
+        container.scrollLeft = 0;
+        console.log('Scrolled table to left to show newest prediction');
+    }
+}
+
+/**
+ * Clear/reset the prediction results table
+ */
+function clearPredictionTable() {
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    
+    if (tableHeader) {
+        // Keep only the first column header (Model)
+        while (tableHeader.children.length > 1) {
+            tableHeader.removeChild(tableHeader.lastChild);
+        }
+    }
+    
+    if (tableBody) {
+        tableBody.innerHTML = '';
+    }
+    
+    currentPredictionColumn = 0;
+    predictionInstances = [];
+}
+
+/**
+ * Update the prediction results table with new predictions
+ * @param {Object} prediction - The prediction data
+ * @param {string} modelId - The model that made the prediction
+ */
+function updatePredictionTable(prediction, modelId) {
+    console.log('updatePredictionTable called with:', prediction, modelId);
+    
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    const historyCard = document.getElementById('predictionHistoryCard');
+    
+    if (!tableHeader || !tableBody) {
+        console.error('Table elements not found:', { tableHeader, tableBody });
+        return;
+    }
+    
+    // Show the history card
+    if (historyCard) historyCard.style.display = 'block';
+    
+    // Get or determine which models we're tracking
+    const modelsToTrack = window.selectedModelIds && window.selectedModelIds.length > 0 
+        ? window.selectedModelIds 
+        : [modelId || window.selectedModelId];
+    
+    console.log('Models to track:', modelsToTrack);
+    
+    // Initialize table header if empty (add "Model" column)
+    if (tableHeader.children.length === 0) {
+        const modelTh = document.createElement('th');
+        modelTh.textContent = 'Model';
+        modelTh.style.textAlign = 'left';
+        tableHeader.appendChild(modelTh);
+    }
+    
+    // Add new column header for this prediction instance (insert after Model column)
+    currentPredictionColumn++;
+    const th = document.createElement('th');
+    th.innerHTML = `${currentPredictionColumn}`;
+    th.style.padding = '4px';
+    th.style.borderBottom = '2px solid #333';
+    th.style.minWidth = '40px';
+    th.style.textAlign = 'center';
+    th.style.fontSize = '0.85rem';
+    
+    // Insert as second column (after Model column)
+    if (tableHeader.children.length > 1) {
+        tableHeader.insertBefore(th, tableHeader.children[1]);
+    } else {
+        tableHeader.appendChild(th);
+    }
+    
+    // Initialize rows if needed (2 rows per model: class and confidence)
+    if (tableBody.children.length === 0) {
+        modelsToTrack.forEach(mId => {
+            const model = availableModels.find(m => m.id === mId);
+            const modelName = model ? `${model.type?.toUpperCase()}` : mId.split('_').pop().slice(0, 8);
+            
+            // Class prediction row
+            const classRow = document.createElement('tr');
+            classRow.className = 'prediction-class-row';
+            classRow.dataset.modelId = mId;
+            classRow.dataset.rowType = 'class';
+            
+            const classLabel = document.createElement('td');
+            classLabel.textContent = `${modelName} - Class`;
+            classLabel.style.fontWeight = '600';
+            classLabel.style.padding = '10px';
+            classLabel.style.background = '#f9f9f9';
+            classLabel.style.borderRight = '2px solid #ddd';
+            classLabel.style.position = 'sticky';
+            classLabel.style.left = '0';
+            classRow.appendChild(classLabel);
+            
+            tableBody.appendChild(classRow);
+            
+            // Confidence percentage row
+            const confRow = document.createElement('tr');
+            confRow.className = 'prediction-confidence-row';
+            confRow.dataset.modelId = mId;
+            confRow.dataset.rowType = 'confidence';
+            
+            const confLabel = document.createElement('td');
+            confLabel.textContent = `${modelName} - Conf %`;
+            confLabel.style.fontWeight = '600';
+            confLabel.style.padding = '10px';
+            confLabel.style.background = '#f9f9f9';
+            confLabel.style.borderRight = '2px solid #ddd';
+            confLabel.style.position = 'sticky';
+            confLabel.style.left = '0';
+            confRow.appendChild(confLabel);
+            
+            tableBody.appendChild(confRow);
+        });
+    }
+    
+    // Add prediction data to each model's rows (insert after Model label column)
+    Array.from(tableBody.children).forEach(row => {
+        const td = document.createElement('td');
+        td.style.padding = '8px';
+        td.style.borderBottom = '1px solid #eee';
+        const rowModelId = row.dataset.modelId;
+        const rowType = row.dataset.rowType;
+        
+        if (rowModelId === modelId && prediction) {
+            if (rowType === 'class') {
+                td.textContent = prediction.class || '-';
+                td.className = 'prediction-class-cell';
+                td.style.fontWeight = '500';
+            } else if (rowType === 'confidence') {
+                const conf = prediction.confidence ? (prediction.confidence * 100).toFixed(1) : 0;
+                td.textContent = `${conf}%`;
+                if (conf > 80) {
+                    td.className = 'high-confidence';
+                    td.style.color = '#4CAF50';
+                }
+            }
+        } else {
+            td.textContent = '-';
+            td.style.color = '#ccc';
+        }
+        
+        // Insert as second column (after Model label column)
+        if (row.children.length > 1) {
+            row.insertBefore(td, row.children[1]);
+        } else {
+            row.appendChild(td);
+        }
+    });
+}
+
+/**
+ * Process the prediction response from the API
+ * @param {Object} result - API response data
+ * @param {string} audioId - ID for the audio data in storage
+ * @param {boolean} skipTableUpdate - Skip updating the table (used for multi-model)
+ */
+function processPredictionResponse(result, audioId, skipTableUpdate = false) {
+    console.log("Processing prediction response:", result);
+    console.log("Current game mode active?", window.currentGameModeActive);
+    console.log("Current game target class:", window.currentGameTargetClassId);
+    
+    // Check for valid predictions array
+    if (!result.predictions || !Array.isArray(result.predictions) || result.predictions.length === 0) {
+        console.warn("No valid predictions array in response");
+        // If in feedback mode, we might still need to resume if this was an error/non-prediction
+        if (window.pauseForFeedback && window.isWaitingForFeedback) {
+            if (typeof window.resumeListeningAfterFeedback === 'function') {
+                console.log("No valid prediction, resuming listening (if paused).");
+                window.resumeListeningAfterFeedback(); 
+            } else {
+                console.error("resumeListeningAfterFeedback function not found!");
+            }
+        }
+        return; // Stop processing if no valid predictions
+    }
+    
+    // Get top prediction
+    const topPrediction = result.predictions[0];
+    
+    // Check if top prediction is valid (has class_id)
+    if (!topPrediction || !topPrediction.class_id) {
+        console.warn("Received prediction response, but top prediction is invalid or missing class_id:", topPrediction);
+        if (window.pauseForFeedback && window.isWaitingForFeedback) {
+            if (typeof window.resumeListeningAfterFeedback === 'function') {
+                console.log("Invalid top prediction, resuming listening (if paused).");
+                window.resumeListeningAfterFeedback();
+            } else {
+                console.error("resumeListeningAfterFeedback function not found!");
+            }
+        }
+        return; // Stop processing if top prediction is invalid
+    }
+    
+    // Valid Prediction Received
+    console.log("Valid prediction received:", topPrediction.class_id, "Full prediction:", topPrediction);
+    
+    // Update global state with the prediction object
+    window.currentPrediction = topPrediction;
+    
+    // Update the prediction table (unless skipped for multi-model)
+    if (!skipTableUpdate) {
+        console.log("Calling updatePredictionTable with modelId:", window.selectedModelId);
+        updatePredictionTable(topPrediction, window.selectedModelId);
+    } else {
+        console.log("Skipping table update (handled by multi-model)");
+    } 
+    
+    // --- Game Mode Logic --- 
+    console.log(`CHECK: window.currentGameModeActive = ${window.currentGameModeActive}`);
+    if (window.currentGameModeActive) {
+        console.log("=== GAME MODE ACTIVE - PROCESSING PREDICTION ===");
+        console.log("Result object:", result);
+        console.log("Top prediction:", topPrediction);
+        console.log("Target class ID:", window.currentGameTargetClassId);
+        console.log("Available functions:", {
+            updateConfusionMatrix: typeof window.updateConfusionMatrix,
+            displayConfusionMatrices: typeof window.displayConfusionMatrices,
+            showFace: typeof window.showFace
+        });
+        
+        // In comparison mode, use the selected game model's prediction
+        let predictedId = topPrediction.class_id;
+        console.log(`Game: predictedId=${predictedId}, gameSelectedModelId=${window.gameSelectedModelId}, model_used=${result.model_used}`);
+        
+        if (window.gameSelectedModelId && result.model_used !== window.gameSelectedModelId) {
+            // This prediction is from a different model, skip game logic for it
+            console.log(`Game Mode: Skipping face reaction for model ${result.model_used}, waiting for ${window.gameSelectedModelId}`);
+            // BUT still update confusion matrix for ALL models
+        } else {
+            // Handle face reaction only for selected model
+            const targetId = window.currentGameTargetClassId;
+            if (targetId) {
+                const isCorrect = (predictedId === targetId);
+                console.log(`Face reaction: Predicted=${predictedId}, Target=${targetId}, Correct=${isCorrect}`);
+                // Show face based on correctness
+                if (typeof window.showFace === 'function') {
+                    window.showFace(isCorrect ? 'happy' : 'grimace');
+                }
+            }
+        }
+        
+        // Always update confusion matrix for all models
+        const targetId = window.currentGameTargetClassId;
+        
+        if (targetId && predictedId) {
+            const isCorrect = (predictedId === targetId);
+            const modelId = result.model_used || window.selectedModelId;
+            console.log(`=== ATTEMPTING CONFUSION MATRIX UPDATE ===`);
+            console.log(`Model: ${modelId}`);
+            console.log(`Target (actual): ${targetId}`);
+            console.log(`Predicted: ${predictedId}`);
+            console.log(`Correct: ${isCorrect}`);
+            console.log(`updateConfusionMatrix exists: ${typeof window.updateConfusionMatrix === 'function'}`);
+            
+            // Update confusion matrix for this prediction
+            if (typeof window.updateConfusionMatrix === 'function' && modelId) {
+                console.log(">>> CALLING updateConfusionMatrix NOW <<<");
+                console.log(`>>> Parameters: modelId='${modelId}', targetId='${targetId}', predictedId='${predictedId}'`);
+                window.updateConfusionMatrix(modelId, targetId, predictedId);
+                console.log(">>> updateConfusionMatrix call completed <<<");
+                
+                // Display the matrices after updating
+                if (typeof window.displayConfusionMatrices === 'function') {
+                    console.log(">>> CALLING displayConfusionMatrices NOW <<<");
+                    window.displayConfusionMatrices();
+                    console.log(">>> displayConfusionMatrices call completed <<<");
+                } else {
+                    console.error("displayConfusionMatrices function not found!");
+                }
+            } else {
+                console.error("FAILED TO UPDATE: updateConfusionMatrix function not found or modelId missing!");
+                console.error(`Function exists: ${typeof window.updateConfusionMatrix}, ModelId: ${modelId}`);
+            }
+        } else {
+            console.warn(`Missing data for confusion matrix update: targetId=${targetId}, predictedId=${predictedId}`);
+        }
+        
+        // Add a delay before selecting the next target
+        if (targetId) {
+            console.log("Game Check: Setting timeout for next target...");
+            setTimeout(() => {
+                console.log("Game Check: Timeout finished, checking face container before selecting next target...");
+                const checkFaceContainer = document.getElementById('faceContainer');
+                console.log(`>>> Game Timeout Callback: Does #faceContainer exist? ${!!checkFaceContainer}, Display: ${checkFaceContainer?.style.display}`);
+                
+                if (window.currentGameModeActive) { // Check if still in game mode
+                    if (typeof window.selectNextTargetSound === 'function') {
+                         window.selectNextTargetSound();
+                    }
+                }
+            }, 1500); // 1.5 second delay
+            
+        } else {
+            console.warn("Game Mode Active, but no target class ID was set. Starting loop again.");
+            if (typeof window.selectNextTargetSound === 'function') window.selectNextTargetSound();
+        }
+        
+        // NOTE: Game mode does NOT use pauseForFeedback/isWaitingForFeedback
+        // No need to set isWaitingForFeedback = true or stop monitor loop here
+        
+    } else {
+        // --- Original Pause/Feedback Logic (Runs only if NOT in game mode) ---
+        console.log("Game Mode NOT Active: Processing for Continuous/Feedback mode...");
+        
+        // Reset listening indicator text (only if in continuous mode)
+        const listeningIndicator = document.getElementById('listeningIndicator');
+        if (listeningIndicator && window.isListening && !window.pauseForFeedback) {
+            listeningIndicator.innerHTML = '<span class="material-icons">hearing</span> Listening...';
+        }
+        
+        // ADDED: Log pauseForFeedback value before check
+        console.log(`>>> processPredictionResponse: Checking pause logic. pauseForFeedback = ${window.pauseForFeedback}`);
+        
+        // Pause Logic
+        if (window.pauseForFeedback) {
+            console.log("Pause mode is ON. Setting isWaitingForFeedback = true and stopping monitor loop.");
+            window.isWaitingForFeedback = true;
+            
+            // --- ADDED: Explicitly stop the monitor loop --- 
+            if (typeof window.stopMonitorLoop === 'function') { // Assuming stopMonitorLoop exists
+                window.stopMonitorLoop(); 
+            } else {
+                 console.warn("stopMonitorLoop function not found in predict_speech_detection.js");
+                 // Attempt manual cancel as fallback?
+                 if (window.animationFrameId) {
+                      console.warn("Attempting manual cancelAnimationFrame as fallback.");
+                      cancelAnimationFrame(window.animationFrameId);
+                      window.animationFrameId = null;
+                 }
+            }
+            // --- END ADDED --- 
+            
+            // Update indicator 
+            const listeningIndicator = document.getElementById('listeningIndicator');
+            if(listeningIndicator) {
+                 listeningIndicator.innerHTML = '<span class="material-icons">pause_circle_outline</span> Paused - Select correct sound';
+                 listeningIndicator.style.display = 'block';
+            }
+            
+            // Make sure the feedback section is visible with a small delay
+            setTimeout(() => {
+                try {
+                    const feedbackSection = document.getElementById('feedbackSection');
+                    if (feedbackSection) {
+                        feedbackSection.style.display = 'block';
+                        feedbackSection.style.visibility = 'visible';
+                        console.log("Force-displayed feedback section from prediction response");
+                        
+                        // Ensure feedback options are created (delayed to ensure DOM is ready)
+                        if (typeof window.updateFeedbackOptions === 'function') {
+                            setTimeout(() => {
+                                window.updateFeedbackOptions();
+                                console.log("Re-created feedback options from prediction response handler");
+                            }, 50);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error ensuring feedback section visibility:", e);
+                }
+            }, 100);
+        } else {
+             window.isWaitingForFeedback = false;
+             
+             // ADDED: If in continuous mode, immediately show we're back to listening
+             const listeningIndicator = document.getElementById('listeningIndicator');
+             if (listeningIndicator && window.isListening) {
+                 listeningIndicator.innerHTML = '<span class="material-icons">hearing</span> Listening...';
+                 listeningIndicator.style.display = 'block';
+             }
+             
+             // FIX: Ensure monitor loop continues running in continuous mode
+             if (window.isListening && !window.animationFrameId) {
+                 console.log("Continuous mode: Restarting monitor loop after prediction");
+                 if (typeof window.monitorAudioEnergy === 'function') {
+                     window.monitorAudioEnergy();
+                 }
+             }
+        }
+        // End Pause Logic
+    }
+    // --- End Game Mode / Original Logic Split --- 
+    
+    // Update the main UI (display prediction, history, and potentially feedback options)
+    // This runs regardless of mode, but feedback options only show if waiting=true
+    if (typeof window.updatePredictionUI === 'function') {
+        window.updatePredictionUI({
+            predictions: [topPrediction],
+            audioId: audioId 
+        });
+    } else {
+        console.error("updatePredictionUI function not available");
+    }
+    
+    // ADDED: Final check for face container visibility
+    const finalFaceCheck = document.getElementById('faceContainer');
+    console.log(`>>> processPredictionResponse END: Does #faceContainer exist? ${!!finalFaceCheck}, Display: ${finalFaceCheck?.style.display}`);
+}
+
+/**
+ * Load available dictionaries from the server
+ */
+function loadAvailableDictionaries() {
+    console.log('🔵 LOAD DICTIONARIES CALLED - Starting to load dictionaries...');
+    const errorElement = document.getElementById('dictionaryLoadingError');
+    
+    // Debug: Check if the dropdown exists
+    const selectElement = document.getElementById('dictionarySelect');
+    if (!selectElement) {
+        console.error('❌ CRITICAL: dictionarySelect element not found!');
+        return;
+    }
+    console.log('✅ Found dictionarySelect element');
+
+    // Just use the regular dictionary list endpoint
+    const endpoint = `/api/dictionary/list`;
+    console.log(`📡 Fetching dictionaries from: ${endpoint}`);
+
+    fetch(endpoint)
+        .then(response => {
+            console.log(`Dictionaries list response status: ${response.status}`);
+            if (!response.ok) {
+                return response.json().catch(() => {
+                    throw new Error(`Failed to load dictionaries: ${response.status} ${response.statusText}`);
+                }).then(errorData => {
+                    throw new Error(`Failed to load dictionaries: ${errorData.error || response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Dictionaries list response data:', data);
+            if (data.success && data.dictionaries) {
+                console.log(`✅ Got ${data.dictionaries.length} dictionaries from server`);
+                
+                // Simple processing - just use the name
+                const processedDictionaries = data.dictionaries.map(dict => {
+                    dict.displayName = dict.name;
+                    return dict;
+                });
+                
+                if (typeof window.populateDictionaryDropdown === 'function') {
+                    console.log('🎯 Calling populateDictionaryDropdown with', processedDictionaries.length, 'dictionaries');
+                    window.populateDictionaryDropdown(processedDictionaries);
+                } else {
+                    console.error('❌ populateDictionaryDropdown function not found! Trying direct population...');
+                    // Fallback: Try to populate directly
+                    const selectEl = document.getElementById('dictionarySelect');
+                    if (selectEl) {
+                        selectEl.innerHTML = '<option value="" disabled selected>-- Select a Dictionary --</option>';
+                        processedDictionaries.forEach(dict => {
+                            const option = document.createElement('option');
+                            option.value = dict.id;
+                            option.textContent = dict.displayName;
+                            selectEl.appendChild(option);
+                        });
+                        console.log('✅ Directly populated dropdown with', processedDictionaries.length, 'dictionaries');
+                    }
+                }
+            } else {
+                throw new Error(data.error || 'Could not retrieve dictionaries.');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dictionaries:', error);
+            if (typeof window.populateDictionaryDropdown === 'function') {
+                window.populateDictionaryDropdown([]);
+                if(errorElement) {
+                    errorElement.textContent = `Error: ${error.message}`;
+                    errorElement.style.display = 'block';
+                    errorElement.className = 'text-danger mt-1';
+                }
+            }
+        });
+}
+
+/**
+ * Load available models for a dictionary
+ * @param {string} dictionaryId - Dictionary ID
+ */
+function loadAvailableModels(dictionaryId) {
+    console.log(`Loading models for dictionary: ${dictionaryId}`);
+    if (!currentUserId || !dictionaryId) {
+        console.error('Error: User ID or Dictionary ID is missing.');
+        const modelsList = document.getElementById('modelsList');
+        if (modelsList) modelsList.innerHTML = `<div class="alert alert-warning">Please select a dictionary first.</div>`;
+        return;
+    }
+
+    const apiUrl = `/api/models/${currentUserId}/${dictionaryId}`;
+    console.log(`Fetching models from: ${apiUrl}`);
+
+    // Show loading state (for dropdown)
+    const modelSelect = document.getElementById('modelSelect');
+    const loadingIndicator = document.getElementById('modelsLoadingMessage');
+    if (modelSelect) modelSelect.disabled = true; // Disable dropdown while loading
+    if (loadingIndicator) loadingIndicator.style.display = 'inline-block';
+
+    fetch(apiUrl)
+        .then(response => {
+            console.log(`Models list response status: ${response.status}`);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    let errorMsg = `Server error ${response.status}`;
+                    try { errorMsg = JSON.parse(text).error || errorMsg; } catch (e) { /* ignore */ }
+                    throw new Error(errorMsg);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Models API response received.", data);
+            if (!data || !data.success) {
+                const errorMsg = data?.error || 'API call failed.';
+                throw new Error(`Failed to load models: ${errorMsg}`);
+            }
+
+            // Process models and update global state
+            if (data.models && Array.isArray(data.models)) {
+                availableModels = data.models.map(m => ({
+                    id: m.id || 'Unknown ID',
+                    name: m.name || 'Unnamed Model',
+                    type: m.type || 'unknown',
+                    dictionary_id: m.dictionary_id || dictionaryId,
+                    created_at: m.created_at || '',
+                    status: m.status || 'unknown',
+                    classes: m.classes || []
+                })).filter(m => m.status === 'trained');
+                console.log(`Stored ${availableModels.length} trained models globally.`);
+            } else {
+                availableModels = [];
+                console.log(`No models found in response for dictionary ${dictionaryId}.`);
+            }
+
+            // --- Populate Models List (new UI) ---
+            if (typeof window.populateModelList === 'function') {
+                console.log('>>> loadAvailableModels: Calling populateModelList with models:', availableModels);
+                window.populateModelList(availableModels);
+            } else {
+                console.error('>>> loadAvailableModels: populateModelList function not found!');
+                // Fallback: populate dropdown if list population fails
+                if (!modelSelect) {
+                    console.error('>>> loadAvailableModels: Could not find modelSelect element!');
+                } else {
+                    console.log('>>> loadAvailableModels: Falling back to dropdown population...');
+                    modelSelect.innerHTML = ''; // Clear previous options
+                    modelSelect.disabled = true; // Disable initially
+
+                    if (!availableModels || availableModels.length === 0) {
+                        const defaultOption = document.createElement('option');
+                        defaultOption.textContent = "No trained models found for this dictionary.";
+                        defaultOption.value = "";
+                        defaultOption.selected = true;
+                        defaultOption.disabled = true;
+                        modelSelect.appendChild(defaultOption);
+                    } else {
+                        const defaultOption = document.createElement('option');
+                        defaultOption.textContent = "-- Select a Model --";
+                        defaultOption.value = "";
+                        defaultOption.selected = true;
+                        defaultOption.disabled = true;
+                        modelSelect.appendChild(defaultOption);
+
+                        availableModels.forEach((model) => {
+                            const option = document.createElement('option');
+                            option.value = model.id;
+                            const modelName = model.name || 'Unnamed Model';
+                            const modelType = model.type || 'unknown';
+                            const createdDate = model.created_at ? new Date(model.created_at).toLocaleDateString() : 'Unknown';
+                            option.textContent = `${modelName} (${modelType}) - Created: ${createdDate}`;
+                            modelSelect.appendChild(option);
+                        });
+                        modelSelect.disabled = false; // Enable dropdown
+                    }
+                    console.log(`>>> loadAvailableModels: Finished populating model dropdown with ${availableModels.length} models.`);
+                }
+            }
+            // --- END Models Population ---
+        })
+        .catch(error => {
+            console.error(`Error loading models for dictionary ${dictionaryId}:`, error);
+            // Update UI to show error in dropdown (now needs to be handled here)
+            const modelSelect = document.getElementById('modelSelect');
+            if (modelSelect) {
+                modelSelect.innerHTML = ''; // Clear previous
+                const errorOption = document.createElement('option');
+                errorOption.textContent = "Error loading models.";
+                errorOption.value = "";
+                errorOption.selected = true;
+                errorOption.disabled = true;
+                modelSelect.appendChild(errorOption);
+                modelSelect.disabled = true;
+            } else {
+                console.error('>>> loadAvailableModels catch block: Could not find modelSelect element to show error.');
+            }
+        })
+        .finally(() => {
+             // Hide loading indicator regardless of success/failure
+             if (loadingIndicator) loadingIndicator.style.display = 'none';
+             // Re-enable dropdown (handled within the .then/.catch blocks now)
+        });
+}
+
+/**
+ * Select a model for prediction (triggered by dropdown change)
+ * @param {string} modelId - ID of the selected model
+ */
+async function selectModel(modelId) { 
+    console.log(`📋 DEBUG selectModel: Called with modelId=${modelId}`);
+
+    // Find the model in availableModels by ID
+    const modelData = availableModels.find(m => m.id === modelId);
+
+    if (!modelData) {
+        console.error(`Could not find model data for ID: ${modelId}`);
+        // Optionally reset UI or show error
+        const modelInfo = document.getElementById('modelInfo');
+        if(modelInfo) modelInfo.style.display = 'none';
+        return;
+    }
+
+    console.log(`>>> selectModel: Found modelData:`, JSON.stringify(modelData));
+
+    // Update global state
+    selectedModelId = modelData.id;
+    selectedModelType = modelData.type || modelData.model_type;
+    window.selectedModelId = selectedModelId;  // Also set on window for visibility check
+    window.selectedModelType = selectedModelType;
+
+    console.log(`📋 DEBUG selectModel: Selected model ID=${selectedModelId}, type=${selectedModelType}`);
+
+    // Get container elements
+    const modelInfo = document.getElementById('modelInfo');
+    const predictorInterfaceCard = document.getElementById('predictorInterfaceCard');
+
+    // Reset prediction state if the function exists
+    if (typeof window.resetPredictionState === 'function') {
+        window.resetPredictionState();
+    } else if (window.endPredictionSession) {
+        // Fallback: End current session if reset func missing
+        if (window.isListening || window.isCapturingNoise) window.endPredictionSession();
+    }
+
+    // Enable predict button now that a model is selected
+    const predictButton = document.getElementById('predictButton');
+    if (predictButton) {
+        predictButton.disabled = false;
+    }
+
+    // Update model info display
+    if (modelInfo) {
+        const modelTypeEl = document.getElementById('modelType');
+        if (modelTypeEl) modelTypeEl.textContent = selectedModelType || 'Unknown';
+        
+        // Update Recognized Classes display (now potentially async)
+        if (modelData.classes && modelData.classes.length > 0) {
+            console.log('DEBUG selectModel: Using embedded sound classes...');
+            await _updateModelInfoClassDisplay(modelData.classes); // Await the helper
+        } else {
+            console.log('DEBUG selectModel: Fetching sound classes...');
+            modelClassNamesEl.textContent = 'Loading...'; // Show loading before fetch
+            await fetchClassesForModel(selectedModelId); // Await fetch and update
+        }
+        
+        modelInfo.style.display = 'block'; // Show the info card AFTER potentially waiting
+    } else {
+        console.error('DEBUG selectModel: modelInfo element not found!');
+    }
+
+    // Show predictor interface last
+    console.log('>>> selectModel: Attempting to find and show predictorInterfaceCard...');
+    if (predictorInterfaceCard) {
+        console.log('>>> selectModel: Found predictorInterfaceCard. Setting display to block.');
+        predictorInterfaceCard.style.display = 'block';
+        setTimeout(() => {
+            predictorInterfaceCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+    } else {
+        console.error('DEBUG selectModel: predictorInterfaceCard element not found!');
+    }
+
+    // Reset prediction display areas (Latest Prediction, History)
+    const latestPrediction = document.getElementById('latestPrediction');
+    const predictionHistoryCard = document.getElementById('predictionHistoryCard');
+    if (latestPrediction) latestPrediction.style.display = 'none';
+    if (predictionHistoryCard) predictionHistoryCard.style.display = 'none';
+    
+    // Update controls visibility now that a model is selected
+    if (typeof window.updateControlsVisibility === 'function') {
+        console.log('>>> selectModel: Calling updateControlsVisibility to show controls');
+        window.updateControlsVisibility();
+    }
+
+    console.log('DEBUG selectModel: Function completed');
+}
+
+/**
+ * Toggle model selection for comparison
+ * @param {string} modelId - ID of model to toggle
+ */
+async function toggleModelForComparison(modelId) {
+    const index = selectedModelIds.indexOf(modelId);
+    if (index > -1) {
+        selectedModelIds.splice(index, 1);
+        console.log(`Removed model ${modelId} from comparison. Selected: ${selectedModelIds.length} models`);
+    } else {
+        selectedModelIds.push(modelId);
+        console.log(`Added model ${modelId} for comparison. Selected: ${selectedModelIds.length} models`);
+    }
+    
+    // If we have at least one model selected and no sound classes loaded yet, load them
+    if (selectedModelIds.length > 0 && (!window.soundClasses || window.soundClasses.length === 0)) {
+        console.log(`Loading sound classes for first selected model: ${selectedModelIds[0]}`);
+        await fetchClassesForModel(selectedModelIds[0]);
+    }
+    
+    // Update UI to show selected models
+    updateComparisonDisplay();
+    
+    // Update game model selector if in game mode
+    if (window.currentGameModeActive && typeof window.updateGameModelSelector === 'function') {
+        window.updateGameModelSelector();
+    }
+    
+    // Show predictor interface if we have models selected
+    const predictorInterfaceCard = document.getElementById('predictorInterfaceCard');
+    const predictionHistoryCard = document.getElementById('predictionHistoryCard');
+    if (selectedModelIds.length > 0) {
+        if (predictorInterfaceCard) {
+            predictorInterfaceCard.style.display = 'block';
+        }
+        if (predictionHistoryCard) {
+            predictionHistoryCard.style.display = 'block';
+        }
+        
+        // Update controls visibility
+        if (typeof window.updateControlsVisibility === 'function') {
+            window.updateControlsVisibility();
+        }
+    }
+}
+
+/**
+ * Update UI to show which models are selected for comparison
+ */
+function updateComparisonDisplay() {
+    const comparisonInfo = document.getElementById('comparisonInfo');
+    const comparisonControls = document.getElementById('comparisonControls');
+    
+    if (selectedModelIds.length > 1) {
+        // Show comparison info
+        if (comparisonInfo) {
+            const modelNames = selectedModelIds.map(id => {
+                const model = availableModels.find(m => m.id === id);
+                return model ? `${model.type?.toUpperCase()}` : 'Model';
+            });
+            comparisonInfo.innerHTML = `<div style="padding: 0.75rem; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 0.875rem;">
+                <span class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">compare</span>
+                <strong>${selectedModelIds.length} models selected:</strong> ${modelNames.join(', ')}
+            </div>`;
+            comparisonInfo.style.display = 'block';
+        }
+        
+        // Show comparison button
+        if (comparisonControls) {
+            comparisonControls.style.display = 'block';
+        }
+    } else {
+        // Hide both when less than 2 models selected
+        if (comparisonInfo) comparisonInfo.style.display = 'none';
+        if (comparisonControls) comparisonControls.style.display = 'none';
+    }
+}
+
+/**
+ * Submit prediction to multiple models simultaneously
+ * @param {ArrayBuffer} wavBytes - WAV file data
+ * @param {number} audioLength - Length of audio
+ * @param {number} sampleRate - Sample rate
+ */
+async function submitMultiModelPrediction(wavBytes, audioLength, sampleRate) {
+    if (!selectedModelIds || selectedModelIds.length === 0) {
+        console.error("No models selected for comparison");
+        window.showToast("Please select at least one model for comparison", "error");
+        return;
+    }
+    
+    const audioId = `audio_${Date.now()}`;
+    console.log(`Submitting prediction to ${selectedModelIds.length} models:`, selectedModelIds);
+    
+    // Create promises for all model predictions
+    const predictionPromises = selectedModelIds.map(async (modelId) => {
+        try {
+            console.log(`Submitting to model ${modelId}...`);
+            const formData = new FormData();
+            formData.append('model_id', modelId);
+            formData.append('dictionary_id', selectedDictionaryId || currentDictionaryId);
+            formData.append('audio', new Blob([wavBytes], { type: 'audio/wav' }), 'recorded_audio.wav');
+            
+            console.log(`Sending request for model ${modelId} with dictionary ${selectedDictionaryId || currentDictionaryId}`);
+            const response = await fetch('/api/inference/classify', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Model ${modelId} response error:`, errorText);
+                throw new Error(`Model ${modelId}: Server error (${response.status}) - ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log(`Received response for model ${modelId}:`, result);
+            
+            if (!result.success) {
+                throw new Error(result.error || `Model ${modelId}: Unknown error`);
+            }
+            
+            return { modelId, result, success: true };
+        } catch (error) {
+            console.error(`Error with model ${modelId}:`, error);
+            return { modelId, error: error.message, success: false };
+        }
+    });
+    
+    // Wait for all predictions
+    console.log('Waiting for all predictions to complete...');
+    const results = await Promise.all(predictionPromises);
+    console.log('All predictions completed:', results);
+    
+    // Process and display results
+    processMultiModelResults(results, audioId);
+}
+
+/**
+ * Process and display results from multiple models
+ * @param {Array} results - Array of prediction results
+ * @param {string} audioId - ID of the audio sample
+ */
+function processMultiModelResults(results, audioId) {
+    console.log("Multi-model results:", results);
+    console.log(`>>> processMultiModelResults: window.currentGameModeActive = ${window.currentGameModeActive}`);
+    
+    // Create a single column for all model predictions
+    updatePredictionTableMultiModel(results);
+    
+    // Process ALL successful results for game mode confusion matrix updates
+    if (window.currentGameModeActive) {
+        console.log(">>> GAME MODE IS ACTIVE - Processing all results for confusion matrix");
+        results.forEach(r => {
+            if (r.success && r.result) {
+                console.log(`>>> Processing result for model: ${r.modelId}`);
+                // Process each result for game mode updates (confusion matrix, etc)
+                processPredictionResponse(r.result, audioId, true);
+            }
+        });
+    } else {
+        console.log(">>> Game mode NOT active - processing first result only");
+        // Process the first successful result for UI updates EXCEPT table
+        // (since we already updated the table with updatePredictionTableMultiModel)
+        const firstSuccess = results.find(r => r.success && r.result);
+        if (firstSuccess) {
+            // Pass true to skip table update since we already handled it
+            processPredictionResponse(firstSuccess.result, audioId, true);
+        }
+    }
+    
+    // Show the history card if not already visible
+    const historyCard = document.getElementById('predictionHistoryCard');
+    if (historyCard) historyCard.style.display = 'block';
+    
+    // Hide the old comparison container since we're using the table now
+    const comparisonContainer = document.getElementById('predictionComparison');
+    if (comparisonContainer) {
+        comparisonContainer.style.display = 'none';
+    }
+}
+
+/**
+ * Fetch sound classes for a model (to update Model Info Card)
+ * @param {string} modelId - Model ID
+ */
+async function fetchClassesForModel(modelId) {
+    console.log(`Fetching classes for model ${modelId} to update Model Info Card`);
+    
+    const modelClassNamesEl = document.getElementById('modelClassNames');
+    if (modelClassNamesEl) modelClassNamesEl.textContent = 'Loading...';
+    
+    if (!currentDictionaryId) {
+        console.error("Cannot fetch model classes: currentDictionaryId is not set.");
+         if (modelClassNamesEl) modelClassNamesEl.textContent = 'Error (No Dict)';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/models/${currentUserId}/${currentDictionaryId}/${modelId}`);
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const data = await response.json();
+        
+        if (data.success && data.model?.classes?.length > 0) {
+            console.log(`Received ${data.model.classes.length} classes from metadata endpoint.`);
+            // Update global state if needed (optional)
+            const modelIndex = availableModels.findIndex(m => m.id === modelId);
+            if (modelIndex !== -1) {
+                availableModels[modelIndex].classes = data.model.classes;
+            }
+            // Update the Model Info card display (now potentially async)
+            await _updateModelInfoClassDisplay(data.model.classes); // Await the helper
+            
+            // Update global feedback/soundClasses list 
+            window.soundClasses = [...data.model.classes];
+            window.globalClassNamesForFeedback = [...data.model.classes];
+            console.log("Updated global soundClasses/globalClassNamesForFeedback.");
+            console.log(">>> Model loaded - soundClasses set to:", window.soundClasses);
+            
+            // If game mode is active, reinitialize confusion matrix with the new classes
+            if (window.currentGameModeActive) {
+                console.log("Game mode is active, reinitializing confusion matrix with new classes");
+                if (window.selectedModelIds && window.selectedModelIds.length > 0) {
+                    window.selectedModelIds.forEach(mid => {
+                        if (typeof window.initializeConfusionMatrix === 'function') {
+                            window.initializeConfusionMatrix(mid);
+                        }
+                    });
+                } else if (modelId) {
+                    if (typeof window.initializeConfusionMatrix === 'function') {
+                        window.initializeConfusionMatrix(modelId);
+                    }
+                }
+                // Redisplay the matrices
+                if (typeof window.displayConfusionMatrices === 'function') {
+                    window.displayConfusionMatrices();
+                }
+            }
+            
+        } else {
+            console.error("Could not find 'classes' array in detailed metadata for Model Info Card.");
+            if (modelClassNamesEl) modelClassNamesEl.textContent = 'Not available';
+            window.soundClasses = [];
+            window.globalClassNamesForFeedback = [];
+        }
+    } catch (error) {
+        console.error('Error loading detailed model metadata for Model Info Card:', error);
+        if (modelClassNamesEl) modelClassNamesEl.textContent = 'Error loading';
+        window.soundClasses = [];
+        window.globalClassNamesForFeedback = [];
+    }
+}
+
+// Function to update the class names display in the Model Info card
+async function _updateModelInfoClassDisplay(classIds) {
+    const modelClassNamesEl = document.getElementById('modelClassNames');
+    if (!modelClassNamesEl) {
+        console.error("Element 'modelClassNames' not found in model info card.");
+        return;
+    }
+    
+    if (!classIds || classIds.length === 0) {
+        modelClassNamesEl.textContent = 'None specified';
+        return;
+    }
+    
+    // Ensure IdMapper is loaded and ready by awaiting its init promise
+    try {
+        console.log("_updateModelInfoClassDisplay: Waiting for IdMapper.init...");
+        await window.IdMapper.init(); // Await the promise
+        console.log("_updateModelInfoClassDisplay: IdMapper initialized. Mapping names...");
+        
+        // Map IDs to names using IdMapper
+        const classNames = classIds.map(id => window.IdMapper.getClassName(id) || id);
+        modelClassNamesEl.textContent = classNames.join(', ');
+        console.log(`_updateModelInfoClassDisplay: Displayed class names: ${modelClassNamesEl.textContent}`);
+
+        // ADDED: Update global state here as well
+        window.soundClasses = [...classIds]; // Store the IDs
+        window.globalClassNamesForFeedback = [...classIds]; // Also use IDs for feedback consistency
+        console.log("_updateModelInfoClassDisplay: Updated global soundClasses/globalClassNamesForFeedback.");
+        
+        // If game mode is active, reinitialize confusion matrix with the new classes
+        if (window.currentGameModeActive) {
+            console.log("Game mode is active (from _updateModelInfoClassDisplay), reinitializing confusion matrix");
+            if (window.selectedModelIds && window.selectedModelIds.length > 0) {
+                window.selectedModelIds.forEach(mid => {
+                    if (typeof window.initializeConfusionMatrix === 'function') {
+                        window.initializeConfusionMatrix(mid);
+                    }
+                });
+            } else if (window.selectedModelId) {
+                if (typeof window.initializeConfusionMatrix === 'function') {
+                    window.initializeConfusionMatrix(window.selectedModelId);
+                }
+            }
+            // Redisplay the matrices
+            if (typeof window.displayConfusionMatrices === 'function') {
+                window.displayConfusionMatrices();
+            }
+        }
+        // END ADDED
+
+    } catch (error) {
+        console.error("Error waiting for or using IdMapper in _updateModelInfoClassDisplay:", error);
+        modelClassNamesEl.textContent = 'Error loading names';
+        // Fallback: display IDs if mapper failed
+        setTimeout(() => { modelClassNamesEl.textContent = classIds.join(', '); }, 1000);
+        // ADDED: Ensure global state is cleared on error
+        window.soundClasses = [];
+        window.globalClassNamesForFeedback = [];
+        console.error("_updateModelInfoClassDisplay: Cleared global soundClasses on error.");
+        // END ADDED
+    }
+}
+
+/**
+ * Handle dictionary change
+ * @param {Event} event - Change event
+ */
+function handleDictionaryChange(event) {
+    if (!event || !event.target) {
+        console.error("handleDictionaryChange called with invalid event object");
+        return;
+    }
+    
+    const dictionaryId = event.target.value;
+    console.log(`Dictionary selection changed to: ${dictionaryId}`);
+
+    const modelSelectionCard = document.getElementById('modelSelectionCard');
+    const soundClassesCard = document.getElementById('soundClassesCard');
+    const predictorInterfaceCard = document.getElementById('predictorInterfaceCard');
+    const latestPrediction = document.getElementById('latestPrediction');
+    const predictionHistoryCard = document.getElementById('predictionHistoryCard');
+    const modelsList = document.getElementById('modelsList');
+
+    if (!dictionaryId) {
+        // Reset if default option is selected
+        selectedDictionaryId = null;
+        currentDictionaryId = null;
+        if (modelSelectionCard) modelSelectionCard.style.display = 'none';
+        if (soundClassesCard) soundClassesCard.style.display = 'none';
+        if (predictorInterfaceCard) predictorInterfaceCard.style.display = 'none';
+        if (latestPrediction) latestPrediction.style.display = 'none';
+        if (predictionHistoryCard) predictionHistoryCard.style.display = 'none';
+        if (modelsList) modelsList.innerHTML = '';
+        
+        // Hide controls as well
+        const controlsSection = document.querySelector('.mui-controls-below-cards');
+        if (controlsSection) controlsSection.style.display = 'none';
+        
+        console.log('Dictionary deselected, hiding model/predictor sections.');
+        return;
+    }
+
+    console.log(`Setting selectedDictionaryId and currentDictionaryId to ${dictionaryId}`);
+    selectedDictionaryId = dictionaryId;
+    currentDictionaryId = dictionaryId;
+    // Explicitly update global window properties as well
+    window.selectedDictionaryId = selectedDictionaryId;
+    window.currentDictionaryId = currentDictionaryId;
+
+    // Show predictor interface immediately after dictionary selection
+    if (predictorInterfaceCard) {
+        predictorInterfaceCard.style.display = 'block';
+        console.log('Made predictorInterfaceCard visible after dictionary selection');
+    }
+    
+    // Show controls as well
+    const controlsSection = document.querySelector('.mui-controls-below-cards');
+    if (controlsSection) {
+        controlsSection.style.display = 'block';
+        console.log('Made controls section visible');
+    }
+    
+    // Reset other sections before loading models
+    if (soundClassesCard) soundClassesCard.style.display = 'none';
+    if (latestPrediction) latestPrediction.style.display = 'none';
+    if (predictionHistoryCard) predictionHistoryCard.style.display = 'none';
+    
+    if (modelsList) {
+        modelsList.innerHTML = '<div id="modelsLoadingMessage"><div class="mui-spinner"></div> Loading models...</div>';
+        console.log('Updated modelsList HTML to show loading spinner');
+    }
+    
+    if (modelSelectionCard) {
+        modelSelectionCard.style.display = 'block';
+        console.log('Made modelSelectionCard visible');
+        // ADDED: Check if modelSelect exists immediately after making card visible
+        const selectCheck = document.getElementById('modelSelect');
+        console.log(`>>> handleDictionaryChange: Does #modelSelect exist RIGHT AFTER making card visible? ${!!selectCheck}`);
+    }
+
+    // Load models for the selected dictionary
+    console.log(`Calling loadAvailableModels with dictionaryId ${dictionaryId}`);
+    loadAvailableModels(selectedDictionaryId);
+
+    // Reset recorder state if dictionary changes
+    if (window.isListening) {
+        window.endPredictionSession();
+    }
+    selectedModelId = '';
+}
+
+/**
+ * Delete a model from the system
+ * @param {string} modelId - ID of the model to delete
+ */
+async function deleteModel(modelId) {
+    console.log(`Deleting model: ${modelId}`);
+    
+    // Get model details for confirmation
+    const model = availableModels.find(m => m.id === modelId);
+    if (!model) {
+        console.error(`Model ${modelId} not found in available models`);
+        alert('Model not found');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const modelType = model.type ? model.type.toUpperCase() : 'Unknown';
+    const modelName = model.name || 'Unnamed Model';
+    const confirmMessage = `Are you sure you want to delete this model?\n\nModel: ${modelType} - ${modelName}\nID: ${modelId}\n\nThis action cannot be undone.`;
+    
+    if (!confirm(confirmMessage)) {
+        console.log('Model deletion cancelled by user');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const modelsList = document.getElementById('modelsList');
+        const originalContent = modelsList ? modelsList.innerHTML : '';
+        if (modelsList) {
+            modelsList.style.opacity = '0.5';
+            modelsList.style.pointerEvents = 'none';
+        }
+        
+        // Make API call to delete model
+        const response = await fetch(`/api/models/${currentUserId}/${currentDictionaryId}/${modelId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMsg = `Server error (${response.status})`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMsg = errorData.error || errorMsg;
+            } catch (e) {
+                // If not JSON, use the text
+                errorMsg = errorText || errorMsg;
+            }
+            throw new Error(errorMsg);
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to delete model');
+        }
+        
+        console.log('Model deleted successfully:', result);
+        
+        // Show success message
+        if (typeof window.showToast === 'function') {
+            window.showToast(`Model ${modelId} deleted successfully`, 'success');
+        } else {
+            alert(`Model deleted successfully`);
+        }
+        
+        // If this was the selected model, clear selection
+        if (window.selectedModelId === modelId) {
+            window.selectedModelId = '';
+            window.selectedModelType = '';
+            
+            // Hide predictor interface
+            const predictorInterface = document.getElementById('predictorInterfaceCard');
+            if (predictorInterface) predictorInterface.style.display = 'none';
+            
+            // Clear prediction history
+            const historyCard = document.getElementById('predictionHistoryCard');
+            if (historyCard) historyCard.style.display = 'none';
+        }
+        
+        // Remove from selected models for comparison
+        if (window.selectedModelIds && window.selectedModelIds.includes(modelId)) {
+            const index = window.selectedModelIds.indexOf(modelId);
+            window.selectedModelIds.splice(index, 1);
+            if (typeof window.updateComparisonDisplay === 'function') {
+                window.updateComparisonDisplay();
+            }
+        }
+        
+        // Remove the model from the availableModels array
+        const modelIndex = availableModels.findIndex(m => m.id === modelId);
+        if (modelIndex !== -1) {
+            availableModels.splice(modelIndex, 1);
+            console.log(`Removed model ${modelId} from availableModels array`);
+        }
+        
+        // Remove the model item from the DOM immediately
+        // Note: modelsList already declared above
+        if (modelsList) {
+            // Find and remove the specific model item
+            const modelItems = modelsList.querySelectorAll('.mui-model-item');
+            modelItems.forEach(item => {
+                if (item.dataset.modelId === modelId) {
+                    // Fade out animation then remove
+                    item.style.transition = 'opacity 0.3s ease-out';
+                    item.style.opacity = '0';
+                    setTimeout(() => {
+                        item.remove();
+                        console.log(`Removed model ${modelId} from DOM`);
+                        
+                        // Update the "Latest" badge if needed
+                        const remainingItems = modelsList.querySelectorAll('.mui-model-item');
+                        if (remainingItems.length > 0) {
+                            // Make the first remaining item the "latest"
+                            remainingItems[0].classList.add('active');
+                            
+                            // Check if the first item needs a "Latest" badge
+                            const firstItemHeader = remainingItems[0].querySelector('h5');
+                            if (firstItemHeader && !firstItemHeader.innerHTML.includes('Latest')) {
+                                const modelType = availableModels[0]?.type || 'unknown';
+                                const badgeClass = modelType === 'cnn' ? 'cnn' : (modelType === 'rf' ? 'rf' : 'ensemble');
+                                firstItemHeader.innerHTML += ` <span class="mui-chip mui-chip-${badgeClass}">Latest</span>`;
+                            }
+                        } else {
+                            // No models left, show empty state
+                            modelsList.innerHTML = `
+                                <div class="mui-alert mui-alert-info">
+                                    <span class="material-icons">info</span>
+                                    <span>No trained models found for this dictionary. Please train a model first.</span>
+                                </div>`;
+                        }
+                    }, 300);
+                }
+            });
+            
+            // Restore normal opacity
+            modelsList.style.opacity = '1';
+            modelsList.style.pointerEvents = 'auto';
+        }
+        
+    } catch (error) {
+        console.error('Error deleting model:', error);
+        
+        // Restore UI state
+        const modelsList = document.getElementById('modelsList');
+        if (modelsList) {
+            modelsList.style.opacity = '1';
+            modelsList.style.pointerEvents = 'auto';
+        }
+        
+        // Show error message
+        if (typeof window.showToast === 'function') {
+            window.showToast(`Failed to delete model: ${error.message}`, 'error');
+        } else {
+            alert(`Failed to delete model: ${error.message}`);
+        }
+    }
+}
+
+// Export to global scope
+// Don't overwrite these with initial empty values!
+// window.selectedModelId = selectedModelId;  // REMOVED - this overwrites with empty string!
+// window.selectedModelType = selectedModelType;  // REMOVED - this overwrites with empty string!
+// window.selectedDictionaryId = selectedDictionaryId;  // REMOVED - this overwrites with null!
+window.currentDictionaryId = currentDictionaryId;
+window.availableModels = availableModels;
+window.soundClasses = soundClasses;
+
+window.submitPrediction = submitPrediction;
+window.processPredictionResponse = processPredictionResponse;
+window.loadAvailableDictionaries = loadAvailableDictionaries;
+window.loadAvailableModels = loadAvailableModels;
+window.selectModel = selectModel;
+window.fetchClassesForModel = fetchClassesForModel;
+window.handleDictionaryChange = handleDictionaryChange;
+window.toggleModelForComparison = toggleModelForComparison;
+window.submitMultiModelPrediction = submitMultiModelPrediction;
+window.updateComparisonDisplay = updateComparisonDisplay;
+window.selectedModelIds = selectedModelIds;
+window.updatePredictionTable = updatePredictionTable;
+window.updatePredictionTableMultiModel = updatePredictionTableMultiModel;
+window.clearPredictionTable = clearPredictionTable;
+window.deleteModel = deleteModel;
+
+// --- ADDED: Game Loop Logic ---
+
+let gameLoopTimeoutId = null;
+
+/**
+ * Selects the next target sound ID randomly from the available classes.
+ */
+function selectNextTargetSound() {
+    console.log("selectNextTargetSound: window.soundClasses =", window.soundClasses);
+    console.log("selectNextTargetSound: soundClasses length =", window.soundClasses ? window.soundClasses.length : 0);
+    
+    if (!window.soundClasses || window.soundClasses.length === 0) {
+        console.error("Game Error: No sound classes loaded to select a target.");
+        console.error("Please make sure a model is selected before starting game mode.");
+        window.currentGameTargetClassId = null;
+        // Optionally display an error to the user
+        if (typeof window.displayTargetSound === 'function') window.displayTargetSound(null); 
+        alert("Please select a model first before starting game mode!");
+        return;
+    }
+    
+    // Exclude current target to avoid repetition (if applicable)
+    const availableTargets = window.soundClasses.filter(id => id !== window.currentGameTargetClassId);
+    const targetPool = availableTargets.length > 0 ? availableTargets : window.soundClasses;
+    
+    const randomIndex = Math.floor(Math.random() * targetPool.length);
+    window.currentGameTargetClassId = targetPool[randomIndex];
+    console.log(`Game Loop: New target selected: ${window.currentGameTargetClassId}`);
+    
+    // Display the new target - convert ID to name first
+    if (typeof window.displayTargetSound === 'function') {
+        // Get the class name from the ID using IdMapper
+        let targetClassName = window.currentGameTargetClassId;
+        if (window.IdMapper && typeof window.IdMapper.getClassName === 'function') {
+            const mappedName = window.IdMapper.getClassName(window.currentGameTargetClassId);
+            if (mappedName && mappedName !== window.currentGameTargetClassId) {
+                targetClassName = mappedName;
+            }
+        }
+        window.displayTargetSound(targetClassName);
+    }
+    
+    // Reset face to neutral for the new target
+    if (typeof window.showFace === 'function') {
+        console.log('>>> selectNextTargetSound: Calling showFace("neutral")...');
+        window.showFace('neutral');
+    }
+    
+    // Ensure face container is properly sized and visible
+    const faceContainer = document.getElementById('faceContainer');
+    if (faceContainer) {
+        // Force dimensions with !important via setAttribute
+        faceContainer.setAttribute('style', 'margin: 1rem auto; display: block !important; height: 200px !important; width: 200px !important; min-height: 200px !important; visibility: visible !important; overflow: hidden !important;');
+        
+        // Force height on all faces too
+        ['neutralFace', 'happyFace', 'grimaceFace'].forEach(id => {
+            const face = document.getElementById(id);
+            if (face) {
+                face.setAttribute('style', 'position: absolute; width: 100% !important; height: 100% !important; min-height: 100% !important;' + 
+                                 (id.includes('neutral') ? 'display: block !important; opacity: 1 !important;' : ''));
+            }
+        });
+        
+        console.log('>>> selectNextTargetSound: Force-updated face container dimensions');
+    }
+}
+
+/**
+ * Starts the game loop (called when entering game mode).
+ */
+async function startGameLoop() {
+    console.log("=== STARTING GAME LOOP ===");
+    window.currentGameModeActive = true;  // Ensure this is set
+    
+    // ADDED: Check for required UI functions
+    if (typeof window.displayTargetSound !== 'function' || typeof window.showFace !== 'function') {
+        console.error("GAME ERROR: Required UI functions (displayTargetSound or showFace) not found on window!");
+        alert("Error starting game: UI functions missing. Please refresh.");
+        // Optionally try to stop the game or prevent further action
+        if(typeof window.stopGameLoop === 'function') window.stopGameLoop();
+        return;
+    }
+    // END CHECK
+    
+    // Check if soundClasses is empty and try to fetch them
+    if (!window.soundClasses || window.soundClasses.length === 0) {
+        console.log("soundClasses is empty, attempting to fetch classes for selected model(s)");
+        if (window.selectedModelId) {
+            console.log(`Fetching classes for model: ${window.selectedModelId}`);
+            await fetchClassesForModel(window.selectedModelId);
+        } else if (window.selectedModelIds && window.selectedModelIds.length > 0) {
+            console.log(`Fetching classes for first model: ${window.selectedModelIds[0]}`);
+            await fetchClassesForModel(window.selectedModelIds[0]);
+        }
+        
+        // Wait a bit for classes to be fully loaded
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Debug confusion matrix state before initialization
+    if (typeof window.debugConfusionMatrix === 'function') {
+        console.log("State before matrix initialization:");
+        window.debugConfusionMatrix();
+    }
+    
+    // Initialize and display confusion matrices
+    console.log("Initializing confusion matrices for game mode...");
+    console.log("selectedModelIds:", window.selectedModelIds);
+    console.log("selectedModelId:", window.selectedModelId);
+    
+    if (window.selectedModelIds && window.selectedModelIds.length > 0) {
+        console.log("Initializing matrices for multiple models:", window.selectedModelIds);
+        window.selectedModelIds.forEach(modelId => {
+            if (typeof window.initializeConfusionMatrix === 'function') {
+                console.log("Initializing matrix for model:", modelId);
+                window.initializeConfusionMatrix(modelId);
+            }
+        });
+    } else if (window.selectedModelId) {
+        console.log("Initializing matrix for single model:", window.selectedModelId);
+        if (typeof window.initializeConfusionMatrix === 'function') {
+            window.initializeConfusionMatrix(window.selectedModelId);
+        }
+    } else {
+        console.error("No models selected for confusion matrix initialization!");
+    }
+    
+    // Display the confusion matrices
+    if (typeof window.displayConfusionMatrices === 'function') {
+        console.log("Displaying confusion matrices...");
+        window.displayConfusionMatrices();
+    } else {
+        console.error("displayConfusionMatrices function not found!");
+    }
+    
+    selectNextTargetSound(); // Select and display the first target
+    // No timeout loop needed here; progression happens after prediction
+}
+
+/**
+ * Stops the game loop (called when leaving game mode).
+ */
+function stopGameLoop() {
+    console.log("Stopping Game Loop...");
+    window.currentGameTargetClassId = null;
+    if (typeof window.displayTargetSound === 'function') {
+        window.displayTargetSound('...'); // Reset to default text
+    }
+    if (typeof window.showFace === 'function') {
+        window.showFace('neutral'); // Reset face
+    }
+}
+
+// Export new functions
+window.startGameLoop = startGameLoop;
+window.stopGameLoop = stopGameLoop;
+// --- END ADDED ---
+
+// Direct call with delay to ensure it runs after all initialization
+setTimeout(() => {
+    loadAvailableDictionaries(); 
+    
+    // Remove any existing prediction popup
+    const existingPopup = document.getElementById('simplePredictionsList');
+    if (existingPopup) {
+        existingPopup.remove();
+        console.log('Removed existing predictions popup on load');
+    }
+    
+    // Periodically check and remove the popup if it appears
+    setInterval(() => {
+        const popup = document.getElementById('simplePredictionsList');
+        if (popup) {
+            popup.remove();
+            console.log('Removed predictions popup');
+        }
+    }, 1000); // Check every second
+    
+    // Add debugging helper to list all available window functions starting with certain prefixes
+    window.listAvailableFunctions = function() {
+        const functionPrefixes = ['load', 'handle', 'populate', 'select', 'fetch', 'update'];
+        const globalFunctions = {};
+        
+        for (const key in window) {
+            if (typeof window[key] === 'function') {
+                for (const prefix of functionPrefixes) {
+                    if (key.startsWith(prefix)) {
+                        globalFunctions[key] = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        console.log("Available global functions:", Object.keys(globalFunctions).sort().join(', '));
+        return Object.keys(globalFunctions).sort();
+    };
+    
+    // Run it once
+    window.listAvailableFunctions();
+}, 1500); 

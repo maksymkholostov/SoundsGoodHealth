@@ -1,0 +1,93 @@
+# Frontend Standardization Guide: MUI Theme
+
+**Goal:** To ensure a consistent, stable, and visually coherent user interface across the SoundsGood application by standardizing on the Material UI (MUI)-inspired theme defined in `base.html`. This approach avoids conflicts caused by mixing CSS frameworks (like Bootstrap and MUI) and provides a clear path for future frontend development.
+
+**Core Principle:** **All new and refactored frontend templates MUST extend `base.html` and exclusively use the styling conventions outlined below. Bootstrap classes and components are strictly forbidden.**
+
+**1. Core Dependencies (Provided by `base.html`)**
+
+*   **Base Template:** All pages must use `{% extends "base.html" %}`.
+*   **Fonts:** Material Icons (`family=Material+Icons`) and Roboto/Poppins fonts are loaded.
+*   **Base CSS:** `base.html` includes:
+    *   MUI Core CSS (`mui-material.min.css`) - Provides foundational MUI styles (may or may not be fully utilized by custom styles).
+    *   Extensive custom CSS within `<style>` tags defining theme colors (`--primary-color`, `--danger-color`, etc.) and custom MUI-like component styles (`.mui-card`, `.mui-button`, `.mui-alert`, `.mui-dialog`, navbar styles, etc.). **These custom styles in `base.html` are the primary reference.**
+
+**2. General Guidelines**
+
+*   **NO BOOTSTRAP:** Do not use *any* Bootstrap classes (e.g., `btn`, `btn-*`, `card`, `card-*`, `row`, `col-*`, `container` (except potentially the top-level one), `modal`, `modal-*`, `alert`, `alert-*`, `form-control`, `form-check`, `list-group`, `badge`, `nav-tabs`, `tab-pane`, `bi-*`, etc.).
+*   **USE MUI STYLES:** Utilize the custom `.mui-*` classes defined in `base.html` or create new custom styles that follow the MUI aesthetic (clean lines, proper spacing, elevation/shadows, standard iconography).
+*   **ICONS:** Use Material Icons exclusively: `<span class="material-icons">icon_name</span>`. Refer to the Material Icons library for available icon names. Ensure icons are vertically aligned with adjacent text, typically using flexbox (`display: flex; align-items: center;`).
+*   **COLORS:** Use the CSS variables defined in the `:root` of `base.html` for consistent theming (e.g., `background-color: var(--primary-color);`, `color: var(--danger-color);`).
+*   **CLEANUP:** Remove any commented-out Bootstrap code or remnants from previous refactoring attempts.
+
+**3. Component Mappings (Bootstrap -> MUI)**
+
+Replace common Bootstrap patterns with the established MUI equivalents:
+
+| Bootstrap Element/Class        | MUI Equivalent / Approach                                                                                                                               | Notes                                                                                                  |
+| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------- |
+| Buttons (`btn`, `btn-*`)       | `.mui-button`, `.mui-button-outlined`. Use inline styles or custom CSS for specific colors (`var(--primary-color)`, etc.). Add `<span class="material-icons">` inside. | Defined in `base.html`. Ensure `display: inline-flex; align-items: center;` for icon alignment.          |
+| Cards (`card`, `card-*`)       | `.mui-card`, `.mui-card-header`, `.mui-card-content`, `.mui-card-actions`.                                                                              | Defined in `base.html`.                                                                                |
+| Grid (`row`, `col-*`)          | Custom CSS using Flexbox (`display: flex; ...`) or CSS Grid (`display: grid; ...`).                                                                       | Avoid Bootstrap grid. Define layout in `custom_styles`. Refer to `dashboard.html` for grid examples. |
+| Forms (`form-control`, etc.) | Use standard `<input>`, `<textarea>`, `<select>`. Style using `.mui-input`, `.mui-textarea` classes. Group using `.mui-form-group`.                          | Basic input styles defined in `sounds_management.html` styles - may need refinement/centralization.  |
+| Form Checks (`form-check`)     | Use standard `<input type="radio/checkbox">` and `<label>`. Style manually using CSS in `custom_styles` to match MUI look.                                | No standard `.mui-form-check` exists in current custom CSS.                                            |
+| Alerts (`alert`, `alert-*`)    | `.mui-alert`, `.mui-alert-success`, `.mui-alert-warning`, `.mui-alert-error`, `.mui-alert-info`.                                                        | Defined in `base.html`. Used by custom `showToast` JS function.                                        |
+| Modals (`modal`, `modal-*`)    | `.mui-dialog-overlay` (outer) and `.mui-dialog` (inner) structure with `.mui-dialog-header`, `.mui-dialog-body`, `.mui-dialog-footer`.                   | Structure/CSS defined in `sounds_management.html`. Requires custom JS for show/hide (see example JS). |
+| Icons (`bi-*`)                 | `<span class="material-icons">icon_name</span>`.                                                                                                         | Use Material Icons library names.                                                                      |
+| Tabs (`nav-tabs`, `tab-pane`)  | Custom structure (e.g., `.mui-tabs-container`, `.mui-tab`) styled in `custom_styles`. Requires custom JS for showing/hiding panes.                        | Refer to `sound_class_view.html` for example CSS and JS.                                               |
+| Lists (`list-group`)         | Custom structure (e.g., `.recording-list-container`, `.recording-item`) styled in `custom_styles` to mimic MUI lists.                                    | Refer to `sound_class_view.html` for example CSS.                                                      |
+
+**4. Custom CSS Usage**
+
+*   Use the `{% block custom_styles %}` block within each template for styles *specific* to that page.
+*   **Before adding custom styles:** Check if a suitable utility class or component style already exists in `base.html` or the shared custom CSS.
+*   Keep custom styles minimal and focused on layout or component variations not covered globally.
+*   Ensure custom styles visually align with the overall MUI theme.
+
+**5. JavaScript Considerations**
+
+*   **DOM Selection:** Select elements using MUI classes (e.g., `document.querySelector('.mui-button')`) or specific IDs.
+*   **Event Listeners:** Attach listeners to MUI elements (e.g., `.mui-button`, dialog close buttons).
+*   **Component Logic:** Since Bootstrap JS is not loaded, logic for components like modals/dialogs and tabs must be handled manually in the page's JavaScript (see examples in `sounds_management.html` and `sound_class_view.html`). Use helper functions like `openDialog`, `closeDialog`, `showToast` where appropriate.
+*   **Dynamic Content:** When adding elements dynamically (e.g., list items, toasts), ensure they use the correct MUI classes and structure.
+
+**6. Handling Future AI Requests**
+
+*   **"Update page X adhering to principles but looking exactly as it does now":** This request is problematic. The *goal* is to make it look like the MUI theme, not preserve potentially conflicting old styles. Rephrase the request: **"Refactor `page X` to use the MUI theme defined in `base.html`, following the component mappings in the Standardization Guide. Preserve the core content and functionality."**
+*   **"Update page X adhering to principles and looking like other pages":** This is the ideal request. Instruct the AI: **"Refactor `page X` to use the MUI theme defined in `base.html`, following the component mappings and guidelines in the Standardization Guide. Ensure its appearance and structure are consistent with `dashboard.html`, `sound_class_view.html`, and `sounds_management.html`."**
+
+**Conclusion:**
+
+Adhering strictly to this guide will prevent CSS framework conflicts, reduce bugs, improve maintainability, and create a professional, unified user experience across the SoundsGood application. All frontend changes should be reviewed against these principles.
+
+---
+
+## MUI Refactoring Checklist
+
+The following template files have been identified as containing Bootstrap elements and require refactoring to align with the MUI standards outlined above:
+
+*   [ ] `frontend/templates/404.html`
+*   [ ] `frontend/templates/error.html`
+*   [ ] `frontend/templates/inference_statistics.html`
+*   [ ] `frontend/templates/register.html`
+*   [ ] `frontend/templates/index.html`
+*   [ ] `frontend/templates/process_flow.html`
+*   [ ] `frontend/templates/sound_approval.html` (Mixed, needs cleanup)
+*   [ ] `frontend/templates/how_it_works.html` (Uses custom classes, needs review for MUI alignment)
+*   [ ] `frontend/templates/training_status.html`
+*   [ ] `frontend/templates/upload_sounds.html`
+*   [ ] `frontend/templates/dictionaries.html`
+*   [ ] `frontend/templates/rf_training_summary_stats.html`
+*   [ ] `frontend/templates/recording.html` (Purpose unclear, may be obsolete)
+*   [ ] `frontend/templates/dictionary_detail.html`
+*   [ ] `frontend/templates/login.html`
+*   [ ] `frontend/templates/reset_password.html`
+*   [ ] `frontend/templates/reset_password_confirm.html`
+*   [ ] `frontend/templates/training.html` (Mixed, needs cleanup)
+*   [ ] `frontend/templates/profile.html` (Mixed, needs cleanup)
+*   [ ] `frontend/templates/sounds_record.html`
+*   [ ] `frontend/templates/list_recordings.html` (Purpose unclear, may be obsolete)
+*   [ ] `frontend/templates/unified_verify.html` (Likely the verification UI, replaces `sound_approval.html`?)
+*   [ ] `frontend/templates/record_test.html` (May be obsolete)
+
+*(Note: Other templates like `cnn_training_summary_stats.html`, `ensemble_training_summary_stats.html`, `model_summary*.html` etc. should also be checked for consistency during refactoring, although they didn't show obvious Bootstrap elements in the initial scans).* 

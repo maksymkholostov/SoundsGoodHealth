@@ -1,0 +1,28 @@
+{
+  "id": "v0.1",
+  "name": "Full Feature Set v0.1",
+  "description": "Complete feature set containing all audio features for model training",
+  "features": [
+    "mfcc",
+    "mfcc_delta",
+    "mfcc_delta2",
+    "mel_spectrogram",
+    "spectral_centroid",
+    "spectral_bandwidth",
+    "spectral_rolloff",
+    "zero_crossing_rate",
+    "rms_energy"
+  ],
+  "parameters": {
+    "sample_rate": 16000,
+    "n_mfcc": 40,
+    "n_mels": 128,
+    "n_fft": 160,
+    "hop_length": 80,
+    "win_length": 160,
+    "window": "hann",
+    "center": true,
+    "pad_mode": "reflect"
+  },
+  "created_at": "2025-08-09T22:02:54.500446"
+}

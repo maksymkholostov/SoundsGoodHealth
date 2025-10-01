@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400">
+  <!-- Background -->
+  <rect x="0" y="0" width="500" height="400" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <text x="250" y="40" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#333">Dictionaries</text>
+  
+  <!-- Dictionary Books -->
+  <g transform="translate(100, 80)">
+    <!-- Dictionary 1: "EhOh" -->
+    <g class="book">
+      <rect x="0" y="0" width="140" height="180" fill="#FF9A8B" rx="5" ry="5" stroke="#FF6B6B" stroke-width="2"/>
+      <rect x="0" y="0" width="30" height="180" fill="#FF6B6B" rx="5" ry="5"/>
+      <text x="70" y="90" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">EhOh</text>
+      <text x="70" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">2 Classes</text>
+      
+      <!-- Dictionary Content (Sound Classes) -->
+      <circle cx="50" cy="150" r="10" fill="white"/>
+      <text x="50" y="154" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#FF6B6B">Eh</text>
+      <circle cx="90" cy="150" r="10" fill="white"/>
+      <text x="90" y="154" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#FF6B6B">Oh</text>
+    </g>
+    
+    <!-- Dictionary 2: "Consonants" -->
+    <g class="book" transform="translate(160, 20)">
+      <rect x="0" y="0" width="140" height="180" fill="#4ECDC4" rx="5" ry="5" stroke="#33B8B0" stroke-width="2"/>
+      <rect x="0" y="0" width="30" height="180" fill="#33B8B0" rx="5" ry="5"/>
+      <text x="70" y="90" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Consonants</text>
+      <text x="70" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">3 Classes</text>
+      
+      <!-- Dictionary Content (Sound Classes) -->
+      <circle cx="40" cy="150" r="10" fill="white"/>
+      <text x="40" y="154" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#33B8B0">K</text>
+      <circle cx="70" cy="150" r="10" fill="white"/>
+      <text x="70" y="154" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#33B8B0">T</text>
+      <circle cx="100" cy="150" r="10" fill="white"/>
+      <text x="100" y="154" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#33B8B0">Sh</text>
+    </g>
+    
+    <!-- Dictionary 3: "Vowels" -->
+    <g class="book" transform="translate(80, 210)">
+      <rect x="0" y="0" width="140" height="180" fill="#FFD166" rx="5" ry="5" stroke="#FFC44D" stroke-width="2"/>
+      <rect x="0" y="0" width="30" height="180" fill="#FFC44D" rx="5" ry="5"/>
+      <text x="70" y="90" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Vowels</text>
+      <text x="70" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">4 Classes</text>
+      
+      <!-- Dictionary Content (Sound Classes) -->
+      <circle cx="30" cy="150" r="8" fill="white"/>
+      <text x="30" y="154" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#FFC44D">A</text>
+      <circle cx="55" cy="150" r="8" fill="white"/>
+      <text x="55" y="154" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#FFC44D">E</text>
+      <circle cx="80" cy="150" r="8" fill="white"/>
+      <text x="80" y="154" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#FFC44D">I</text>
+      <circle cx="105" cy="150" r="8" fill="white"/>
+      <text x="105" y="154" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#FFC44D">O</text>
+    </g>
+  </g>
+  
+  <!-- Animation for floating effect -->
+  <style>
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    .book {
+      animation: float 4s ease-in-out infinite;
+      transform-origin: center;
+    }
+    .book:nth-child(1) { animation-delay: 0s; }
+    .book:nth-child(2) { animation-delay: 1s; }
+    .book:nth-child(3) { animation-delay: 2s; }
+  </style>
+</svg> 

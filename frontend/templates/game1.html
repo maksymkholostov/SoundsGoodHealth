@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Play with Sounds - SoundsGood{% endblock %}
+
+{% block additional_head %}
+<!-- Include play-specific CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/play.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Play with Sounds</h1>
+    <p class="lead">Make sounds and watch the face react! This is a fun way to practice making different sounds.</p>
+     
+    <div class="mui-play-container">
+        <div class="mui-instructions">
+            <div class="mui-alert mui-alert-info">
+                <span class="material-icons">info</span>
+                <div>
+                    <strong>How it works:</strong> Speak or make a sound, and the face will smile when it hears you!
+                    The louder the sound, the more the face will react.
+                </div>
+            </div>
+        </div>
+        
+        <div class="mui-face-container" id="faceContainer">
+            <div class="mui-face mui-face-neutral" id="neutralFace">
+                <div class="mui-eye mui-eye-left"></div>
+                <div class="mui-eye mui-eye-right"></div>
+                <div class="mui-mouth mui-mouth-neutral"></div>
+            </div>
+            <div class="mui-face mui-face-happy" id="happyFace">
+                <div class="mui-eye mui-eye-left"></div>
+                <div class="mui-eye mui-eye-right"></div>
+                <div class="mui-mouth mui-mouth-happy"></div>
+            </div>
+        </div>
+        
+        <div class="mui-sound-level">
+            <div class="mui-sound-level-indicator" id="soundLevelIndicator"></div>
+        </div>
+        
+        <button class="mui-button" id="startAudioBtn">
+            <span class="material-icons">mic</span>
+            Start Listening
+        </button>
+        
+        <div class="mui-options-panel">
+            <h3>Settings</h3>
+            <div>
+                <label for="sensitivitySlider">Sensitivity</label>
+                <input type="range" class="mui-sensitivity-slider" id="sensitivitySlider" min="1" max="100" value="80">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Less sensitive</span>
+                    <span>More sensitive</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include play-specific JavaScript -->
+<script src="{{ url_for('static', filename='js/play.js') }}"></script>
+{% endblock %} 

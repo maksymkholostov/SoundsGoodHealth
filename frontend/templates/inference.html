@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Inference - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+.mui-predict-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+    padding: 0;
+}
+
+.mui-card {
+    margin-bottom: 24px;
+        border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background-color: white;
+}
+
+.mui-card-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+}
+
+.mui-card-content {
+    padding: 16px;
+}
+
+.mui-recording-status {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+.mui-status-indicator {
+    width: 16px;
+    height: 16px;
+        border-radius: 50%;
+    background: var(--danger-color);
+    }
+
+.mui-status-indicator.recording {
+    background: var(--success-color);
+        animation: pulse 1s infinite;
+    }
+
+.mui-predictions-list {
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+.mui-prediction-item {
+        display: flex;
+        justify-content: space-between;
+    padding: 12px;
+    margin-bottom: 8px;
+        background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+.mui-prediction-item .probability {
+        color: #666;
+    }
+
+.mui-feedback-form {
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.mui-sound-buttons {
+        display: flex;
+        flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+    }
+
+.mui-sound-button {
+        min-width: 80px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.mui-sound-button.correct {
+    background-color: var(--success-color);
+        color: white;
+    }
+
+.mui-sound-button.incorrect {
+    background-color: var(--danger-color);
+        color: white;
+    }
+
+.mui-predicted-sound {
+    font-weight: 500;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+}
+
+.mui-statistics {
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.mui-per-sound-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+    }
+
+.mui-sound-stat {
+        background: white;
+    padding: 12px;
+    border-radius: 8px;
+        text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mui-debug-container {
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 16px;
+        height: 300px;
+        overflow-y: auto;
+    }
+
+.mui-debug-container .log-entry {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 0.9; }
+        70% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(0.95); opacity: 0.9; }
+    }
+
+.mui-sounds-list {
+    margin: 16px 0;
+    }
+
+.mui-sound-badge {
+        display: inline-block;
+    padding: 4px 12px;
+    margin: 4px;
+    background: rgba(63, 81, 181, 0.1);
+    border-radius: 16px;
+        font-size: 0.9em;
+    color: var(--primary-color);
+    }
+
+.mui-confusion-matrix {
+        background: white;
+    border-radius: 8px;
+    margin-top: 16px;
+    overflow: hidden;
+    }
+
+.mui-confusion-matrix th, .mui-confusion-matrix td {
+        text-align: center;
+        font-size: 0.9em;
+    padding: 8px !important;
+    }
+
+.mui-confusion-matrix td.correct {
+    background-color: rgba(76, 175, 80, 0.2);
+    }
+
+.mui-confusion-matrix td.error {
+    background-color: rgba(244, 67, 54, 0.2);
+    }
+
+.mui-patterns-list,
+.mui-recent-errors-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+.mui-pattern-item,
+.mui-error-item {
+        background: white;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mui-error-item .timestamp {
+    color: #666;
+    font-size: 0.85em;
+}
+
+.mui-model-select {
+    margin-bottom: 16px;
+}
+
+.mui-model-select select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(0,0,0,0.2);
+        border-radius: 4px;
+    background-color: white;
+}
+
+.mui-grid-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 900px) {
+    .mui-grid-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mui-card-header-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0;
+        display: flex;
+        align-items: center;
+}
+
+.mui-card-header-title .material-icons {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+.mui-button {
+    padding: 8px 16px;
+        border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+}
+
+.mui-button-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.mui-button-primary:hover {
+    background-color: #303f9f;
+}
+
+.mui-button-primary:disabled {
+    background-color: rgba(0,0,0,0.12);
+    color: rgba(0,0,0,0.26);
+    cursor: not-allowed;
+}
+
+.mui-button-outlined {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.mui-button-outlined:hover {
+    background-color: rgba(63, 81, 181, 0.1);
+}
+
+.mui-button .material-icons {
+    font-size: 18px;
+    margin-right: 4px;
+}
+
+.mui-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mui-table th, .mui-table td {
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 8px;
+}
+
+.mui-table th {
+    background-color: rgba(0,0,0,0.05);
+    font-weight: 500;
+}
+
+.mui-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+}
+
+.mui-tab {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.mui-tab.active {
+    color: var(--primary-color);
+}
+
+.mui-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+.mui-tab-content {
+    padding: 16px 0;
+}</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 24px">
+        <h1 class="page-title">
+            <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">graphic_eq</span>
+            Sound Inference
+        </h1>
+        <p style="color: #666; margin-top: 8px;">Test your trained models by speaking and getting real-time predictions</p>
+    </div>
+
+    <div class="mui-predict-container">
+        <div class="mui-grid-container">
+            <!-- Left Column: Main Prediction Area -->
+            <div>
+                <!-- Model Selection Card -->
+                <div class="mui-card">
+                    <div class="mui-card-header">
+                        <h2 class="mui-card-header-title">
+                            <span class="material-icons">dataset</span>
+                            Select Model
+                        </h2>
+                    </div>
+                    <div class="mui-card-content">
+                        <div class="mui-model-select">
+                            <select id="modelSelect" onchange="onModelChange()">
+                                <option value="">-- Select a model --</option>
+                                {% for model in models %}
+                                <option value="{{ model.id }}">
+                                    {{ model.name }} ({{ model.dict_name }}, {{ model.model_type }})
+                                </option>
+                    {% endfor %}
+                            </select>
+            </div>
+
+                        <div id="modelInfo" style="display: none;">
+                            <div class="mui-sounds-list">
+                                <h3 style="font-size: 1rem; margin-bottom: 8px;">Sounds in this model:</h3>
+                                <div id="soundsList"></div>
+                </div>
+
+                            <div id="startRecordingContainer" style="margin-top: 16px;">
+                                <button id="startRecordingBtn" class="mui-button mui-button-primary" disabled>
+                                    <span class="material-icons">mic</span> Start Recording
+                                </button>
+                                <button id="stopRecordingBtn" class="mui-button mui-button-outlined" style="display: none;">
+                                    <span class="material-icons">stop</span> Stop Recording
+                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recording Area -->
+                <div class="mui-card" id="recordingArea" style="display: none;">
+                    <div class="mui-card-header">
+                        <h2 class="mui-card-header-title">
+                            <span class="material-icons">mic</span>
+                            Recording
+                        </h2>
+                    </div>
+                    <div class="mui-card-content">
+                        <div class="mui-recording-status">
+                            <div id="recordingIndicator" class="mui-status-indicator"></div>
+                            <div id="recordingStatus">Not recording</div>
+                        </div>
+
+                        <div id="audioVisualizer"></div>
+                        
+                        <div class="mui-predictions-container" style="margin-top: 16px;">
+                            <h3 style="font-size: 1rem; margin-bottom: 8px;">Latest Prediction:</h3>
+                            <div class="mui-prediction-display">
+                                <div class="mui-predicted-sound" id="predictedSound">--</div>
+                                <div id="predictionConfidence" style="color: #666;">Confidence: 0%</div>
+                            </div>
+                            
+                            <div class="mui-predictions-list" id="predictionsList">
+                                <!-- Predictions will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="mui-feedback-form">
+                            <h3 style="font-size: 1rem; margin-bottom: 8px;">Was the prediction correct?</h3>
+                            <div>
+                                <button class="mui-button mui-button-outlined" onclick="provideFeedback(true)">
+                                    <span class="material-icons">thumb_up</span> Yes
+                                </button>
+                                <button class="mui-button mui-button-outlined" onclick="provideFeedback(false)">
+                                    <span class="material-icons">thumb_down</span> No
+                                </button>
+                            </div>
+                            
+                            <div style="margin-top: 16px;">
+                                <p>If incorrect, what did you actually say?</p>
+                                <div class="mui-sound-buttons" id="soundFeedbackButtons">
+                                    <!-- Sound buttons will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Statistics and Analysis -->
+            <div>
+                <!-- Statistics Card -->
+                <div class="mui-card" id="statisticsCard" style="display: none;">
+                    <div class="mui-card-header">
+                        <h2 class="mui-card-header-title">
+                            <span class="material-icons">analytics</span>
+                            Statistics
+                        </h2>
+                    </div>
+                    <div class="mui-card-content">
+                        <div class="mui-statistics">
+                            <div>
+                                <strong>Total Predictions:</strong> <span id="totalPredictions">0</span>
+                            </div>
+                            <div>
+                                <strong>Correct Predictions:</strong> <span id="correctPredictions">0</span>
+                            </div>
+                            <div>
+                                <strong>Accuracy:</strong> <span id="accuracyRate">0%</span>
+                            </div>
+                        </div>
+
+                        <h3 style="font-size: 1rem; margin: 16px 0 8px;">Per-Sound Statistics:</h3>
+                        <div class="mui-per-sound-stats" id="perSoundStats">
+                            <!-- Per-sound statistics will be added here -->
+                        </div>
+                        </div>
+                    </div>
+
+                <!-- Confusion Matrix Card -->
+                <div class="mui-card" id="confusionMatrixCard" style="display: none;">
+                    <div class="mui-card-header">
+                        <h2 class="mui-card-header-title">
+                            <span class="material-icons">grid_on</span>
+                            Confusion Matrix
+                        </h2>
+                    </div>
+                    <div class="mui-card-content">
+                        <p style="margin-bottom: 8px;">Shows how often each sound is predicted as each other sound.</p>
+                        <div class="mui-confusion-matrix">
+                            <table class="mui-table" id="confusionMatrix">
+                                <!-- Confusion matrix will be added here -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Patterns Card -->
+                <div class="mui-card" id="patternsCard" style="display: none;">
+                    <div class="mui-card-header">
+                        <h2 class="mui-card-header-title">
+                            <span class="material-icons">trending_up</span>
+                            Error Patterns
+                        </h2>
+                    </div>
+                    <div class="mui-card-content">
+                        <p>Common misclassification patterns:</p>
+                        <div class="mui-patterns-list" id="patternsList">
+                            <!-- Patterns will be added here -->
+                    </div>
+
+                        <h3 style="font-size: 1rem; margin: 16px 0 8px;">Recent Errors:</h3>
+                        <div class="mui-recent-errors-list" id="recentErrorsList">
+                            <!-- Recent errors will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Debug Area (Hidden by Default) -->
+        <div class="mui-card" id="debugCard" style="display: none;">
+            <div class="mui-card-header">
+                <h2 class="mui-card-header-title">
+                    <span class="material-icons">bug_report</span>
+                    Debug Information
+                </h2>
+            </div>
+            <div class="mui-card-content">
+                <div class="mui-debug-container" id="debugLog">
+                    <!-- Debug log entries will be added here -->
+            </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<!-- Debugging toggle -->
+<div style="text-align: center; margin: 16px 0;">
+    <button id="toggleDebugBtn" class="mui-button mui-button-outlined" onclick="toggleDebug()">
+        <span class="material-icons">code</span> Toggle Debug Info
+    </button>
+</div>
+
+<!-- Custom scripts for this page -->
+<script>
+// ... existing code ...
+</script>
+{% endblock %}

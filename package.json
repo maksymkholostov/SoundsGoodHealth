@@ -1,0 +1,12 @@
+{
+  "name": "soundclassifiers-v10",
+  "version": "1.0.0",
+  "description": "SoundClassifiers v10 Application",
+  "main": "wsgi.py",
+  "scripts": {
+    "start": "gunicorn wsgi:app"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 

@@ -1,0 +1,16 @@
+{
+  "id": "feat_moh_ronrubin_20250811_213108601",
+  "recording_id": "gold_moh_ronrubin_20250811_211531734_5",
+  "feature_set_id": "v0.1",
+  "filename": "features/v0.1/ronrubin/gold/Moh/gold_moh_ronrubin_20250811_211531734_5_features.npz",
+  "metadata": {
+    "dictionary_id": "dict_mohmoo",
+    "class_id": "cls_moh",
+    "class_name": "Moh",
+    "recording_type": "gold",
+    "subset": "gold",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-08-11T21:31:08.602009"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "feat_moh_ronrubin_20250811_213034912",
+  "recording_id": "aug_moh_ronrubin_20250811_212553286",
+  "feature_set_id": "v0.1",
+  "filename": "features/v0.1/ronrubin/augmented/Moh/aug_moh_ronrubin_20250811_212553286_features.npz",
+  "metadata": {
+    "dictionary_id": "dict_mohmoo",
+    "class_id": "cls_moh",
+    "class_name": "Moh",
+    "recording_type": "augmented",
+    "subset": "augmented",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-08-11T21:30:34.912773"
+}

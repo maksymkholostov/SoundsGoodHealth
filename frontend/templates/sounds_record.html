@@ -1,0 +1,2114 @@
+{% extends "base.html" %}
+
+{% block title %}Record Sounds - {{ source_dictionary.name if source_dictionary else 'General' }} - {{ preselected_class if preselected_class else 'Select Class' }}{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Material UI styling for recording page */
+.mui-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.mui-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mui-card-content {
+    padding: 1.5rem;
+}
+
+.mui-card-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+}
+
+.mui-card-title .material-icons {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.mui-record-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border: 2px solid var(--primary-color);
+}
+
+.mui-record-btn .material-icons {
+    font-size: 32px;
+    color: var(--primary-color);
+}
+
+.mui-record-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+.mui-record-btn.recording {
+    background-color: #f44336;
+    animation: pulse 1.5s infinite;
+}
+
+.mui-record-btn.recording .material-icons {
+    color: white;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+    }
+}
+
+.mui-select {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--dark-color);
+    background-color: white;
+    background-clip: padding-box;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+.mui-select:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.1rem rgba(63, 81, 181, 0.25);
+}
+
+.mui-input {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--dark-color);
+    background-color: white;
+    background-clip: padding-box;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.mui-input:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.1rem rgba(63, 81, 181, 0.25);
+}
+
+.mui-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.mui-button .material-icons {
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+.mui-button:hover {
+    background-color: #303f9f;
+}
+
+.mui-button-outlined {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.mui-button-outlined:hover {
+    background-color: rgba(63, 81, 181, 0.1);
+}
+
+.mui-button-small {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.mui-alert {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.mui-alert .material-icons {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.mui-alert-info {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #0D47A1;
+    border-left: 4px solid #2196F3;
+}
+
+.mui-alert-warning {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #E65100;
+    border-left: 4px solid #FF9800;
+}
+
+.mui-alert-danger {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #B71C1C;
+    border-left: 4px solid #F44336;
+}
+
+.mui-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    background-color: var(--primary-color);
+    border-radius: 12px;
+    margin-left: 0.5rem;
+}
+
+.waveform-container {
+    height: 120px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.previews-container {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.preview-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+}
+
+.recording-status {
+    text-align: center;
+    font-size: 1.1rem;
+    margin: 10px 0;
+}
+
+/* Original styles to keep compatibility */
+.recording-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.record-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    border: 2px solid #007bff;
+}
+
+.record-btn i {
+    font-size: 30px;
+    color: #007bff;
+}
+
+.record-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    background-color: #e9ecef;
+}
+
+.record-btn.recording {
+    background-color: #dc3545;
+    animation: pulse 1.5s infinite;
+}
+
+.record-btn.recording i {
+    color: white;
+}
+
+.class-selection {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.recent-recordings {
+    margin-top: 2rem;
+}
+
+/* Add styles for the ambient noise toggle button */
+.mui-button-grey {
+    background-color: #9e9e9e; /* Grey */
+    color: white;
+}
+.mui-button-grey:hover {
+    background-color: #757575;
+}
+
+.mui-button-green {
+    background-color: #4CAF50; /* Green */
+    color: white;
+}
+.mui-button-green:hover {
+    background-color: #388E3C;
+}
+
+/* Styles for the icon inside the button */
+#ambientNoiseToggleBtn .material-icons {
+     margin-right: 4px; /* Space between icon and text */
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="page-title">Record Sounds</h1>
+        <p class="lead">Record and submit sound samples for classification. Select a sound class and record your voice or other sounds.</p>
+    </div>
+</div>
+
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="font-size: 1.75rem; font-weight: 500; color: var(--primary-color); margin-bottom: 0.5rem; display: flex; align-items: center;">
+        <span class="material-icons" style="margin-right: 0.5rem;">mic</span>
+        Recordings
+    </h1>
+    <p style="color: #666; margin-bottom: 1rem;">First select an existing sound class or create a new one, then record and process sound samples</p>
+    
+    <!-- Debug indicator - will show when a class is selected and ready -->
+    <div id="debugStatus" class="mui-alert mui-alert-warning" style="display: none;">
+        <span class="material-icons">warning</span>
+        <div>
+            <strong>Debug Status:</strong> <span id="debugMessage">No class selected</span>
+        </div>
+    </div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; margin: 0 -0.75rem;">
+    <div style="flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 0.75rem; margin-bottom: 1.5rem;">
+        <!-- Sound Class Selection - Now shown by default -->
+        <div class="mui-card" id="classSelectionCard">
+            <div class="mui-card-content">
+                <h2 class="mui-card-title">
+                    <span class="material-icons">label</span>
+                    Step 1: Select Sound Class
+                </h2>
+                
+                <form id="selectClassForm">
+                    <!-- Show this option for all users -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="classOption" id="allClassesOption" value="all" checked>
+                        <label class="form-check-label" for="allClassesOption">
+                            Select a class from all classes
+                        </label>
+                    </div>
+                    
+                    <div id="allClassesSection" style="margin-bottom: 1.5rem;">
+                        <select class="mui-select" id="allClassesSelect">
+                            <option value="">-- Select a class --</option>
+                            {% for class_item in sound_classes %}
+                            <option value="{{ class_item['id'] }}">{{ class_item['name'] }} ({{ class_item['sample_count'] | default(0) }} samples)</option>
+                            {% endfor %}
+                        </select>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #666;">
+                            Available classes: {{ sound_classes|length }}
+                        </div>
+                    </div>
+                    
+                    <!-- Only show this option if we're coming from a dictionary -->
+                    {% if source_dictionary %}
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="classOption" id="dictClassesOption" value="dict">
+                        <label class="form-check-label" for="dictClassesOption">
+                            Select a class from dictionary "{{ source_dictionary.name }}"
+                        </label>
+                    </div>
+                    
+                    <div id="dictClassesSection" style="margin-bottom: 1.5rem; display: none;">
+                        <select class="mui-select" id="dictClassesSelect">
+                            <option value="">-- Select a class --</option>
+                            {% for class_item in dict_classes %}
+                            <option value="{{ class_item['id'] }}">{{ class_item['name'] }} ({{ class_item['sample_count'] | default(0) }} samples)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="classOption" id="newClassOption" value="new">
+                        <label class="form-check-label" for="newClassOption">
+                            Create new class
+                        </label>
+                    </div>
+                    
+                    <div id="newClassSection" style="margin-bottom: 1.5rem; display: none;">
+                        <input type="text" class="mui-input" id="newClassName" placeholder="Enter new class name">
+                        <div style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+                            Use a descriptive name for the sound (e.g., "zee", "ah", "pop")
+                        </div>
+                        <button type="button" class="mui-button mui-button-small" id="createClassBtn" style="margin-top: 0.75rem;">
+                            <span class="material-icons" style="font-size: 1rem;">add_circle</span>
+                            Create Class
+                        </button>
+                        
+                        <!-- Only show this button if we're coming from a dictionary -->
+                        {% if source_dictionary %}
+                        <button type="button" class="mui-button mui-button-small" id="addToDictionaryBtn" style="margin-top: 0.75rem; margin-left: 0.5rem; display: none;">
+                            <span class="material-icons" style="font-size: 1rem;">add_circle</span>
+                            Create & Add to Dictionary "{{ source_dictionary.name }}"
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mui-card">
+            <div class="mui-card-content">
+                <h2 class="mui-card-title">
+                    <span class="material-icons">info</span>
+                    Current Selection
+                </h2>
+                <div id="currentClassInfo" style="color: #666;">
+                    <p>No class selected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 0.75rem;">
+        <!-- Recording Card -->
+        <div class="mui-card" style="min-height: 600px;">
+            <div class="mui-card-content">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <h2 class="mui-card-title" style="text-align: center; justify-content: center;">
+                            <span class="material-icons">graphic_eq</span>
+                            Step 2: Record Sound
+                        </h2>
+                        
+                        <div class="mui-alert mui-alert-info" id="recordingInstructions">
+                            <span class="material-icons">info</span>
+                            <div>Please select or create a sound class first to enable recording.</div>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem;">
+                            <div class="mui-record-btn" id="recordBtn">
+                                <span class="material-icons">mic</span>
+                            </div>
+                            <span style="margin-top: 0.75rem;" id="recordStatus">Click to start recording</span>
+                            <div style="margin-top: 0.75rem; display: none;" id="recordingTime">00:00</div>
+                            
+                            {# ADDED Ambient Noise Toggle Button #}
+                             <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                                 <button type="button" id="ambientNoiseToggleBtn" class="mui-button mui-button-small mui-button-grey" title="Toggle pre-recording ambient noise measurement">
+                                    <span class="material-icons" style="font-size: 1rem;">volume_off</span>
+                                    <span class="button-text">Record Noise Profile</span>
+                                </button>
+                                {# Optional helper text #}
+                                {# <span style="font-size: 0.8rem; color: #666;">Click to toggle</span> #}
+                            </div>
+                            {# END Ambient Noise Section #}
+                            
+                            <!-- Microphone Test Button -->
+                            <div style="margin-top: 1rem;">
+                                <button type="button" id="micTestBtn" class="mui-button mui-button-small" style="background-color: #2196F3;">
+                                    <span class="material-icons" style="font-size: 1rem;">mic_none</span>
+                                    Test Microphone
+                                </button>
+                            </div>
+                            
+                            <!-- Recording Tools -->
+                            {# REMOVED Quick Recording Test Button and Output Div #}
+                            {# <button id="quickTestBtn" ...></button> #}
+                            {# <div id="quickTestOutput" ...></div> #}
+                            
+                            {# REMOVED Diagnostic Button and Output Div #}
+                            {# <button id="runDiagnosticBtn" ...></button> #}
+                            {# <div id="diagnosticOutput" ...></div> #}
+                            
+                            {# REMOVED API Test Button and Output Div #}
+                            {# <button id="testApiBtn" ...></button> #}
+                            {# <div id="apiTestOutput" ...></div> #}
+                            
+                            {# COMMENTED OUT Direct recording test button #}
+                            <!-- 
+                            <button id="directRecordBtn" class="mui-button mui-button-small" style="margin-top: 0.75rem; background-color: #f44336;">
+                                <span class="material-icons">fiber_manual_record</span>
+                                Direct Recording Test
+                            </button>
+                            <div id="directRecordOutput" class="mui-alert mui-alert-info" style="display: none; margin-top: 0.75rem; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+                            -->
+                        </div>
+                    </div>
+                    
+                    <!-- Sound Classes Summary Table -->
+                    <div style="width: 320px; margin-left: 20px; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 20px;">
+                        <h3 style="font-size: 1rem; font-weight: 500; color: var(--dark-color); margin-bottom: 10px; display: flex; align-items: center;">
+                            <span class="material-icons" style="font-size: 18px; margin-right: 5px; color: var(--primary-color);">summarize</span>
+                            Sound Classes Summary
+                        </h3>
+                        <div style="max-height: 300px; overflow-y: auto; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1);">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                                <thead>
+                                    <tr style="background-color: rgba(0,0,0,0.05);">
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.1);">Class</th>
+                                        <th style="padding: 8px; text-align: center; font-weight: 500; border-bottom: 1px solid rgba(0,0,0,0.1);">Total Samples</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recordingsSummaryTableBody">
+                                    {% if sound_classes %}
+                                        {% for class_item in sound_classes %}
+                                        <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                            <td style="padding: 8px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">{{ class_item['name'] }}</td>
+                                            <td style="padding: 8px; text-align: center;">{{ class_item['sample_count'] | default(0) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="2" style="padding: 16px; text-align: center; color: #666;">No sound classes available</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.75rem; color: #666; text-align: right;">
+                            Total Classes: {{ sound_classes|length or 0 }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recording Controls (moved to top) -->
+                <div id="recordingControls" style="display: none; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <button id="cancelRecordingBtn" class="mui-button mui-button-outlined">
+                            <span class="material-icons">close</span>
+                            Cancel
+                        </button>
+                        <button id="saveRecordingBtn" class="mui-button" style="margin-left: auto;">
+                            <span class="material-icons">save</span>
+                            Save Recording
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Waveform Visualization (Initially Hidden) -->
+                <div class="waveform-container" id="waveformContainer" style="display: none; margin-top: 20px; margin-bottom: 20px;"></div>
+
+                <!-- ADDED: Verification Link Container (Moved Here) -->
+                <div id="verificationLinkContainer" style="margin-top: 1.5rem; padding: 1rem; text-align: center; background-color: #f8f9fa; border-radius: 8px;">
+                    <p style="margin-bottom: 0.5rem;">Review and approve pending recordings:</p>
+                    <a href="{{ url_for('recording_web.verify_sounds_page') }}" class="mui-button" style="background-color: var(--primary-color); color: white;">
+                        <span class="material-icons" style="margin-right: 8px;">check_circle</span> Go to Verification Page
+                    </a>
+                </div>
+                <!-- End Verification Link -->
+            </div>
+        </div>
+        
+        <!-- REMOVED Recordings to be Verified Section -->
+        
+    </div>
+</div>
+
+<!-- Processing Progress Modal -->
+<div id="processingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background-color: white; border-radius: 8px; padding: 2rem; max-width: 400px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <h3 style="margin-top: 0; font-weight: 500; margin-bottom: 1rem;">Processing Audio</h3>
+        <div style="margin-bottom: 1.5rem;">
+            <div style="width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                <div id="processingProgress" style="height: 100%; width: 0%; background-color: var(--primary-color); transition: width 0.3s;"></div>
+            </div>
+        </div>
+        <p id="processingStatus" style="margin-bottom: 0;">Analyzing audio...</p>
+    </div>
+</div>
+
+<!-- Toast Container for Notifications -->
+<div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} {# Include scripts from base.html #}
+<script src="{{ url_for('core_web.static_files', filename='js/recorder.js') }}"></script>
+
+{# Define showToast globally #}
+<script>
+// --- Professional Notification System ---
+function showNotification(message, type = 'info', duration = 3000) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'custom-notification';
+    
+    // Set color based on type
+    const colors = {
+        'success': '#28a745',
+        'danger': '#dc3545', 
+        'error': '#dc3545',
+        'warning': '#ffc107',
+        'info': '#17a2b8'
+    };
+    
+    const icons = {
+        'success': '✓',
+        'danger': '✕',
+        'error': '✕', 
+        'warning': '⚠',
+        'info': 'ℹ'
+    };
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: white;
+        border: 1px solid ${colors[type] || colors.info};
+        border-left: 4px solid ${colors[type] || colors.info};
+        border-radius: 4px;
+        padding: 16px 24px;
+        min-width: 300px;
+        max-width: 500px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        animation: slideDown 0.3s ease-out;
+    `;
+    
+    // Add content
+    notification.innerHTML = `
+        <span style="color: ${colors[type] || colors.info}; font-size: 20px; font-weight: bold;">
+            ${icons[type] || icons.info}
+        </span>
+        <span style="color: #333; flex: 1;">${message}</span>
+        <button onclick="this.parentElement.remove()" style="
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+            margin-left: 12px;
+        ">×</button>
+    `;
+    
+    // Add animation styles if not already present
+    if (!document.getElementById('notificationStyles')) {
+        const style = document.createElement('style');
+        style.id = 'notificationStyles';
+        style.innerHTML = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, 0);
+                }
+            }
+            @keyframes slideUp {
+                from {
+                    opacity: 1;
+                    transform: translate(-50%, 0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translate(-50%, -20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-remove after duration
+    if (duration > 0) {
+        setTimeout(() => {
+            notification.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    }
+}
+
+// --- Updated Toast Function (wrapper for compatibility) ---
+function showToast(message, type = 'info') {
+    showNotification(message, type);
+
+    const toastId = `toast-${Date.now()}`;
+    const toastElement = document.createElement('div');
+    toastElement.id = toastId;
+    toastElement.className = `toast align-items-center text-white bg-${type} border-0`; 
+    toastElement.setAttribute('role', 'alert');
+    toastElement.setAttribute('aria-live', 'assertive');
+    toastElement.setAttribute('aria-atomic', 'true');
+
+    let icon = 'info';
+    if (type === 'success') icon = 'check_circle';
+    if (type === 'danger') icon = 'error';
+    if (type === 'warning') icon = 'warning';
+
+    toastElement.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body" style="display: flex; align-items: center;">
+                <span class="material-icons" style="margin-right: 8px;">${icon}</span>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+    toastContainer.appendChild(toastElement);
+
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+         const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+         toast.show();
+         toastElement.addEventListener('hidden.bs.toast', function () {
+             toastElement.remove();
+         });
+    } else {
+         console.error('Bootstrap Toast component not found. Cannot display toast.');
+         alert(`${type.toUpperCase()}: ${message}`); // Fallback alert
+         toastElement.remove();
+    }
+}
+// --- End Toast Function ---
+</script>
+
+{# Main page logic inside DOMContentLoaded #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ======================================
+    //  DOM Element References
+    // ======================================
+    const form = document.getElementById('selectClassForm');
+    const allOption = document.getElementById('allClassesOption');
+    const dictOption = document.getElementById('dictClassesOption');
+    const newOption = document.getElementById('newClassOption');
+    const allSection = document.getElementById('allClassesSection');
+    const dictSection = document.getElementById('dictClassesSection'); 
+    const newSection = document.getElementById('newClassSection');
+    const allSelect = document.getElementById('allClassesSelect');
+    const dictSelect = document.getElementById('dictClassesSelect'); 
+    const newNameInput = document.getElementById('newClassName');
+    const createClassBtn = document.getElementById('createClassBtn');
+    const addToDictBtn = document.getElementById('addToDictionaryBtn'); 
+    const currentClassInfo = document.getElementById('currentClassInfo');
+    const recordingInstructions = document.getElementById('recordingInstructions');
+    const recordBtn = document.getElementById('recordBtn');
+    const waveformContainer = document.getElementById('waveformContainer');
+    const recordStatus = document.getElementById('recordStatus');
+    const recordingTime = document.getElementById('recordingTime');
+    const saveRecordingBtn = document.getElementById('saveRecordingBtn');
+    const cancelRecordingBtn = document.getElementById('cancelRecordingBtn');
+    const ambientNoiseBtn = document.getElementById('ambientNoiseToggleBtn');
+    const ambientNoiseText = ambientNoiseBtn ? ambientNoiseBtn.querySelector('.button-text') : null;
+    const ambientNoiseIcon = ambientNoiseBtn ? ambientNoiseBtn.querySelector('.material-icons') : null;
+    const micTestBtn = document.getElementById('micTestBtn');
+    const modal = document.getElementById('processingModal');
+    const progress = document.getElementById('processingProgress');
+    const status = document.getElementById('processingStatus');
+    const verificationLinkContainer = document.getElementById('verificationLinkContainer'); // Get the link container
+
+    // ======================================
+    //  State Variables
+    // ======================================
+    let recorder = null;
+    let audioContext = null; // If needed by recorder.js or visualization
+    let isRecording = false; // Is a main sound recording active?
+    let isNoiseCapturing = false; // Is the 3s noise capture phase active?
+    let audioChunks = [];
+    let recordedAudioBlob = null; // For the main sound recording
+    let noiseProfileBlob = null; // Stores the captured noise data for the session
+    let timerInterval = null;
+    let startTime = null;
+    let noiseCaptureTimer = null;
+    let isAmbientNoiseEnabled = false; // User setting toggle (renamed for consistency)
+    window.selectedClassId = null;
+    let audioStream = null; // For monitoring audio levels
+    let audioAnalyser = null;
+    let levelMonitorInterval = null;
+
+    // ======================================
+    //  Helper Functions
+    // ======================================
+
+    // --- Reset UI (excluding noise toggle state) ---
+    function resetRecordingUI() {
+        console.log("[ResetUI] Resetting main recording UI.");
+        isRecording = false;
+        isNoiseCapturing = false; // Reset this too
+        clearInterval(timerInterval);
+        clearTimeout(noiseCaptureTimer);
+        audioChunks = [];
+        recordedAudioBlob = null;
+        
+        // Stop audio level monitoring
+        stopAudioLevelMonitoring();
+        
+        if (recordBtn) {
+            recordBtn.classList.remove('recording');
+            const icon = recordBtn.querySelector('.material-icons');
+            if(icon) icon.textContent = 'mic';
+            recordBtn.disabled = !window.selectedClassId; 
+        }
+        if (recordStatus) recordStatus.textContent = 'Click to start recording';
+        if (recordingTime) recordingTime.style.display = 'none';
+        const recordingControls = document.getElementById('recordingControls');
+        if(recordingControls) recordingControls.style.display = 'none';
+        if(saveRecordingBtn) saveRecordingBtn.disabled = false;
+        if(cancelRecordingBtn) cancelRecordingBtn.disabled = false;
+        if(waveformContainer) waveformContainer.innerHTML = '';
+        if(waveformContainer) waveformContainer.style.display = 'none'; // Hide waveform container on reset
+        if(ambientNoiseBtn) ambientNoiseBtn.disabled = false; // Re-enable noise toggle
+        if(verificationLinkContainer) verificationLinkContainer.style.display = 'block'; // Show the link container
+
+        // Attempt to stop/cancel any lingering recorder activity
+        if (recorder && recorder.isRecordingActive && recorder.isRecordingActive()) {
+            try { recorder.cancel(); } catch(e) { console.warn("[ResetUI] Error cancelling recorder:", e)} 
+        } else if (recorder && recorder.state && recorder.state !== 'inactive') {
+             try { recorder.stop(); } catch(e) { console.warn("[ResetUI] Error stopping recorder:", e)}
+        }
+        console.log("[ResetUI] Finished.");
+    }
+    
+    // --- Update Class Dropdown ---
+    function updateClassDropdown(newClass) {
+        console.log("[updateClassDropdown] Adding new class to dropdown:", newClass);
+        
+        if (!newClass || !newClass.id || !newClass.name) {
+            console.error("[updateClassDropdown] Invalid class data:", newClass);
+            return;
+        }
+        
+        // Update the main all classes dropdown
+        const allClassesSelect = document.getElementById('allClassesSelect');
+        if (allClassesSelect) {
+            // Check if class already exists (shouldn't happen, but just in case)
+            const existingOption = Array.from(allClassesSelect.options).find(
+                opt => opt.value === newClass.id
+            );
+            
+            if (!existingOption) {
+                // Create new option
+                const newOption = document.createElement('option');
+                newOption.value = newClass.id;
+                newOption.text = `${newClass.name} (0 samples)`; // New class has 0 samples
+                
+                // Find the correct position to insert (alphabetically)
+                let insertIndex = allClassesSelect.options.length;
+                for (let i = 1; i < allClassesSelect.options.length; i++) { // Start at 1 to skip placeholder
+                    const optionText = allClassesSelect.options[i].text;
+                    const optionName = optionText.split(' (')[0];
+                    if (optionName.toLowerCase() > newClass.name.toLowerCase()) {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+                
+                // Insert at the correct position
+                allClassesSelect.add(newOption, insertIndex);
+                
+                // Select the new class
+                allClassesSelect.value = newClass.id;
+                allOption.checked = true; // Switch to "all classes" radio
+                
+                // Update the UI sections
+                updateSections();
+                
+                // Clear the new class input
+                if (newNameInput) newNameInput.value = '';
+                
+                console.log("[updateClassDropdown] Successfully added and selected new class");
+            } else {
+                console.log("[updateClassDropdown] Class already exists in dropdown, selecting it");
+                allClassesSelect.value = newClass.id;
+                allOption.checked = true;
+                updateSections();
+            }
+            
+            // Update the summary table as well
+            updateSummaryTable(newClass);
+        }
+    }
+    
+    // --- Update Summary Table ---
+    function updateSummaryTable(newClass) {
+        const tableBody = document.getElementById('recordingsSummaryTableBody');
+        if (!tableBody) return;
+        
+        // Check if we need to remove "No sound classes available" row
+        const emptyRow = tableBody.querySelector('tr td[colspan="2"]');
+        if (emptyRow) {
+            emptyRow.parentElement.remove();
+        }
+        
+        // Check if class already exists in table
+        const existingRow = Array.from(tableBody.querySelectorAll('tr')).find(row => {
+            const nameCell = row.querySelector('td:first-child');
+            return nameCell && nameCell.textContent.trim() === newClass.name;
+        });
+        
+        if (!existingRow) {
+            // Create new row
+            const newRow = document.createElement('tr');
+            newRow.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+            newRow.innerHTML = `
+                <td style="padding: 8px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${newClass.name}</td>
+                <td style="padding: 8px; text-align: center;">0</td>
+            `;
+            
+            // Find correct position to insert (alphabetically)
+            let insertBefore = null;
+            const rows = tableBody.querySelectorAll('tr');
+            for (const row of rows) {
+                const nameCell = row.querySelector('td:first-child');
+                if (nameCell && nameCell.textContent.trim().toLowerCase() > newClass.name.toLowerCase()) {
+                    insertBefore = row;
+                    break;
+                }
+            }
+            
+            if (insertBefore) {
+                tableBody.insertBefore(newRow, insertBefore);
+            } else {
+                tableBody.appendChild(newRow);
+            }
+            
+            // Update total count
+            const totalDiv = document.querySelector('div[style*="Total Classes"]');
+            if (totalDiv) {
+                const currentCount = parseInt(totalDiv.textContent.match(/\d+/)[0]) || 0;
+                totalDiv.textContent = `Total Classes: ${currentCount + 1}`;
+            }
+        }
+    }
+    
+    // --- Update Noise Button Appearance ---
+    function updateNoiseButtonUI() {
+        if (!ambientNoiseBtn) return;
+        if (isAmbientNoiseEnabled) {
+            if(ambientNoiseText) ambientNoiseText.textContent = 'Noise Profile Enabled';
+            ambientNoiseBtn.classList.remove('mui-button-grey', 'mui-button-danger', 'recording');
+            ambientNoiseBtn.classList.add('mui-button-green');
+            if(ambientNoiseIcon) ambientNoiseIcon.textContent = 'volume_up';
+                 } else {
+            if(ambientNoiseText) ambientNoiseText.textContent = 'Record Noise Profile';
+            ambientNoiseBtn.classList.remove('mui-button-green', 'mui-button-danger', 'recording');
+            ambientNoiseBtn.classList.add('mui-button-grey');
+            if(ambientNoiseIcon) ambientNoiseIcon.textContent = 'volume_off';
+        }
+        ambientNoiseBtn.disabled = isRecording || isNoiseCapturing; // Disable if any recording is active
+    }
+    
+    // --- Initialize Recorder --- 
+    async function initRecorder() {
+        console.log("[InitRecorder] Attempting...");
+        if (recorder) return true;
+        if (typeof AudioRecorder === 'undefined'){
+             console.error("[InitRecorder] AudioRecorder class not found!");
+             showToast("Audio recording library not loaded.", "danger"); return false; 
+        }
+        try {
+             recorder = new AudioRecorder({
+                 onStop: handleStop, // Use the single stop handler
+                 onError: handleError, 
+                 onDataAvailable: (e) => { if (e.data.size > 0) audioChunks.push(e.data); }
+             });
+             console.log("[InitRecorder] Success.");
+             
+             // Check available audio devices
+             checkAudioDevices();
+             return true;
+        } catch (e) {
+             console.error("[InitRecorder] Failed:", e);
+             showToast("Could not initialize audio recorder.", "danger");
+             if(recordBtn) recordBtn.disabled = true;
+             if(ambientNoiseBtn) ambientNoiseBtn.disabled = true;
+             return false; 
+        }
+    }
+
+    // --- Handle Recording Stop (Noise or Main) --- 
+    async function handleStop(blob) {
+        console.log("[HandleStop] Fired. isNoiseCapturing=", isNoiseCapturing, "isRecording=", isRecording);
+        
+        // Store the current state before clearing it
+        const wasNoiseCapturing = isNoiseCapturing;
+        const wasRecording = isRecording;
+        
+        clearInterval(timerInterval); 
+        clearTimeout(noiseCaptureTimer);
+        timerInterval = null;
+        noiseCaptureTimer = null;
+        if(recordingTime) recordingTime.style.display = 'none';
+        if(verificationLinkContainer) verificationLinkContainer.style.display = 'none'; // Hide link when preview shows
+        
+        if (!blob || blob.size <= 44) {
+            console.warn("[HandleStop] Invalid blob received. Size:", blob ? blob.size : 'null');
+            showToast("Recording failed: No valid audio data.", "warning");
+            resetRecordingUI(); // Reset everything
+                return;
+            }
+
+        if (wasNoiseCapturing) {
+             console.log("[HandleStop] Processing captured noise profile.");
+             isNoiseCapturing = false; // End noise capture phase
+             noiseProfileBlob = blob; // Store it
+             audioChunks = []; // Clear for main recording
+             showToast("Noise profile captured. Starting main recording...", "info");
+             if(ambientNoiseBtn) ambientNoiseBtn.disabled = false; // Re-enable toggle
+             // Automatically start the main recording
+             setTimeout(startMainRecording, 50); // Short delay for UI update
+        } else if (wasRecording) {
+             console.log("[HandleStop] Processing main sound recording.");
+             isRecording = false; // End main recording phase
+             recordedAudioBlob = blob; // Store it
+             audioChunks = [];
+             
+             // Update UI for save/cancel
+             if(recordStatus) recordStatus.textContent = 'Recording finished. Save or Cancel.';
+             if(recordBtn) {
+                         recordBtn.classList.remove('recording');
+                         const icon = recordBtn.querySelector('.material-icons');
+                 if(icon) icon.textContent = 'mic';
+                 recordBtn.disabled = false; 
+             }
+             const recordingControls = document.getElementById('recordingControls');
+             if(recordingControls) recordingControls.style.display = 'block';
+             if(ambientNoiseBtn) ambientNoiseBtn.disabled = false; 
+             if(verificationLinkContainer) verificationLinkContainer.style.display = 'none'; // Keep link hidden
+             renderWaveformPreview(recordedAudioBlob); // Call preview function
+        } else {
+             console.warn("[HandleStop] Stop triggered but no recording was active?");
+             console.warn("[HandleStop] Blob details:", { size: blob.size, type: blob.type });
+             // Still save the blob if we have one
+             if (blob && blob.size > 44) {
+                 recordedAudioBlob = blob;
+                 if(recordStatus) recordStatus.textContent = 'Recording finished. Save or Cancel.';
+                 const recordingControls = document.getElementById('recordingControls');
+                 if(recordingControls) recordingControls.style.display = 'block';
+                 renderWaveformPreview(recordedAudioBlob);
+             }
+        }
+    }
+    
+    // --- Handle Errors --- 
+    function handleError(error) {
+        console.error('Handling recorder error:', error);
+        let userMessage = `Recording error: ${error.message || error.name || 'Unknown error'}`;
+                    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                        userMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+                    } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                         userMessage = 'No microphone found. Please ensure a microphone is connected and enabled.';
+                    } else if (error.message && (error.message.includes('decodeAudioData') || error.message.includes('conversion')) ) {
+                         userMessage = 'Error processing recorded audio format. Please try again or use a different browser.';
+                    }
+                    showToast(userMessage, 'danger');
+                    resetRecordingUI();
+                }
+    
+    // --- Start MAIN Sound Recording --- 
+    async function startMainRecording() {
+         console.log("[StartMainRecording]");
+         if (isRecording || isNoiseCapturing) { // Prevent overlap
+              console.warn("[StartMainRecording] Already recording something.");
+              return;
+         }
+         isRecording = true;
+         isNoiseCapturing = false;
+         audioChunks = [];
+         recordedAudioBlob = null;
+         if(verificationLinkContainer) verificationLinkContainer.style.display = 'none'; // Hide link when recording starts
+         if(waveformContainer) waveformContainer.style.display = 'none'; // Hide waveform container when starting
+         
+         if(recordBtn) {
+             recordBtn.classList.add('recording');
+             const icon = recordBtn.querySelector('.material-icons');
+             if(icon) icon.textContent = 'stop'; 
+             recordBtn.disabled = false; // Ensure it's clickable to stop
+         }
+         if(recordStatus) recordStatus.textContent = 'Recording...';
+         const recordingControls = document.getElementById('recordingControls');
+         if(recordingControls) recordingControls.style.display = 'none';
+         if(ambientNoiseBtn) ambientNoiseBtn.disabled = true; // Disable noise toggle during main recording
+         if(recordingTime) {
+            recordingTime.textContent = '00:00';
+            recordingTime.style.display = 'block';
+        }
+         startTime = Date.now();
+         timerInterval = setInterval(updateTimer, 1000);
+         try {
+              await recorder.start();
+              console.log("[StartMainRecording] Recorder started.");
+              
+              // Start monitoring audio levels
+              console.log("[StartMainRecording] About to start audio level monitoring...");
+              setTimeout(() => {
+                  // Delay slightly to ensure stream is ready
+                  startAudioLevelMonitoring();
+              }, 100);
+         } catch(e) { handleError(e); }
+    }
+
+    // --- Stop ANY Active Recording --- 
+    function stopRecording() {
+        console.log("[StopRecording] Requesting recorder stop.");
+        
+        // Stop audio level monitoring
+        stopAudioLevelMonitoring();
+        
+        if (recorder && recorder.isRecordingActive && recorder.isRecordingActive()) {
+            try { recorder.stop(); } catch(e) { handleError(e); } // onstop handles state changes
+        } else {
+             console.warn("[StopRecording] Stop called but recorder not active.");
+             // Manually reset if state seems inconsistent
+             resetRecordingUI();
+        }
+    }
+    
+    // --- Check Audio Devices ---
+    async function checkAudioDevices() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputs = devices.filter(device => device.kind === 'audioinput');
+            
+            console.log("[AudioDevices] Found audio input devices:", audioInputs.length);
+            audioInputs.forEach((device, index) => {
+                console.log(`[AudioDevices] Input ${index + 1}: ${device.label || 'Unnamed'} (${device.deviceId})`);
+            });
+            
+            // Check current constraints if recording
+            if (recorder && recorder.stream) {
+                const tracks = recorder.stream.getAudioTracks();
+                if (tracks.length > 0) {
+                    const settings = tracks[0].getSettings();
+                    console.log("[AudioDevices] Current recording settings:", settings);
+                }
+            }
+        } catch (error) {
+            console.error("[AudioDevices] Error checking devices:", error);
+        }
+    }
+
+    // --- Audio Level Monitoring ---
+    function startAudioLevelMonitoring() {
+        console.log("[AudioMonitor] Starting audio level monitoring...");
+        
+        try {
+            // Get the microphone stream from the recorder
+            if (!recorder || !recorder.stream) {
+                console.error("[AudioMonitor] No recorder stream available");
+                return;
+            }
+            
+            // Create audio context if needed
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Create analyser node
+            audioAnalyser = audioContext.createAnalyser();
+            audioAnalyser.fftSize = 2048;
+            
+            // Create media stream source
+            const source = audioContext.createMediaStreamSource(recorder.stream);
+            source.connect(audioAnalyser);
+            
+            // Create buffer for frequency data
+            const bufferLength = audioAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            // Start monitoring every 100ms (0.1 seconds)
+            levelMonitorInterval = setInterval(() => {
+                // Get time domain data (waveform)
+                audioAnalyser.getByteTimeDomainData(dataArray);
+                
+                // Calculate RMS (Root Mean Square) for volume level
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const amplitude = (dataArray[i] - 128) / 128.0; // Convert to -1 to 1 range
+                    sum += amplitude * amplitude;
+                }
+                const rms = Math.sqrt(sum / bufferLength);
+                const decibels = 20 * Math.log10(rms);
+                
+                // Calculate peak level
+                let maxAmplitude = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const amplitude = Math.abs((dataArray[i] - 128) / 128.0);
+                    if (amplitude > maxAmplitude) {
+                        maxAmplitude = amplitude;
+                    }
+                }
+                
+                // Log energy levels
+                const timestamp = new Date().toLocaleTimeString();
+                const energyLevel = Math.round(rms * 100); // Convert to percentage
+                const peakLevel = Math.round(maxAmplitude * 100);
+                
+                console.log(`[AudioMonitor] ${timestamp} - Energy: ${energyLevel}%, Peak: ${peakLevel}%, dB: ${decibels.toFixed(1)}`);
+                
+                // Update UI with visual feedback (optional)
+                if (recordStatus && isRecording) {
+                    const bars = '█'.repeat(Math.max(0, Math.round(energyLevel / 10)));
+                    recordStatus.textContent = `Recording... ${bars}`;
+                }
+                
+                // Warn if levels are too low
+                if (energyLevel < 1 && peakLevel < 5) {
+                    console.warn("[AudioMonitor] Very low audio levels detected - check microphone");
+                }
+                
+            }, 100); // Every 0.1 seconds
+            
+            console.log("[AudioMonitor] Monitoring started successfully");
+            
+        } catch (error) {
+            console.error("[AudioMonitor] Error starting audio monitoring:", error);
+        }
+    }
+    
+    function stopAudioLevelMonitoring() {
+        console.log("[AudioMonitor] Stopping audio level monitoring");
+        
+        if (levelMonitorInterval) {
+            clearInterval(levelMonitorInterval);
+            levelMonitorInterval = null;
+        }
+        
+        if (audioAnalyser) {
+            try {
+                audioAnalyser.disconnect();
+            } catch (e) {
+                console.warn("[AudioMonitor] Error disconnecting analyser:", e);
+            }
+            audioAnalyser = null;
+        }
+        
+        // Reset status text if needed
+        if (recordStatus && !isRecording) {
+            recordStatus.textContent = 'Click to start recording';
+        }
+    }
+    
+    // --- Save Main Recording ---
+    async function saveRecording() {
+       if (!recordedAudioBlob) { showToast('No audio recorded.', 'warning'); return; }
+       if (!window.selectedClassId) { showToast('No class selected.', 'warning'); return; }
+       
+       // Show processing modal
+       if(modal) {
+           modal.style.display = 'flex';
+           if(progress) progress.style.width = '10%';
+           if(status) status.textContent = 'Uploading audio...';
+       }
+       
+       // Disable buttons during save
+       if(saveRecordingBtn) saveRecordingBtn.disabled = true;
+       if(cancelRecordingBtn) cancelRecordingBtn.disabled = true;
+       
+       const formData = new FormData();
+       formData.append('audio', recordedAudioBlob, 'recording.wav'); 
+       formData.append('sound_class_id', window.selectedClassId);
+       const dictId = new URLSearchParams(window.location.search).get('dictionary_id');
+       if (dictId) formData.append('dictionary_id', dictId); 
+       
+       // Add noise profile if it exists
+       if (isAmbientNoiseEnabled && noiseProfileBlob) {
+           formData.append('noise_profile', noiseProfileBlob, 'noise_profile.wav');
+       }
+       
+       try {
+            if(progress) progress.style.width = '30%';
+            if(status) status.textContent = 'Processing segments...';
+           const response = await fetch('/api/ml/record', { method: 'POST', body: formData });
+            if(progress) progress.style.width = '70%';
+           const data = await response.json();
+            if(progress) progress.style.width = '100%';
+            if(status) status.textContent = 'Done!';
+           if (response.ok && data.success) {
+               // Use showNotification instead of showToast for consistent styling
+               showNotification(data.message || 'Recording processed successfully!', 'success', 5000);
+               resetRecordingUI(); // Reset UI completely
+           } else {
+               throw new Error(data.error || 'Failed to process recording.');
+           }
+       } catch (error) {
+           console.error('Error saving recording:', error);
+           showNotification(`Save failed: ${error.message}`, 'danger', 5000);
+           if(saveRecordingBtn) saveRecordingBtn.disabled = false;
+           if(cancelRecordingBtn) cancelRecordingBtn.disabled = false;
+       } finally {
+            setTimeout(() => { if(modal) modal.style.display = 'none'; }, 700);
+       }
+    }
+    
+    // --- Cancel Recording --- 
+     function cancelRecording() {
+         console.log("[CancelRecording] User cancelled.");
+         stopRecording(); // Attempt to stop gracefully first
+         resetRecordingUI(); // Reset UI state fully (shows link again)
+         showToast('Recording cancelled.', 'info');
+     }
+     
+    // --- Timer & Preview ---
+    function updateTimer() {
+        if (!startTime) return;
+        
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const seconds = (elapsed % 60).toString().padStart(2, '0');
+        
+        if (recordingTime) {
+            recordingTime.textContent = `${minutes}:${seconds}`;
+        }
+    }
+    
+    function renderWaveformPreview(blob) {
+        if (!blob || !waveformContainer) return;
+        
+        console.log("[RenderWaveform] Rendering preview for blob size:", blob.size);
+        console.log("[RenderWaveform] WaveSurfer available:", typeof window.WaveSurfer !== 'undefined');
+        
+        // Clear and show container
+        waveformContainer.innerHTML = '';
+        waveformContainer.style.display = 'block';
+        
+        // Add a title
+        const title = document.createElement('h5');
+        title.style.marginBottom = '10px';
+        title.style.color = '#666';
+        title.textContent = 'Recording Preview:';
+        waveformContainer.appendChild(title);
+
+        // Create the audio player FIRST (so it's always visible)
+        const audioPlayer = document.createElement('audio');
+        audioPlayer.controls = true;
+        audioPlayer.style.width = '100%';
+        audioPlayer.style.marginBottom = '15px';
+        audioPlayer.src = URL.createObjectURL(blob);
+        waveformContainer.appendChild(audioPlayer);
+
+        // Create a container for Wavesurfer
+        const waveElement = document.createElement('div');
+        waveElement.id = 'waveform-preview';
+        waveElement.style.minHeight = '128px';
+        waveElement.style.backgroundColor = '#f0f0f0';
+        waveElement.style.borderRadius = '4px';
+        waveElement.style.position = 'relative';
+        waveformContainer.appendChild(waveElement);
+
+        // Try to initialize Wavesurfer
+        if (window.WaveSurfer) {
+            try {
+                console.log("[RenderWaveform] Initializing WaveSurfer...");
+                const wavesurfer = WaveSurfer.create({
+                    container: waveElement,
+                    waveColor: '#2196F3',
+                    progressColor: '#1976D2',
+                    cursorColor: '#333',
+                    barWidth: 3,
+                    barRadius: 3,
+                    barGap: 2,
+                    height: 128,
+                    normalize: true,
+                    responsive: true,
+                    backend: 'WebAudio',
+                    minPxPerSec: 50,
+                    scrollParent: false
+                });
+
+                // Load the blob
+                wavesurfer.loadBlob(blob);
+
+                wavesurfer.on('ready', () => {
+                    console.log("[RenderWaveform] Wavesurfer ready - waveform should be visible");
+                });
+
+                wavesurfer.on('error', (err) => {
+                    console.error('[RenderWaveform] Wavesurfer error:', err);
+                    drawSimpleWaveform(waveElement, blob);
+                });
+
+            } catch (e) {
+                console.error("[RenderWaveform] Error initializing WaveSurfer:", e);
+                drawSimpleWaveform(waveElement, blob);
+            }
+        } else {
+            console.warn('[RenderWaveform] WaveSurfer library not loaded');
+            drawSimpleWaveform(waveElement, blob);
+        }
+    }
+    
+    // Simple canvas-based waveform as fallback
+    function drawSimpleWaveform(container, blob) {
+        container.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.width = container.offsetWidth || 600;
+        canvas.height = 128;
+        canvas.style.width = '100%';
+        canvas.style.height = '128px';
+        container.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw center line
+        ctx.strokeStyle = '#ccc';
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+        
+        // Draw fake waveform pattern
+        ctx.strokeStyle = '#2196F3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        const segments = 100;
+        for (let i = 0; i <= segments; i++) {
+            const x = (i / segments) * canvas.width;
+            const amplitude = Math.random() * 40 + 10;
+            const y = canvas.height / 2 + (Math.random() - 0.5) * amplitude;
+            
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+        
+        // Add text
+        ctx.fillStyle = '#666';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Audio waveform preview', canvas.width / 2, canvas.height - 10);
+    }
+    
+    // --- Class Selection Logic --- 
+    function updateSections() {
+        console.log("[UpdateSections] Updating section visibility...");
+        const selectedOption = form.querySelector('input[name="classOption"]:checked');
+        if (!selectedOption) return;
+
+        allSection.style.display = selectedOption.value === 'all' ? 'block' : 'none';
+        if (dictSection) dictSection.style.display = selectedOption.value === 'dict' ? 'block' : 'none';
+        newSection.style.display = selectedOption.value === 'new' ? 'block' : 'none';
+        updateCurrentSelectionDisplay();
+    }
+
+    function updateCurrentSelectionDisplay() {
+        console.log("[UpdateSelectionDisplay] Updating..."); 
+        const selectedOption = form.querySelector('input[name="classOption"]:checked');
+        let selectedClassName = null;
+        let tempSelectedClassId = null; // Use temporary variable
+
+        if (selectedOption) {
+            console.log("[UpdateSelectionDisplay] Selected option:", selectedOption.value);
+            if (selectedOption.value === 'all' && allSelect && allSelect.value) {
+                tempSelectedClassId = allSelect.value;
+                console.log("[UpdateSelectionDisplay] All class selected, ID:", tempSelectedClassId);
+                selectedClassName = allSelect.options[allSelect.selectedIndex].text.split(' (')[0]; 
+            } else if (dictSelect && selectedOption.value === 'dict' && dictSelect.value) {
+                tempSelectedClassId = dictSelect.value;
+                console.log("[UpdateSelectionDisplay] Dict class selected, ID:", tempSelectedClassId);
+                selectedClassName = dictSelect.options[dictSelect.selectedIndex].text.split(' (')[0];
+            } else if (newOption && selectedOption.value === 'new' && newNameInput && newNameInput.value.trim()) {
+                selectedClassName = newNameInput.value.trim();
+                console.log("[UpdateSelectionDisplay] New class name:", selectedClassName);
+                tempSelectedClassId = null; // New class doesn't have an ID yet
+            }
+        }
+
+        // Update global variable only after processing
+        console.log("[UpdateSelectionDisplay] Setting selectedClassId from", window.selectedClassId, "to", tempSelectedClassId);
+        window.selectedClassId = tempSelectedClassId;
+
+        if (selectedClassName) {
+            console.log("[UpdateSelectionDisplay] Selected class name:", selectedClassName);
+            if (currentClassInfo) {
+                 currentClassInfo.innerHTML = `<p><strong>Class:</strong> ${selectedClassName}</p>`;
+                 if (window.selectedClassId) {
+                     currentClassInfo.innerHTML += `<p><small>(ID: ${window.selectedClassId})</small></p>`;
+                 } else {
+                      currentClassInfo.innerHTML += `<p><small>(New Class - Not Saved)</small></p>`;
+                 }
+            }
+             if (window.selectedClassId) { // Enable recording ONLY if an EXISTING class ID is selected
+                 if (recordBtn) {
+                     recordBtn.disabled = false;
+                     console.log("[UpdateSelectionDisplay] Enabled record button");
+                 }
+                 if (recordingInstructions) {
+                     recordingInstructions.style.display = 'none';
+                     console.log("[UpdateSelectionDisplay] Hiding instructions");
+                 }
+                 console.log("[UpdateSelectionDisplay] Recording ENABLED for", selectedClassName);
+             } else {
+                  if (recordBtn) {
+                      recordBtn.disabled = true;
+                      console.log("[UpdateSelectionDisplay] Disabled record button");
+                  }
+                  if (recordingInstructions) {
+                       recordingInstructions.style.display = 'flex';
+                       recordingInstructions.querySelector('div').textContent = 'Please create or select an existing class first.';
+                       console.log("[UpdateSelectionDisplay] Showing instructions");
+                  }
+                  console.log("[UpdateSelectionDisplay] Recording DISABLED.");
+             }
+        } else {
+             console.log("[UpdateSelectionDisplay] No class name selected");
+             if (currentClassInfo) currentClassInfo.innerHTML = '<p>No class selected</p>';
+             window.selectedClassId = null;
+             if (recordBtn) {
+                 recordBtn.disabled = true;
+                 console.log("[UpdateSelectionDisplay] Disabled record button");
+             }
+             if (recordingInstructions) {
+                 recordingInstructions.style.display = 'flex';
+                 recordingInstructions.querySelector('div').textContent = 'Please select or create a sound class first.';
+                 console.log("[UpdateSelectionDisplay] Showing instructions");
+             }
+             console.log("[UpdateSelectionDisplay] No selection. Recording DISABLED.");
+        }
+    }
+
+    // ======================================
+    //  Event Listener Attachments
+    // ======================================
+    // Add event listeners for class selection
+    if(form) {
+        // Add listeners for radio button changes
+        const radioButtons = form.querySelectorAll('input[name="classOption"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', updateSections);
+        });
+    }
+
+    // Add listeners for dropdown selections
+    if(allSelect) {
+        allSelect.addEventListener('change', updateCurrentSelectionDisplay);
+    }
+    
+    if(dictSelect) {
+        dictSelect.addEventListener('change', updateCurrentSelectionDisplay);
+    }
+    
+    if(newNameInput) {
+        newNameInput.addEventListener('input', updateCurrentSelectionDisplay);
+    }
+
+    // Create class button
+    if(createClassBtn) {
+        createClassBtn.addEventListener('click', function() {
+            const className = newNameInput.value.trim();
+            if (!className) {
+                showToast('Please enter a class name', 'warning');
+                return;
+            }
+
+            console.log("[CreateClass] Creating new class:", className);
+            
+            // Check if class already exists in the dropdown
+            const allClassesSelect = document.getElementById('allClassesSelect');
+            if (allClassesSelect) {
+                const existingOptions = Array.from(allClassesSelect.options);
+                const classExists = existingOptions.some(option => {
+                    // Extract class name from option text (format: "ClassName (X samples)")
+                    const optionText = option.text;
+                    const classNameMatch = optionText.match(/^([^(]+)\s*\(/);
+                    if (classNameMatch) {
+                        const existingClassName = classNameMatch[1].trim();
+                        return existingClassName.toLowerCase() === className.toLowerCase();
+                    }
+                    return false;
+                });
+                
+                if (classExists) {
+                    console.log("[CreateClass] Class already exists locally:", className);
+                    showNotification(`Class "${className}" already exists. Please choose a different name.`, 'warning', 4000);
+                    return;
+                }
+            }
+            
+            // Don't show modal for class creation - it's too fast
+            // Just send the API request directly
+            fetch('/sound_classes/api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ class_name: className })
+            })
+            .then(response => {
+                // Check if response is OK before parsing JSON
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Store the created class ID and update UI
+                    // The backend returns the class object in data.class
+                    window.selectedClassId = data.class ? data.class.id : null;
+                    console.log("[CreateClass] Class created with ID:", window.selectedClassId);
+                    
+                    // Update UI to show we have a valid class selected
+                    if(currentClassInfo) {
+                        currentClassInfo.innerHTML = `
+                            <p><strong>Class:</strong> ${className}</p>
+                            <p><small>(ID: ${window.selectedClassId})</small></p>
+                        `;
+                    }
+                    
+                    // Enable recording
+                    if(recordBtn) recordBtn.disabled = false;
+                    if(recordingInstructions) recordingInstructions.style.display = 'none';
+                    
+                    // Show success notification
+                    showNotification(`Sound class "${className}" has been created successfully.`, 'success');
+                    
+                    // Update the dropdown with the new class
+                    updateClassDropdown(data.class);
+                } else {
+                    throw new Error(data.error || data.message || 'Failed to create class');
+                }
+            })
+            .catch(error => {
+                console.error('[CreateClass] Error:', error);
+                // Show appropriate error notification
+                let errorMessage = error.message;
+                if (errorMessage.toLowerCase().includes('already exists')) {
+                    errorMessage = `Class "${className}" already exists. Please choose a different name.`;
+                }
+                showNotification(errorMessage, 'warning', 5000);
+            });
+        });
+    }
+
+    // Ambient Noise Button - Record noise profile
+    if (ambientNoiseBtn) {
+        ambientNoiseBtn.addEventListener('click', function() {
+            console.log("Noise Profile button clicked");
+            
+            // Create professional noise recording modal
+            const noiseModal = document.createElement('div');
+            noiseModal.id = 'noiseRecordingModal';
+            noiseModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 32px;
+                max-width: 500px;
+                text-align: center;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                animation: slideDown 0.3s ease-out;
+            `;
+            
+            modalContent.innerHTML = `
+                <div style="margin-bottom: 24px;">
+                    <span class="material-icons" style="font-size: 48px; color: #3f51b5;">mic_off</span>
+                </div>
+                <h3 style="margin: 0 0 16px 0; font-size: 24px; color: #333;">Record Background Noise</h3>
+                <p style="margin: 0 0 24px 0; color: #666; line-height: 1.6;">
+                    When you click "Start Recording", you'll hear a beep.<br>
+                    <strong>Please remain quiet for 3 seconds</strong> while we capture the background noise.
+                </p>
+                <div id="noiseCountdown" style="display: none; margin: 24px 0;">
+                    <div style="font-size: 72px; font-weight: bold; color: #3f51b5;" id="countdownNumber">3</div>
+                    <div style="color: #666; margin-top: 8px;">Recording background noise...</div>
+                </div>
+                <div id="noiseButtons">
+                    <button id="startNoiseRecording" style="
+                        background: #3f51b5;
+                        color: white;
+                        border: none;
+                        padding: 12px 32px;
+                        border-radius: 6px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        margin-right: 12px;
+                    ">
+                        <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">mic</span>
+                        Start Recording
+                    </button>
+                    <button id="cancelNoiseRecording" style="
+                        background: #f5f5f5;
+                        color: #666;
+                        border: none;
+                        padding: 12px 32px;
+                        border-radius: 6px;
+                        font-size: 16px;
+                        cursor: pointer;
+                    ">Cancel</button>
+                </div>
+                <div id="noiseSuccess" style="display: none; margin-top: 24px;">
+                    <span class="material-icons" style="font-size: 48px; color: #4caf50;">check_circle</span>
+                    <p style="margin: 16px 0; color: #4caf50; font-weight: 500;">
+                        Noise profile recorded successfully!
+                    </p>
+                    <p style="color: #666; font-size: 14px;">
+                        If your background noise changes significantly, please record a new profile.
+                    </p>
+                    <button id="closeNoiseModal" style="
+                        background: #4caf50;
+                        color: white;
+                        border: none;
+                        padding: 12px 32px;
+                        border-radius: 6px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        margin-top: 16px;
+                    ">Done</button>
+                </div>
+            `;
+            
+            noiseModal.appendChild(modalContent);
+            document.body.appendChild(noiseModal);
+            
+            // Handle start recording
+            const startBtn = document.getElementById('startNoiseRecording');
+            const cancelBtn = document.getElementById('cancelNoiseRecording');
+            const closeBtn = document.getElementById('closeNoiseModal');
+            const buttonsDiv = document.getElementById('noiseButtons');
+            const countdownDiv = document.getElementById('noiseCountdown');
+            const successDiv = document.getElementById('noiseSuccess');
+            const countdownNumber = document.getElementById('countdownNumber');
+            
+            startBtn.addEventListener('click', async function() {
+                // Initialize recorder if not already done
+                if (!recorder) {
+                    if (!await initRecorder()) {
+                        showNotification('Failed to initialize audio recorder. Please check your browser settings.', 'danger');
+                        return;
+                    }
+                }
+                
+                // Play beep sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+                
+                // Hide buttons, show countdown
+                buttonsDiv.style.display = 'none';
+                countdownDiv.style.display = 'block';
+                
+                // Start recording noise
+                try {
+                    
+                    // Clear any previous audio chunks
+                    audioChunks = [];
+                    isNoiseCapturing = true;
+                    
+                    // Create a custom onStop handler for the modal
+                    const originalOnStop = recorder.options.onStop;
+                    recorder.options.onStop = async (blob) => {
+                        console.log("[Modal Noise Recording] Received blob:", blob);
+                        isNoiseCapturing = false;
+                        noiseProfileBlob = blob;
+                        
+                        // Save noise profile to server
+                        const formData = new FormData();
+                        formData.append('noise_profile', blob, 'noise_profile.wav');
+                        
+                        try {
+                            const response = await fetch('/api/sounds/noise_profile', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            
+                            if (response.ok) {
+                                console.log("Noise profile saved successfully");
+                                isAmbientNoiseEnabled = true;
+                                updateNoiseButtonUI();
+                                
+                                // Show success
+                                countdownDiv.style.display = 'none';
+                                successDiv.style.display = 'block';
+                            } else {
+                                throw new Error('Failed to save noise profile');
+                            }
+                        } catch (error) {
+                            console.error("Error saving noise profile:", error);
+                            showNotification('Failed to save noise profile. Please try again.', 'danger');
+                            noiseModal.remove();
+                        }
+                        
+                        // Restore original handler
+                        recorder.options.onStop = originalOnStop;
+                    };
+                    
+                    // Start recording
+                    await recorder.start();
+                    console.log("Started noise profile recording");
+                    
+                    // Countdown from 3 to 1
+                    let count = 3;
+                    const countdownInterval = setInterval(() => {
+                        count--;
+                        if (count > 0) {
+                            countdownNumber.textContent = count;
+                        } else {
+                            clearInterval(countdownInterval);
+                            countdownNumber.textContent = '0';
+                        }
+                    }, 1000);
+                    
+                    // Stop recording after 3 seconds
+                    setTimeout(() => {
+                        if (recorder && recorder.isRecordingActive()) {
+                            recorder.stop();
+                        }
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error("Error starting noise recording:", error);
+                    console.error("Error stack:", error.stack);
+                    console.error("Recorder state:", recorder ? "exists" : "undefined");
+                    
+                    // Reset state
+                    isNoiseCapturing = false;
+                    
+                    // Hide countdown, show buttons again
+                    countdownDiv.style.display = 'none';
+                    buttonsDiv.style.display = 'block';
+                    
+                    // Show appropriate error message
+                    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                        showNotification('Microphone access denied. Please allow microphone access and try again.', 'warning');
+                    } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                        showNotification('No microphone found. Please connect a microphone and try again.', 'danger');
+                    } else {
+                        showNotification(`Failed to start recording: ${error.message}`, 'danger');
+                    }
+                    
+                    // Don't close modal - let user try again or cancel
+                }
+            });
+            
+            cancelBtn.addEventListener('click', function() {
+                noiseModal.remove();
+            });
+            
+            closeBtn.addEventListener('click', function() {
+                noiseModal.remove();
+            });
+            
+            // Close on background click
+            noiseModal.addEventListener('click', function(e) {
+                if (e.target === noiseModal) {
+                    noiseModal.remove();
+                }
+            });
+        });
+    }
+
+    // Main Record Button (Handles starting noise/main recording)
+        if (recordBtn) {
+        recordBtn.addEventListener('click', async function() {
+            console.log("[RecordClick] Clicked. Current state: isRecording=", isRecording, "isNoiseCapturing=", isNoiseCapturing);
+
+            // --- Stop existing recording if active ---
+            if (isRecording || isNoiseCapturing) {
+                console.log("[RecordClick] Stopping active recording.");
+                stopRecording(); // Let handleStop manage UI state update
+                return;
+            }
+
+            // --- Start new recording sequence ---
+                if (!window.selectedClassId) {
+                showToast('Please select a valid sound class first!', 'warning');
+                     return;
+                }
+            if (!recorder) {
+                 if (!await initRecorder()) {
+                      showToast("Recorder not available.", "danger");
+                return;
+            }
+                 // Brief pause after init needed?
+                 // await new Promise(resolve => setTimeout(resolve, 100)); 
+            }
+            
+            const needsNoiseCapture = isAmbientNoiseEnabled && !noiseProfileBlob;
+            
+            if (needsNoiseCapture) {
+                // --- Start Noise Capture Phase --- 
+                console.log("[RecordClick] Starting noise capture phase...");
+                isNoiseCapturing = true;
+                audioChunks = []; 
+                if(recordStatus) recordStatus.textContent = 'Measuring noise... Be quiet (3s)';
+                if(recordBtn) { recordBtn.classList.add('recording'); recordBtn.querySelector('.material-icons').textContent = 'mic_off'; recordBtn.disabled = true; } // Disable during noise capture
+                if(ambientNoiseBtn) ambientNoiseBtn.disabled = true;
+                if(cancelRecordingBtn) cancelRecordingBtn.style.display = 'inline-flex';
+                if(saveRecordingBtn) saveRecordingBtn.style.display = 'none';
+                if(waveformContainer) waveformContainer.style.display = 'none'; // Hide waveform container
+                 try {
+                     await recorder.start();
+                     clearTimeout(noiseCaptureTimer);
+                     noiseCaptureTimer = setTimeout(() => {
+                         if (isNoiseCapturing && recorder && recorder.isRecordingActive && recorder.isRecordingActive()) {
+                             console.log("[RecordClick] Noise timer finished. Stopping recorder.");
+                             try { recorder.stop(); } catch(e){ handleError(e); }
+                         }
+                     }, 3000);
+                 } catch (startError) {
+                     handleError(startError); 
+                 }
+                } else {
+                // --- Start Regular Sound Recording Directly --- 
+                 if(isAmbientNoiseEnabled && noiseProfileBlob){
+                      console.log("[RecordClick] Noise profile already captured, starting main recording.")
+                 }
+                startMainRecording();
+            }
+        });
+    }
+    
+    // Hook up Save/Cancel buttons
+    if(saveRecordingBtn) saveRecordingBtn.addEventListener('click', saveRecording);
+    if(cancelRecordingBtn) cancelRecordingBtn.addEventListener('click', cancelRecording);
+    
+    // Microphone Test Button
+    if(micTestBtn) {
+        micTestBtn.addEventListener('click', async function() {
+            console.log("[MicTest] Starting microphone test...");
+            
+            try {
+                // Request microphone access with specific constraints
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        sampleSize: 16,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+                
+                console.log("[MicTest] Got microphone stream");
+                
+                // Check stream tracks
+                const tracks = stream.getAudioTracks();
+                if (tracks.length > 0) {
+                    const track = tracks[0];
+                    const settings = track.getSettings();
+                    console.log("[MicTest] Track settings:", settings);
+                    console.log("[MicTest] Track enabled:", track.enabled);
+                    console.log("[MicTest] Track muted:", track.muted);
+                    console.log("[MicTest] Track label:", track.label);
+                }
+                
+                // Create audio context for analysis
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                source.connect(analyser);
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                // Monitor for 3 seconds
+                let maxLevel = 0;
+                const testDuration = 3000;
+                const startTime = Date.now();
+                
+                showNotification('Microphone test running for 3 seconds. Make some noise!', 'info', 3000);
+                
+                const testInterval = setInterval(() => {
+                    analyser.getByteTimeDomainData(dataArray);
+                    
+                    // Calculate level
+                    let sum = 0;
+                    let max = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        const amplitude = Math.abs((dataArray[i] - 128) / 128.0);
+                        sum += amplitude * amplitude;
+                        if (amplitude > max) max = amplitude;
+                    }
+                    const rms = Math.sqrt(sum / bufferLength);
+                    const level = Math.round(rms * 100);
+                    const peakLevel = Math.round(max * 100);
+                    
+                    if (level > maxLevel) maxLevel = level;
+                    
+                    console.log(`[MicTest] Level: ${level}%, Peak: ${peakLevel}%`);
+                    
+                    // Check if test duration complete
+                    if (Date.now() - startTime > testDuration) {
+                        clearInterval(testInterval);
+                        
+                        // Clean up
+                        source.disconnect();
+                        stream.getTracks().forEach(track => track.stop());
+                        audioContext.close();
+                        
+                        // Show results
+                        if (maxLevel === 0) {
+                            showNotification('❌ No audio detected! Check your microphone and system settings.', 'danger', 5000);
+                            console.error("[MicTest] No audio detected during test");
+                        } else if (maxLevel < 5) {
+                            showNotification(`⚠️ Very low audio levels detected (max: ${maxLevel}%). Check microphone gain.`, 'warning', 5000);
+                        } else {
+                            showNotification(`✅ Microphone working! Max level: ${maxLevel}%`, 'success', 3000);
+                        }
+                        
+                        console.log(`[MicTest] Test complete. Max level: ${maxLevel}%`);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error("[MicTest] Error:", error);
+                let message = 'Microphone test failed: ';
+                
+                if (error.name === 'NotAllowedError') {
+                    message += 'Permission denied. Please allow microphone access.';
+                } else if (error.name === 'NotFoundError') {
+                    message += 'No microphone found.';
+                } else {
+                    message += error.message;
+                }
+                
+                showNotification(message, 'danger', 5000);
+            }
+        });
+    }
+     
+    // ======================================
+    //  Initial Setup Calls
+    // ======================================
+    if (typeof AudioRecorder !== 'undefined') { 
+        initRecorder().then(success => {
+            if (success) {
+                 // Check if there's a preselected class (from URL or server)
+                 console.log("[Initial Setup] Checking for preselected class...");
+                 
+                 // Force an initial update to ensure UI state matches selections
+                 updateSections(); // Set initial class UI state
+                 updateNoiseButtonUI(); // Set initial noise button state
+                 resetRecordingUI(); // Ensure UI is reset initially (shows link)
+                 
+                 // Check URL for a class ID parameter
+                 const urlParams = new URLSearchParams(window.location.search);
+                 const classIdFromUrl = urlParams.get('class_id');
+                 if (classIdFromUrl) {
+                     console.log("[Initial Setup] Found class_id in URL:", classIdFromUrl);
+                     
+                     // Try to select that class in the dropdown
+                     if (allSelect) {
+                         for (let i = 0; i < allSelect.options.length; i++) {
+                             if (allSelect.options[i].value === classIdFromUrl) {
+                                 allSelect.selectedIndex = i;
+                                 allOption.checked = true;
+                                 break;
+                             }
+                         }
+                     }
+                     
+                     // Update the UI with this selection
+                     updateSections();
+            }
+        }
+    });
+                } else {
+        console.error("AudioRecorder library (recorder.js?) not loaded!");
+        showToast("Audio recording library failed to load. Recording is disabled.", "danger");
+        if(recordBtn) recordBtn.disabled = true;
+        if(ambientNoiseBtn) ambientNoiseBtn.disabled = true;
+    }
+    
+});
+</script>
+{% endblock %}
+
+

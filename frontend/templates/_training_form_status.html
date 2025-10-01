@@ -1,0 +1,343 @@
+{# Partial template for Training Parameters Form and Status Section #}
+
+<!-- Training Parameters Form -->
+<div id="trainingParameters" class="mui-training-parameters" style="display: none;">
+    <div class="mui-card">
+         {# Title updated dynamically by JS #}
+        <div class="mui-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="trainingParamsTitle" style="margin: 0; font-size: 1.25rem; font-weight: 500;">Training Parameters</h3>
+            {# Duplicate Reset Cache button, keep for convenience #}
+            <button type="button" id="resetFeatureCacheBtn" class="mui-button mui-button-outlined"
+                   style="display: inline-flex; align-items: center;"
+                   data-bs-toggle="tooltip" data-bs-placement="left"
+                   title="Resets the feature cache for the selected dictionary. Requires re-extraction before training.">
+                <span class="material-icons" style="font-size: 16px; margin-right: 4px;">refresh</span>
+                Reset Feature Cache
+            </button>
+        </div>
+        <div class="mui-card-content">
+            <div class="mui-alert mui-alert-info mb-4">
+                <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">info</span>
+                <span>Hover over parameter labels for detailed explanations. Training uses early stopping based on validation performance.</span>
+            </div>
+            <form id="trainingForm">
+                {# Values will be populated by JS based on selections #}
+                <input type="hidden" id="modelType" name="model_type" value="">
+                 {# Value populated by JS / Server-side initially #}
+                <input type="hidden" id="dictName" name="dict_name" value="{{ selected_dict or '' }}">
+
+                {# CNN Parameters - Grouped and hidden/shown by JS #}
+                <div id="cnnParameters" style="display: none;">
+                    <label for="cnnEpochs" class="mui-form-label" data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="Maximum training cycles. Early stopping automatically halts training when validation performance plateaus.">Epochs</label>
+                    <input type="number" class="mui-input" id="cnnEpochs" name="epochs" value="50" min="1" max="200">
+                    <small class="mui-form-text text-muted">Max passes through data. Auto-stops when optimal.</small>
+                </div>
+                 <div id="cnnParameters" style="display: none;">
+                    <label for="cnnBatchSize" class="mui-form-label" data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="Samples processed per weight update. Smaller values (8-64) often work well with early stopping and reduce memory usage.">Batch Size</label>
+                    <input type="number" class="mui-input" id="cnnBatchSize" name="batch_size" value="32" min="4" max="128" step="4">
+                     <small class="mui-form-text text-muted">Samples per update. 16-64 recommended.</small>
+                </div>
+                 <div id="cnnParameters" style="display: none;">
+                    <label for="cnnLearningRate" class="mui-form-label" data-bs-toggle="tooltip" data-bs-placement="top"
+                           title="Controls weight adjustment size per batch. 0.001 is often good. Smaller (0.0001) = slower, careful learning. Larger (0.01) = faster, riskier.">Learning Rate</label>
+                    <input type="number" class="mui-input" id="cnnLearningRate" name="learning_rate" value="0.001" step="0.0001" min="0.00001" max="0.01">
+                     <small class="mui-form-text text-muted">Step size for learning. 0.001 default.</small>
+                </div>
+
+                {# Random Forest Parameters - Grouped and hidden/shown by JS #}
+                <div id="rfParameters" style="display: none;">
+                    <label for="rfEstimators" class="mui-form-label" data-bs-toggle="tooltip" title="Number of decision trees in the forest. More trees generally improve accuracy but increase training time.">Number of Estimators</label>
+                    <input type="number" class="mui-input" id="rfEstimators" name="n_estimators" value="100" min="10" max="500" step="10">
+                     <small class="mui-form-text text-muted">Number of trees. 50-200 typical.</small>
+                </div>
+                <div id="rfParameters" style="display: none;">
+                    <label for="rfMaxDepth" class="mui-form-label" data-bs-toggle="tooltip" title="Maximum depth of each tree. Deeper trees can model more complexity but risk overfitting. Leave blank for unlimited depth.">Max Depth</label>
+                    <input type="number" class="mui-input" id="rfMaxDepth" name="max_depth" placeholder="Unlimited" min="1" max="100">
+                     <small class="mui-form-text text-muted">Tree depth limit. Blank = no limit.</small>
+                </div>
+
+                {# Ensemble Parameters - Grouped and hidden/shown by JS #}
+                 <div id="ensembleParameters" style="display: none;">
+                    <label for="rfWeight" class="mui-form-label" data-bs-toggle="tooltip" title="Blending weight between CNN and RF predictions in the ensemble. 0.5 gives equal weight.">Random Forest Weight</label>
+                    <input type="range" class="mui-form-range" id="rfWeight" name="rf_weight" min="0" max="1" step="0.1" value="0.5">
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>CNN Only (0.0)</span>
+                        <span>Equal (0.5)</span>
+                        <span>RF Only (1.0)</span>
+                    </div>
+                </div>
+
+                {# Common Parameters (shown based on model type by JS) #}
+                <div class="mui-form-control" id="commonParameters" style="display: none;">
+                    <div class="mui-form-check">
+                        <input class="mui-form-check-input" type="checkbox" id="useClassWeights" name="use_class_weights" checked>
+                        <label class="mui-form-check-label" for="useClassWeights" data-bs-toggle="tooltip" title="Adjusts model training to give more importance to classes with fewer samples. Recommended for imbalanced datasets.">
+                            Use class weights (for imbalanced data)
+                        </label>
+                    </div>
+                    <div class="mui-form-check">
+                        <input class="mui-form-check-input" type="checkbox" id="useAugmented" name="use_augmented" checked>
+                        <label class="mui-form-check-label" for="useAugmented" data-bs-toggle="tooltip" title="Include augmented recordings in training. Recommended.">
+                            Use augmented sounds
+                        </label>
+                    </div>
+                </div>
+
+                {# Submit Button #}
+                <div class="mui-d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="button" class="mui-button mui-button-contained" id="startTrainingBtn">
+                        <span class="material-icons" style="font-size: 16px; margin-right: 4px;">play_arrow</span>
+                        Start Training
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Training Status / Progress Section -->
+<div id="trainingStatus" class="mui-training-status mui-card" style="display: none;">
+     <div class="mui-card-content">
+        <h3 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center;">
+            <span class="material-icons me-2">hourglass_top</span>Training Progress
+        </h3>
+        <div class="mui-progress mui-progress-container">
+            <div class="mui-progress-bar mui-progress-bar-striped mui-progress-bar-animated" id="trainingProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div id="trainingLog" class="mt-3">
+            <p class="mb-2"><strong>Status:</strong> <span id="statusMessage">Initializing...</span></p>
+
+             {# Error Container #}
+            <div id="errorContainer" class="mui-alert mui-alert-danger mt-3" style="display: none;">
+                <h5 style="display: flex; align-items: center;"><span class="material-icons me-2">error</span>Training Errors Detected</h5>
+                <div id="errorDetails" class="mt-2 mb-2">
+                    <!-- Error summary dynamically added here -->
+                </div>
+                <strong>Suggestions:</strong>
+                <ul id="suggestionsList" class="mt-1 mb-0">
+                    <!-- Suggestions dynamically added here -->
+                </ul>
+            </div>
+
+            {# Detailed Logs Toggle/Container #}
+            <div class="mt-3">
+                 {# Button listener added in training_init_ui.js #}
+                <button class="mui-button mui-button-outlined" type="button">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">description</span> Toggle Detailed Logs
+                </button>
+                <div id="detailedLogs" class="mt-2" style="display: none;">
+                    <div class="mui-card">
+                        <div class="mui-card-header mui-card-header-secondary">
+                            <strong>Training Logs</strong>
+                        </div>
+                        <div class="mui-card-content" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                            <pre id="logMessages" style="white-space: pre-wrap; word-break: break-all; margin-bottom: 0; font-size: 0.85rem;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             {# General Info Alert #}
+            <div class="mui-alert mui-alert-info mt-3">
+                <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">info</span>Training may take several minutes depending on data size and parameters. Results will appear below upon completion.
+            </div>
+
+             {# Training Steps List #}
+            <div id="trainingSteps" class="mt-4">
+                <h5 style="font-size: 1.1rem; font-weight: 500;">Training Steps:</h5>
+                <div class="list-group" id="trainingStepsList">
+                    <!-- Training steps dynamically added here -->
+                </div>
+            </div>
+
+             {# Data Summary Section (Initially hidden) #}
+            <div id="trainingDataSummary" class="mt-4" style="display: none;">
+                <h5 style="font-size: 1.1rem; font-weight: 500;">Data Summary:</h5>
+                <div class="mui-card">
+                    <div class="mui-card-content">
+                         {# Simplified summary counts #}
+                         <div class="row mb-3 text-center small">
+                             <div class="col">Original: <strong id="originalCount">0</strong></div>
+                             <div class="col">Processed: <strong id="processedCount">0</strong></div>
+                             <div class="col">Augmented: <strong id="augmentedCount">0</strong></div>
+                             <div class="col">Stretched: <strong id="stretchedCount">0</strong></div>
+                              <div class="col">Skipped: <strong id="skippedCount">0</strong></div>
+                             <div class="col">Total Training: <strong id="totalCount">0</strong></div>
+                         </div>
+                         <hr/>
+                         {# Class Breakdown Table #}
+                        <h6 class="mt-3">Class Breakdown (Processed + Augmented):</h6>
+                         <div class="table-responsive">
+                            <table id="classBreakdownTable" class="mui-table mui-table-sm mui-table-bordered mui-table-striped">
+                                <thead class="mui-thead-light">
+                                    <tr>
+                                        <th>Class</th>
+                                        <th>Original Samples</th>
+                                        <th>Processed for Training</th>
+                                        <th>Augmented Samples</th>
+                                        <th>Total Training Samples</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Class breakdown rows dynamically added here -->
+                                </tbody>
+                                 {# Footer added dynamically by JS #}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+             {# MFCC Normalization Details (Initially hidden) #}
+            <div id="mfccNormalizationDetails" class="mt-4" style="display: none;">
+                <div class="mui-card">
+                    <div class="mui-card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#mfccDetailsContent" aria-expanded="false" aria-controls="mfccDetailsContent">
+                        <h5 class="mb-0 d-flex align-items-center justify-content-between">
+                            <span>
+                                <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">analytics</span>
+                                Feature Normalization Details
+                            </span>
+                            <span class="material-icons" id="mfccToggleIcon">chevron_right</span>
+                        </h5>
+                    </div>
+                    <div class="collapse" id="mfccDetailsContent">
+                         <div class="mui-card-content">
+                            <div class="mui-alert mui-alert-info small">
+                                 Features (like MFCCs, deltas) are typically normalized (scaled) before training to improve model stability and performance. The first MFCC (energy) is often handled separately or excluded from normalization.
+                            </div>
+                            <ul class="nav nav-tabs" id="mfccTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="mfcc-stats-tab" data-bs-toggle="tab" data-bs-target="#mfcc-stats" type="button" role="tab" aria-controls="mfcc-stats" aria-selected="true">Summary Stats</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="mfcc-coeffs-tab" data-bs-toggle="tab" data-bs-target="#mfcc-coeffs" type="button" role="tab" aria-controls="mfcc-coeffs" aria-selected="false">Coefficients Chart</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="mfcc-deltas-tab" data-bs-toggle="tab" data-bs-target="#mfcc-deltas" type="button" role="tab" aria-controls="mfcc-deltas" aria-selected="false">Deltas Chart</button>
+                                </li>
+                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="feature-vector-tab" data-bs-toggle="tab" data-bs-target="#feature-vector" type="button" role="tab" aria-controls="feature-vector" aria-selected="false">Full Feature Vector</button>
+                                </li>
+                            </ul>
+                            <div class="tab-content mt-3" id="mfccTabContent">
+                                <!-- Summary Statistics Tab -->
+                                <div class="tab-pane fade show active" id="mfcc-stats" role="tabpanel" aria-labelledby="mfcc-stats-tab">
+                                    <p class="small text-muted mb-2">Overall statistics for features before and after normalization.</p>
+                                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                        <table class="mui-table mui-table-sm mui-table-bordered">
+                                            <thead class="mui-thead-light sticky-top">
+                                                <tr>
+                                                    <th>Feature Stat</th>
+                                                    <th>Before Normalization</th>
+                                                    <th>After Normalization</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="mfccStatsTableBody">
+                                                 <tr><td colspan="3" class="text-center text-muted small">Loading stats...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Coefficients Chart Tab -->
+                                <div class="tab-pane fade" id="mfcc-coeffs" role="tabpanel" aria-labelledby="mfcc-coeffs-tab">
+                                     <p class="small text-muted mb-2">Visualization of raw MFCC coefficient values (before normalization). MFCC 1 (energy) highlighted.</p>
+                                    <div id="mfccCoefficientsChart" style="height: 300px; position: relative;">
+                                         <p class="text-center text-muted small">Loading chart...</p>
+                                    </div>
+                                </div>
+                                <!-- Delta Features Chart Tab -->
+                                <div class="tab-pane fade" id="mfcc-deltas" role="tabpanel" aria-labelledby="mfcc-deltas-tab">
+                                    <p class="small text-muted mb-2">Visualization of raw Delta feature values (before normalization).</p>
+                                    <div id="mfccDeltasChart" style="height: 300px; position: relative;">
+                                         <p class="text-center text-muted small">Loading chart...</p>
+                                    </div>
+                                </div>
+                                <!-- Full Feature Vector Tab -->
+                                <div class="tab-pane fade" id="feature-vector" role="tabpanel" aria-labelledby="feature-vector-tab">
+                                    <p class="small text-muted mb-2">Example structure of the full feature vector used for training (total <strong id="feature-vector-count">0</strong> features):</p>
+                                    <div class="feature-vector-display p-2 bg-light border rounded small" style="max-height: 150px; overflow-y: auto; font-family: monospace; word-break: break-all;">
+                                        <span id="complete-feature-vector">Loading feature structure...</span>
+                                    </div>
+                                 </div>
+                            </div> {# End Tab Content #}
+                        </div> {# End Card Content #}
+                    </div> {# End Collapse Area #}
+                </div> {# End Card #}
+            </div> {# End MFCC Details Section #}
+
+
+             {# Processing Errors Table (Initially hidden) #}
+            <div id="processingErrorsDetails" class="mt-4" style="display: none;">
+                <h5 style="font-size: 1.1rem; font-weight: 500;">Processing Errors:</h5>
+                <div class="mui-card">
+                    <div class="mui-card-content">
+                        <div class="mui-alert mui-alert-warning small">
+                            <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">warning</span>
+                            The following files encountered issues during processing. Non-fatal errors may use fallback methods. Fatal errors skip the file.
+                        </div>
+                        <div class="table-responsive">
+                            <table class="mui-table mui-table-sm mui-table-bordered mui-table-striped">
+                                <thead class="mui-thead-light">
+                                    <tr>
+                                        <th>File</th>
+                                        <th>Class</th>
+                                        <th>Error Type</th>
+                                        <th>Message</th>
+                                        <th>Resolution</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="errorFilesTableBody">
+                                     <tr><td colspan="5" class="text-center text-muted small">Loading errors...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Epoch Results Table (Initially hidden) #}
+            <div id="epochResultsTable" class="mt-4" style="display: none;">
+                <h5 style="font-size: 1.1rem; font-weight: 500;">Epoch Results:</h5>
+                <div class="mui-card">
+                    <div class="mui-card-content">
+                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="mui-table mui-table-striped mui-table-bordered mui-table-sm">
+                                <thead class="mui-thead-primary sticky-top">
+                                    <tr>
+                                        <th>Epoch #</th>
+                                        <th>Train Acc</th>
+                                        <th>Train Loss</th>
+                                        <th>Val Acc</th>
+                                        <th>Val Loss</th>
+                                        <th>Improved?</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="epochResultsBody">
+                                     <tr><td colspan="6" class="text-center text-muted small">Waiting for epoch results...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            {# Model Results Container (Initially hidden) - Populated upon completion #}
+            <div id="modelResultsContainer" class="mt-4" style="display: none;">
+                <h5 style="font-size: 1.1rem; font-weight: 500;">Final Model Results:</h5>
+                <div id="modelResults">
+                    <p class="text-center text-muted">Loading final results...</p>
+                </div>
+                <div id="modelAnalysisSummary" class="mt-3 mb-2" style="font-weight: 500;">
+                    <!-- Analysis summary will be loaded here by JS -->
+                </div>
+                <ul id="modelImprovementSuggestions" class="list-unstyled small text-muted mb-3">
+                    <!-- Suggestions will be loaded here by JS -->
+                </ul>
+            </div>
+        </div> {# End trainingLog #}
+     </div> {# End mui-card-content #}
+</div> {# End trainingStatus #}

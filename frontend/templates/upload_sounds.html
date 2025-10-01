@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Sounds - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+    /* Basic card styling */
+    .upload-card, .results-card {
+        background-color: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    /* Form layout */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    select,
+    input[type="file"] {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box; /* Include padding and border in element's total width and height */
+    }
+    
+    input[type="file"] {
+        padding: 0.5rem; /* Adjust padding specifically for file input */
+    }
+
+    /* Button styling */
+    .upload-button {
+        /* Use MUI button classes for consistency */
+    }
+    
+    /* Waveform container */
+    .waveform-container {
+        width: 100%;
+        margin-top: 1rem;
+        height: 120px;
+        background-color: #f9f9f9;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Loading indicator */
+    .loading-indicator {
+        display: none; /* Hidden by default */
+        text-align: center;
+        margin-top: 1rem;
+        font-style: italic;
+        color: #777;
+    }
+    
+    /* Verify button styling */
+    .verify-link-container {
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .verify-button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    
+    .verify-button:hover {
+        background-color: #45a049;
+    }
+    
+    .verify-instructions {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #4CAF50;
+        margin-bottom: 20px;
+    }
+    
+    /* Audio controls */
+    .audio-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem 0;
+        gap: 1rem;
+    }
+    
+    .audio-controls button {
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .audio-controls button:hover {
+        background-color: #3a80d2;
+    }
+    
+    .audio-controls button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .discard-button {
+        background-color: #e74c3c !important;
+    }
+    
+    .discard-button:hover {
+        background-color: #c0392b !important;
+    }
+    
+    /* Recording metadata */
+    .recording-metadata {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+    
+    .recording-metadata p {
+        margin: 0.3rem 0;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .upload-card, .results-card {
+            padding: 1rem;
+        }
+        select, input[type="file"], button {
+            font-size: 1rem; /* Ensure readability on smaller devices */
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Upload Sounds</h2>
+    <p>Upload existing sound files (.wav format) to associate them with sound classes. The system will process the uploaded file to extract individual sound instances separated by silence.</p>
+
+    <!-- Upload Card -->
+    <div class="upload-card">
+        <h3>Upload Audio File</h3>
+        <form id="uploadSoundForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="soundClassSelectUpload">Target Sound Class:</label>
+                <select id="soundClassSelectUpload" name="sound_class_id" required>
+                    <option value="">-- Select Sound Class --</option>
+                    {% for class_data in sound_classes %}
+                    <option value="{{ class_data.id }}">{{ class_data.name }} ({{ class_data.sample_count }} samples)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="audioFileInput">Select WAV File:</label>
+                <input type="file" id="audioFileInput" name="audio_file" accept=".wav" required>
+                <small class="form-text text-muted">
+                    Upload a single .wav file. Ensure individual sound instances within the file are separated by approximately 1 second of silence.
+                </small>
+            </div>
+
+            <button type="submit" class="mui-button mui-button-contained upload-button" id="uploadButton">
+                <span class="material-icons" style="margin-right: 8px;">upload</span> Upload & Process
+            </button>
+        </form>
+        <div class="loading-indicator" id="uploadLoadingIndicator">Processing upload...</div>
+    </div>
+
+    <!-- Results Card (Raw recording with waveform) -->
+    <div class="results-card" id="uploadResultsCard" style="display: none;">
+        <h3>Uploaded Recording</h3>
+        <p id="uploadResultMessage"></p>
+        
+        <div class="recording-metadata" id="recordingMetadata">
+            <p><strong>Class:</strong> <span id="recordingClass"></span></p>
+            <p><strong>Duration:</strong> <span id="recordingDuration"></span> seconds</p>
+            <p><strong>Format:</strong> <span id="recordingFormat">16-bit mono WAV (16kHz)</span></p>
+        </div>
+        
+        <!-- Waveform visualization will go here -->
+        <div class="waveform-container" id="waveformContainer"></div>
+        
+        <div class="audio-controls">
+            <button id="playRawButton" title="Play raw recording">
+                <span class="material-icons">play_arrow</span>
+            </button>
+            
+            <button id="pauseRawButton" title="Pause playback" disabled>
+                <span class="material-icons">pause</span>
+            </button>
+            
+            <button id="discardRawButton" class="discard-button" title="Discard raw recording">
+                <span class="material-icons">delete</span>
+            </button>
+        </div>
+        
+        <div class="verify-instructions">
+            <p><strong>Next Steps:</strong> Your sound file has been processed and individual segments are ready for verification.</p>
+            <p>Go to the Verify page to review, listen to, and approve each extracted sound segment.</p>
+        </div>
+        
+        <div class="verify-link-container">
+            <a href="{{ url_for('recording_web.verify_sounds_page') }}" class="verify-button" id="goToVerifyButton">
+                <span class="material-icons" style="margin-right: 8px;">check_circle</span> Go to Verify Page
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include wavesurfer.js for waveform visualization -->
+<script src="https://unpkg.com/wavesurfer.js@6.6.4"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const soundClassSelect = document.getElementById('soundClassSelectUpload');
+    const uploadForm = document.getElementById('uploadSoundForm');
+    const audioFileInput = document.getElementById('audioFileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const loadingIndicator = document.getElementById('uploadLoadingIndicator');
+    const resultsCard = document.getElementById('uploadResultsCard');
+    const resultMessage = document.getElementById('uploadResultMessage');
+    
+    // New elements for raw recording display
+    const recordingClassEl = document.getElementById('recordingClass');
+    const recordingDurationEl = document.getElementById('recordingDuration');
+    const waveformContainer = document.getElementById('waveformContainer');
+    const playRawButton = document.getElementById('playRawButton');
+    const pauseRawButton = document.getElementById('pauseRawButton');
+    const discardRawButton = document.getElementById('discardRawButton');
+    
+    // Raw recording info
+    let rawRecordingId = null;
+    let rawRecordingUrl = null;
+    let wavesurfer = null;
+    
+    // Initialize wavesurfer
+    function initWavesurfer() {
+        // Destroy existing instance if it exists
+        if (wavesurfer) {
+            wavesurfer.destroy();
+        }
+        
+        // Create new wavesurfer instance
+        wavesurfer = WaveSurfer.create({
+            container: waveformContainer,
+            waveColor: '#4a90e2',
+            progressColor: '#2c3e50',
+            cursorColor: '#333',
+            height: 120,
+            barWidth: 2,
+            barGap: 1,
+            responsive: true,
+            normalize: true
+        });
+        
+        // Set up event listeners for wavesurfer
+        wavesurfer.on('ready', function() {
+            playRawButton.disabled = false;
+        });
+        
+        wavesurfer.on('play', function() {
+            playRawButton.disabled = true;
+            pauseRawButton.disabled = false;
+        });
+        
+        wavesurfer.on('pause', function() {
+            playRawButton.disabled = false;
+            pauseRawButton.disabled = true;
+        });
+        
+        wavesurfer.on('finish', function() {
+            playRawButton.disabled = false;
+            pauseRawButton.disabled = true;
+        });
+    }
+    
+    // Set up playback control event listeners
+    playRawButton.addEventListener('click', function() {
+        if (wavesurfer) {
+            wavesurfer.play();
+        }
+    });
+    
+    pauseRawButton.addEventListener('click', function() {
+        if (wavesurfer) {
+            wavesurfer.pause();
+        }
+    });
+    
+    discardRawButton.addEventListener('click', async function() {
+        if (!rawRecordingId) return;
+        
+        if (!confirm('Are you sure you want to discard this raw recording? This cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch("{{ url_for('recording_web.api_delete_sound_file') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'sound_instance_id': rawRecordingId
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Recording discarded successfully.');
+                resultsCard.style.display = 'none'; // Hide the results card
+                uploadForm.reset(); // Reset the form
+            } else {
+                alert(`Error: ${result.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Discard error:', error);
+            alert(`Network error: ${error.message}`);
+        }
+    });
+
+    // --- Upload Form Submission --- 
+    uploadForm.addEventListener('submit', async function(event) {
+        event.preventDefault(); // Prevent default HTML form submission
+
+        const selectedClassId = soundClassSelect.value;
+        const file = audioFileInput.files[0];
+
+        if (!selectedClassId) {
+            alert('Please select a sound class.');
+            return;
+        }
+        if (!file) {
+            alert('Please select a WAV file to upload.');
+            return;
+        }
+        if (!file.name.toLowerCase().endsWith('.wav')) {
+            alert('Please upload a valid .wav file.');
+            return;
+        }
+
+        uploadButton.disabled = true;
+        loadingIndicator.style.display = 'block';
+        resultsCard.style.display = 'none';
+        
+        // Reset wavesurfer
+        if (wavesurfer) {
+            wavesurfer.destroy();
+            wavesurfer = null;
+        }
+
+        const formData = new FormData();
+        formData.append('audio_file', file); // Match the key expected by backend
+        formData.append('sound_class_id', selectedClassId);
+
+        try {
+            const response = await fetch("{{ url_for('recording_web.api_upload_audio_sample') }}", {
+                method: 'POST',
+                body: formData,
+                // Headers are automatically set by browser for FormData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                resultMessage.textContent = result.message || 'Upload processed successfully.';
+                
+                // Display raw recording info if available
+                if (result.raw_file_info) {
+                    const rawInfo = result.raw_file_info;
+                    
+                    // Store the recording ID for discard function
+                    rawRecordingId = rawInfo.id;
+                    
+                    // Get class name from selected option
+                    const selectedOption = soundClassSelect.options[soundClassSelect.selectedIndex];
+                    const className = selectedOption.text.split(' (')[0];
+                    recordingClassEl.textContent = className;
+                    
+                    // Show duration
+                    recordingDurationEl.textContent = rawInfo.duration || 'Unknown';
+                    
+                    // Initialize wavesurfer with the raw recording URL
+                    initWavesurfer();
+                    
+                    // If there's a path for the raw recording, load it into wavesurfer
+                    if (rawInfo.relative_wav_path) {
+                        const audioUrl = `/api/sounds/stream_by_path?path=${encodeURIComponent(rawInfo.relative_wav_path)}`;
+                        rawRecordingUrl = audioUrl;
+                        wavesurfer.load(audioUrl);
+                }
+                }
+                
+                 resultsCard.style.display = 'block';
+            } else {
+                resultMessage.textContent = `Error: ${result.error || 'Unknown error during processing.'}`;
+                resultsCard.style.display = 'block';
+                alert(`Upload failed: ${result.error || 'Unknown error'}`);
+            }
+
+        } catch (error) {
+            console.error('Upload network error:', error);
+            resultMessage.textContent = `Network Error: ${error.message}`;
+            resultsCard.style.display = 'block';
+            alert(`Network error during upload: ${error.message}`);
+        } finally {
+            uploadButton.disabled = false;
+            loadingIndicator.style.display = 'none';
+            // Don't clear the file input here to allow for re-submission if needed
+                }
+            });
+});
+</script>
+{% endblock %} 

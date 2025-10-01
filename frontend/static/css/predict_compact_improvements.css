@@ -1,0 +1,415 @@
+/* Compact improvements for existing predict page */
+/* These override predict.css to make everything more compact */
+
+/* Reduce overall padding and margins - ULTRA COMPACT */
+.mui-predict-container {
+    max-width: 1600px !important;
+    margin: 0.5rem auto !important;
+    padding: 0.5rem !important;
+}
+
+/* Make header more compact */
+.mui-page-header {
+    margin-bottom: 0.3rem !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+}
+
+.mui-page-title {
+    font-size: 1.3rem !important;
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+}
+
+.mui-page-subtitle {
+    font-size: 0.85rem !important;
+    margin-bottom: 0 !important;
+}
+
+/* Tighter grid gaps */
+.mui-steps-grid {
+    gap: 0.5rem !important;
+}
+
+/* More compact cards */
+.mui-model-card {
+    min-height: auto !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.mui-card-header {
+    padding: 0.3rem 0.5rem !important;
+}
+
+.mui-card-header h2 {
+    font-size: 0.9rem !important;
+}
+
+.mui-card-content {
+    padding: 0.5rem !important;
+}
+
+/* Smaller form elements */
+.mui-form-select {
+    padding: 0.3rem !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 0 !important;
+}
+
+.mui-helper-text {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.1rem !important;
+    margin-top: 0.1rem !important;
+    line-height: 1.2 !important;
+}
+
+.mui-form-label {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.2rem !important;
+}
+
+/* Compact model list */
+#modelsList {
+    min-height: 80px !important;
+    padding: 0.3rem !important;
+}
+
+.model-item {
+    padding: 0.3rem !important;
+    margin-bottom: 0.3rem !important;
+    position: relative !important;
+    min-height: auto !important;
+}
+
+.model-item label {
+    font-size: 0.85rem !important;
+    line-height: 1.2 !important;
+}
+
+.model-details {
+    font-size: 0.75rem !important;
+    line-height: 1.1 !important;
+    margin-top: 0.1rem !important;
+}
+
+/* Date/time in top right corner of model boxes */
+.model-item .model-date {
+    position: absolute !important;
+    top: 0.3rem !important;
+    right: 0.3rem !important;
+    font-size: 0.7rem !important;
+    color: #999 !important;
+    line-height: 1 !important;
+}
+
+/* Reduce model box height */
+.model-item > div {
+    padding: 0.4rem 0.5rem !important;
+    min-height: auto !important;
+}
+
+/* More compact model info display */
+#modelInfo {
+    padding: 0.3rem !important;
+    margin-top: 0.2rem !important;
+}
+
+/* Compact buttons */
+.mui-button {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.85rem !important;
+    margin: 0.2rem !important;
+}
+
+/* Compact prediction display */
+#prediction-value {
+    font-size: 2rem !important;
+}
+
+#confidence-value {
+    font-size: 1.2rem !important;
+}
+
+/* Compact prediction controls */
+.predictor-controls {
+    padding: 0.75rem !important;
+}
+
+.predictor-controls button {
+    padding: 0.6rem 1.2rem !important;
+    font-size: 0.95rem !important;
+}
+
+/* Make mode radios inline to save space */
+.mui-radio-group {
+    display: flex !important;
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+}
+
+.mui-radio-group label {
+    margin-bottom: 0 !important;
+}
+
+/* Compact radio button rows */
+.mui-mode-cards-row {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.mui-mode-cards-row p {
+    margin: 0 !important;
+    padding: 0.1rem !important;
+    font-size: 0.85rem !important;
+}
+
+.mui-mode-cards-row p:last-child {
+    margin-bottom: 0 !important;
+}
+
+.mui-mode-cards-row .mode-title {
+    font-size: 0.85rem !important;
+}
+
+/* Compact history display */
+#predictionHistoryCard {
+    min-height: 200px !important;
+}
+
+.history-entry {
+    padding: 0.5rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* Layout adjustments for proper card positioning */
+@media (min-width: 1400px) {
+    .mui-steps-grid {
+        grid-template-columns: 400px 1fr !important;
+    }
+    
+    /* Dictionary selection - left column, top */
+    .mui-steps-grid > div:first-child {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    /* Predictor interface - left column, below dictionary */
+    #predictorInterfaceCard {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+    }
+    
+    /* Model selection - right column, full height */
+    #modelSelectionCard {
+        grid-column: 2 !important;
+        grid-row: 1 / span 3;
+    }
+    
+    /* History - bottom full width */
+    #predictionHistoryCard {
+        grid-column: 1 / span 2;
+        grid-row: 4;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .mui-steps-grid {
+        grid-template-columns: 1fr !important;
+        grid-auto-flow: row !important;
+    }
+    
+    /* Force vertical stacking on smaller screens */
+    #predictorInterfaceCard {
+        grid-column: 1 !important;
+        grid-row: auto !important;
+    }
+    
+    #modelSelectionCard {
+        grid-column: 1 !important;
+        grid-row: auto !important;
+    }
+}
+
+/* Remove unnecessary spacing */
+.mui-alert {
+    margin-bottom: 0.3rem !important;
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* Ultra compact model selection boxes in the list */
+#modelsList > div {
+    padding: 0.4rem !important;
+    margin-bottom: 0.3rem !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    position: relative !important;
+}
+
+/* Model selection box content more compact */
+#modelsList .model-content {
+    padding-right: 100px !important; /* Space for date in top right */
+}
+
+/* Ambient helper text more compact */
+.ambient-helper {
+    font-size: 0.75rem !important;
+    margin: 0.1rem 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Compact the face display */
+#face-container {
+    width: 150px !important;
+    height: 150px !important;
+}
+
+/* Compact face styling in body */
+#compactFaceContainer {
+    background: white;
+    border-radius: 50%;
+    padding: 5px;
+    border: 2px solid #ddd;
+}
+
+#compactFaceContainer .face {
+    position: relative;
+    background: #f9f9f9;
+    border-radius: 50%;
+}
+
+#compactFaceContainer .eye {
+    position: absolute;
+    background: #333;
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+    top: 35%;
+}
+
+#compactFaceContainer .eye-left {
+    left: 25%;
+}
+
+#compactFaceContainer .eye-right {
+    right: 25%;
+}
+
+#compactFaceContainer .mouth {
+    position: absolute;
+    bottom: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+}
+
+#compactFaceContainer .mouth-neutral {
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+#compactFaceContainer .mouth-happy {
+    width: 20px;
+    height: 10px;
+    border-radius: 0 0 50% 50%;
+}
+
+/* Compact game display */
+#gameCompactDisplay {
+    background: white;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Make confusion matrix more compact if displayed */
+.confusion-matrix table {
+    font-size: 0.8rem !important;
+}
+
+.confusion-matrix th,
+.confusion-matrix td {
+    padding: 0.3rem !important;
+}
+
+/* Compact ambient noise button */
+#ambientNoiseBtn {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* Status messages more compact */
+#statusMessage {
+    font-size: 0.9rem !important;
+    padding: 0.5rem !important;
+}
+
+/* Recording status indicator */
+.recording-indicator {
+    font-size: 0.9rem !important;
+    padding: 0.3rem 0.6rem !important;
+}
+
+/* Move control buttons to the left and position correctly */
+.mui-controls-below-cards {
+    text-align: left !important;
+    padding-left: 0.5rem !important;
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.2rem !important;
+}
+
+.mui-controls-below-cards button {
+    margin-right: 1rem !important;
+    display: inline-block !important;
+}
+
+.mui-controls-below-cards #predictButton {
+    margin-left: 0 !important;
+}
+
+/* Make prediction table much more compact */
+#predictionResultsTable {
+    font-size: 0.8rem !important;
+}
+
+#predictionResultsTable th,
+#predictionResultsTable td {
+    padding: 0.3rem 0.4rem !important;
+    line-height: 1.2 !important;
+}
+
+/* Compact table headers */
+#predictionResultsTable th {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+}
+
+/* Very compact instance numbering in header */
+#tableHeader th:not(:first-child) {
+    min-width: 40px !important;
+    max-width: 60px !important;
+    text-align: center !important;
+}
+
+/* Compact the model name column */
+#predictionResultsTable td:first-child {
+    font-weight: 500 !important;
+    font-size: 0.8rem !important;
+    min-width: 100px !important;
+    max-width: 150px !important;
+}
+
+/* Compact prediction cells */
+#predictionResultsTable td:not(:first-child) {
+    text-align: center !important;
+    min-width: 40px !important;
+    max-width: 60px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}

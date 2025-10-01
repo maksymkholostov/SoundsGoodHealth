@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SoundsGood</title>
+
+    <!-- Fonts (Poppins, Roboto, Material Icons) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Optional: MUI Core CSS (if needed for base styles) -->
+    <!-- <link href="https://unpkg.com/@mui/material@latest/dist/mui-material.min.css" rel="stylesheet"> -->
+
+    <!-- Link Shared Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* REMOVE Variables - Defined in style.css */
+        /* :root { ... } */
+
+        /* Base body styles - Keep as they override base.html */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--body-bg-color); /* Use variable from style.css */
+            color: var(--dark-color);
+            line-height: 1.5;
+        }
+
+        /* Login Page Specific Layout Styles */
+        .login-wrapper {
+            max-width: 400px;
+            width: 100%;
+            padding: 1rem;
+        }
+
+        /* REMOVE .mui-card - Defined in style.css */
+        /* .mui-card { ... } */
+
+        /* Header Styling */
+        .login-header-mui {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: none;
+            /* Use border-radius from variable */
+            border-top-left-radius: var(--card-border-radius);
+            border-top-right-radius: var(--card-border-radius);
+        }
+        .login-header-mui .logo-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .login-header-mui h1 {
+            margin: 0 0 0.25rem 0;
+            font-weight: 600;
+            font-size: 2.2rem;
+        }
+        .login-header-mui p {
+            margin: 0;
+            opacity: 1;
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        /* Body Styling */
+        .login-body-mui {
+            padding: 1.8rem 2rem 1.5rem 2rem;
+        }
+        .login-body-mui h2 {
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 1rem;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        /* Footer Links Styling */
+        .login-footer-container {
+             margin-top: 1.5rem;
+             position: relative;
+             padding-bottom: 2em;
+             min-height: auto;
+        }
+        .login-footer-main {
+             text-align: center;
+             font-size: 0.9rem;
+        }
+        .login-footer-main p {
+            margin-bottom: 0.5rem;
+        }
+        .login-footer-main a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .login-footer-main a:hover {
+            text-decoration: underline;
+        }
+        .how-it-works-link-container {
+            position: absolute;
+            bottom: 0.25rem;
+            right: 0;
+            font-size: 0.85rem;
+        }
+        .how-it-works-link {
+             color: var(--primary-color);
+             text-decoration: none;
+             display: inline-flex;
+             align-items: center;
+        }
+         .how-it-works-link:hover {
+             text-decoration: underline;
+         }
+        .how-it-works-link .material-icons {
+             font-size: 1rem;
+             margin-left: 4px;
+             vertical-align: text-bottom;
+        }
+
+        /* Copyright Footer */
+        .copyright-footer {
+            text-align: center;
+            margin-top: 0.5rem;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        /* Form Styling - Use styles from style.css */
+        /* REMOVE .mui-form-group { ... } */
+        /* REMOVE .mui-form-group label { ... } */
+        /* REMOVE .mui-input-icon-wrapper { ... } */
+        /* REMOVE .mui-input-icon { ... } */
+        /* REMOVE .mui-input { ... } */
+        /* REMOVE .mui-input-with-icon { ... } */
+        /* REMOVE .mui-input::placeholder { ... } */
+        /* REMOVE .mui-input:focus { ... } */
+
+        /* Login Button Specific Styles (if any) */
+        .login-button {
+            /* Inherits base .mui-button styles */
+            width: 100%;
+            /* padding: 0.75rem 1.5rem; */ /* Use base padding or adjust if needed */
+            /* font-size: 1rem; */ /* Use base size or adjust */
+            gap: 0.5rem;
+        }
+        .login-button .material-icons {
+            /* font-size: 1.2rem; */ /* Use base size or adjust */
+        }
+
+        /* Forgot Password Link */
+        .forgot-password-link {
+            font-size: 0.875rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            float: right;
+            margin-top: 0.25rem;
+        }
+        .forgot-password-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Alert Styling - Use styles from style.css */
+        /* REMOVE .mui-alert { ... } */
+        .login-body-mui .mui-alert { /* Keep specific margin */
+             margin-top: 1.5rem;
+        }
+        /* REMOVE .mui-alert .material-icons { ... } */
+        /* REMOVE .mui-alert-info { ... } */
+        /* REMOVE .mui-alert-error { ... } */
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        /* Remove spin animation - defined in style.css if needed globally */
+    </style>
+</head>
+<body>
+    <div class="login-wrapper fade-in">
+        <div class="mui-card"> <!-- Uses style from style.css -->
+            <div class="login-header-mui"> <!-- Uses local style -->
+                <span class="material-icons logo-icon">graphic_eq</span>
+                <h1>SoundsGood</h1>
+                <p>Speech Recognition Platform</p>
+            </div>
+            <div class="login-body-mui"> <!-- Uses local style -->
+                <h2>Login</h2>
+
+                {# Flash Messages / Errors - Uses .mui-alert from style.css #}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="mui-alert mui-alert-{{ category if category != 'danger' else 'error' }}">
+                                {% if category == 'success' %}<span class="material-icons">check_circle</span>
+                                {% elif category == 'warning' %}<span class="material-icons">warning</span>
+                                {% elif category == 'danger' or category == 'error' %}<span class="material-icons">error</span>
+                                {% else %}<span class="material-icons">info</span>
+                                {% endif %}
+                                <span style="flex-grow: 1;">{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                {% if error %}
+                <div class="mui-alert mui-alert-error">
+                    <span class="material-icons">error</span>
+                    <span style="flex-grow: 1;">{{ error }}</span>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('auth_web.login_page') }}" style="margin-top: 1rem;">
+                    <div class="mui-form-group">
+                        <label for="username">Username</label>
+                        <div class="mui-input-icon-wrapper">
+                            <span class="material-icons mui-input-icon">person_outline</span>
+                            <input type="text" class="mui-input mui-input-with-icon" id="username" name="username" placeholder="Enter your username"
+                                {% if test_mode %}value="test"{% endif %}
+                                {% if ron_mode %}value="ronrubin"{% endif %}
+                                autocomplete="username"
+                                required>
+                        </div>
+                    </div>
+                    <div class="mui-form-group">
+                        <label for="password">Password</label>
+                        <div class="mui-input-icon-wrapper">
+                            <span class="material-icons mui-input-icon">lock_outline</span>
+                            <input type="password" class="mui-input mui-input-with-icon" id="password" name="password" placeholder="Enter your password"
+                                {% if test_mode %}value="test"{% endif %}
+                                {% if ron_mode %}value="password123"{% endif %}
+                                autocomplete="current-password"
+                                required>
+                        </div>
+                        <div style="margin-top: 0.25rem; height: 1.5em;"> {# Reserve space #}
+                            <a href="{{ url_for('auth_web.forgot_password') }}" class="forgot-password-link">Forgot password?</a>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="mui-button login-button">
+                            <span class="material-icons">login</span>Login
+                        </button>
+                    </div>
+                </form>
+
+                {# Test/Dev Mode Hints - Added margin-top via CSS #}
+                {% if test_mode %}
+                <div class="mui-alert mui-alert-info">
+                    <span class="material-icons">info</span>
+                    <span style="flex-grow: 1;">Test mode: Username and password are pre-filled. Click the login button to continue.</span>
+                </div>
+                {% endif %}
+                {% if ron_mode %}
+                <div class="mui-alert mui-alert-info">
+                    <span class="material-icons">info</span>
+                    <span style="flex-grow: 1;">Developer mode: Your credentials are pre-filled. Click the login button to continue.</span>
+                </div>
+                {% endif %}
+
+                <div class="login-footer-container">
+                    <div class="login-footer-main">
+                        <p>Don't have an account? <a href="{{ url_for('auth_web.register_page') }}">Register</a></p>
+                    </div>
+                    <div class="how-it-works-link-container">
+                         <a href="{{ url_for('core_web.how_it_works_page') }}" class="how-it-works-link">How it works <span class="material-icons">info_outline</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="copyright-footer">
+            <p>&copy; 2025 SoundsGood. All rights reserved.</p>
+        </div>
+    </div>
+
+</body>
+</html> 

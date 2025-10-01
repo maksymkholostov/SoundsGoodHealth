@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Games - SoundsGood{% endblock %}
+
+{% block additional_head %}
+<style>
+    .games-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 30px;
+    }
+    
+    .game-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .game-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    
+    .game-image {
+        width: 100%;
+        height: 180px;
+        background-size: cover;
+        background-position: center;
+        background-color: #f0f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .game-image-icon {
+        font-size: 80px;
+        color: var(--primary-color);
+    }
+    
+    .game-content {
+        padding: 20px;
+    }
+    
+    .game-title {
+        margin: 0 0 10px 0;
+        color: var(--primary-color);
+        font-size: 1.5rem;
+    }
+    
+    .game-description {
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    
+    .game-button {
+        display: block;
+        width: 100%;
+        padding: 12px 0;
+        background-color: var(--primary-color);
+        color: white;
+        text-align: center;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .game-button:hover {
+        background-color: #2a3eb1;
+    }
+    
+    .page-title {
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    
+    .page-description {
+        color: #555;
+        max-width: 700px;
+        margin: 0 auto 30px auto;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="games-container">
+    <h1 class="page-title text-center">Sound Games</h1>
+    <p class="page-description text-center">Practice and have fun with these interactive sound games! Choose a game below to get started.</p>
+    
+    <div class="games-grid">
+        <!-- Game 1: Let it all out -->
+        <div class="game-card">
+            <div class="game-image">
+                <span class="material-icons game-image-icon">celebration</span>
+            </div>
+            <div class="game-content">
+                <h2 class="game-title">Game 1: Let it all out!</h2>
+                <p class="game-description">
+                    Make any sound you want and watch the face react! The louder the sound, the more the face will smile. Great for practicing vocal volume and expression.
+                </p>
+                <a href="{{ url_for('games.game1_page') }}" class="game-button">
+                    <span class="material-icons" style="vertical-align: middle; margin-right: 5px;">play_circle</span>
+                    Play Game
+                </a>
+            </div>
+        </div>
+        
+        <!-- Game renamed to Game 2 -->
+        <div class="game-card">
+            <div class="game-image">
+                <span class="material-icons game-image-icon">psychology</span>
+            </div>
+            <div class="game-content">
+                <h2 class="game-title">Game 2: Say the Sound!</h2>
+                <p class="game-description">
+                    Test your pronunciation skills! The game will show you a sound class (like "Eh" or "Oh"), and you need to say it correctly to make the face smile.
+                </p>
+                <a href="{{ url_for('games.game2_page') }}" class="game-button">
+                    <span class="material-icons" style="vertical-align: middle; margin-right: 5px;">play_circle</span>
+                    Play Game
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Get the current user ID from the server
+    const currentUserId = "{{ current_user.id if current_user else '' }}";
+</script>
+{% endblock %} 

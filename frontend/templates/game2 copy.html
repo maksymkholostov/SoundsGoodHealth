@@ -1,0 +1,803 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Class Game - SoundsGood{% endblock %}
+
+{% block additional_head %}
+<!-- Include play-specific CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/play.css') }}">
+<style>
+    .mui-class-display {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+    
+    .mui-face-grimace .mui-mouth {
+        position: absolute;
+        width: 60%;
+        height: 10px;
+        bottom: 25%;
+        left: 20%;
+        background-color: transparent;
+        border: 3px solid #333;
+        border-radius: 0 0 30px 30px;
+        transform: rotate(180deg);
+    }
+    
+    .mui-face-grimace {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: #f8d568;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .mui-prediction-info {
+        margin-top: 1rem;
+        padding: 0.5rem;
+        border-radius: 4px;
+        background-color: rgba(0, 0, 0, 0.05);
+        font-size: 0.9rem;
+    }
+    
+    /* Loading indicator in case of script failure */
+    #errorMessage {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 4px;
+        background-color: #ffebee;
+        color: #c62828;
+        display: none;
+    }
+    
+    /* Shake animation */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    .shake {
+        animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .mui-prediction-info p {
+        margin: 5px 0;
+    }
+    
+    .mui-steps-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .mui-model-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .mui-card-header {
+        background-color: #f5f5f5;
+        padding: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .mui-card-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+    
+    .mui-card-header h2 .material-icons {
+        margin-right: 0.5rem;
+    }
+    
+    .mui-card-content {
+        padding: 1.5rem;
+    }
+    
+    .mui-game-section {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Sound Class Game</h1>
+    <p class="lead">Say the displayed sound class correctly to make the face smile!</p>
+    
+    <div class="mui-steps-grid">
+        <!-- STEP 1: Select Dictionary -->
+        <div class="mui-model-card">
+            <div class="mui-card-header">
+                <h2>
+                    <span class="material-icons">source</span>
+                    1. Select Dictionary
+                </h2>
+            </div>
+            <div class="mui-card-content">
+                <p class="mui-helper-text">Choose the dictionary containing the model you want to use.</p>
+                <div>
+                    <label for="dictionarySelect" class="mui-form-label">Dictionary:</label>
+                    <select class="mui-form-select" id="dictionarySelect" aria-label="Select Dictionary" onchange="if(window.handleDictionaryChange) window.handleDictionaryChange({target: this})">
+                        <option selected disabled value="">Loading dictionaries...</option>
+                    </select>
+                    <div id="dictionaryLoadingError" class="mui-error-text" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Select Model (Initially Hidden) -->
+        <div id="modelSelectionCard" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">memory</span>
+                        2. Select a Prediction Model
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <p class="mui-helper-text">Choose a trained model for sound prediction</p>
+                    <div id="modelsList" style="margin-bottom: 1rem;">
+                        <div id="modelsLoadingMessage" style="text-align: center; padding: 24px 0;">
+                            <div class="mui-spinner"></div>
+                            <div class="mui-loading-text">Loading available models...</div>
+                        </div>
+                    </div>
+                    <div id="modelInfo" style="display: none; padding: 1rem; background-color: rgba(63, 81, 181, 0.05); border-radius: 8px;">
+                        <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Selected Model Info:</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <p><strong>Learning Type:</strong> <span id="modelType">-</span></p>
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <p><strong>Dictionary ID:</strong> <span id="dictionaryName">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STEP 3: Available Sound Classes (Initially Hidden) -->
+        <div id="soundClassesCard" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">music_note</span>
+                        Available Sound Classes
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <p class="mui-helper-text">These are the sound classes the selected model can recognize</p>
+                    <div class="mui-sounds-list" id="soundsList">
+                        <!-- Sound classes will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STEP 4: Game Interface (Initially Hidden) -->
+        <div id="gameInterfaceCard" class="mui-game-section mui-full-width" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">videogame_asset</span>
+                        3. Play the Game
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <div class="mui-controls-wrapper">
+                        <!-- Ambient Noise Toggle -->
+                        <div class="mui-control-option">
+                            <label class="mui-switch">
+                                <input type="checkbox" id="ambientNoiseSwitch" onchange="document.getElementById('ambientNoiseStatus').textContent = this.checked ? 'On' : 'Off'; document.getElementById('ambientNoiseStatus').className = this.checked ? 'mui-control-status active' : 'mui-control-status';">
+                                <span class="mui-switch-slider"></span>
+                            </label>
+                            <span class="mui-control-label">
+                                <span class="material-icons" style="font-size: 18px; vertical-align: text-bottom; margin-right: 6px;">tune</span>
+                                Check to measure ambient noise (recommended)
+                            </span>
+                            <span class="mui-control-status" id="ambientNoiseStatus">Off</span>
+                        </div>
+                        
+                        <button class="mui-button" id="startGameBtn">
+                            <span class="material-icons">play_arrow</span>
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Play Interface (Initially Hidden) -->
+    <div id="gamePlaySection" class="mui-game-section" style="display: none;">
+        <div class="mui-play-container">
+            <div class="mui-instructions">
+                <div class="mui-alert mui-alert-info">
+                    <span class="material-icons">info</span>
+                    <div>
+                        <strong>How it works:</strong> Say the sound class shown below. If the model recognizes that you correctly pronounced the displayed sound class, the face will smile! Otherwise, it will grimace. Try to say it exactly as shown.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mui-class-display" id="classToSay">
+                <!-- Class name will be displayed here -->
+            </div>
+            
+            <div class="mui-face-container" id="faceContainer">
+                <div class="mui-face mui-face-neutral" id="neutralFace">
+                    <div class="mui-eye mui-eye-left"></div>
+                    <div class="mui-eye mui-eye-right"></div>
+                    <div class="mui-mouth mui-mouth-neutral"></div>
+                </div>
+                <div class="mui-face mui-face-happy" id="happyFace">
+                    <div class="mui-eye mui-eye-left"></div>
+                    <div class="mui-eye mui-eye-right"></div>
+                    <div class="mui-mouth mui-mouth-happy"></div>
+                </div>
+                <div class="mui-face mui-face-grimace" id="grimaceFace">
+                    <div class="mui-eye mui-eye-left"></div>
+                    <div class="mui-eye mui-eye-right"></div>
+                    <div class="mui-mouth"></div>
+                </div>
+            </div>
+            
+            <div class="mui-sound-level">
+                <div class="mui-sound-level-indicator" id="soundLevelIndicator"></div>
+            </div>
+            
+            <button class="mui-button" id="startAudioBtn" onclick="startGame()" style="display: flex; justify-content: center; align-items: center; margin: 20px auto; padding: 12px 24px; font-size: 1.1rem;">
+                <span class="material-icons" style="margin-right: 8px;">mic</span>
+                START GAME
+            </button>
+            
+            <div class="mui-prediction-info" id="predictionInfo" style="display: none;">
+                <div id="gameStatus" style="margin-bottom: 10px; font-weight: bold; color: #3f51b5;"></div>
+                <div id="predictionResults" style="display: none;">
+                    <p><strong>Predicted:</strong> <span id="predictedClass">-</span></p>
+                    <p><strong>Confidence:</strong> <span id="confidenceValue">-</span>%</p>
+                </div>
+                <div id="feedbackMessage" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div id="errorMessage">
+                <!-- Error messages will be displayed here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Third-Party Libraries first -->
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+
+<!-- Define global variables needed by the custom scripts -->
+<script>
+    const currentUserId = "{{ current_user.id if current_user else '' }}";
+    console.log(`📋 DEBUG [game2.html]: Initializing with UserID: ${currentUserId}`);
+    
+    // Core variables for game functionality
+    let audioContext;
+    let analyser;
+    let microphone;
+    let javascriptNode;
+    let listening = false;
+    let currentClass = "";
+    let predictionTimeoutId = null;
+    let classNames = [];
+    
+    // Direct function to start/stop the game
+    function startGame() {
+        console.log("Start game button clicked, current state:", listening);
+        const startBtn = document.getElementById('startAudioBtn');
+        const gameStatus = document.getElementById('gameStatus');
+        const predictionInfo = document.getElementById('predictionInfo');
+        
+        if (!listening) {
+            // Start the game
+            initAudio();
+            startBtn.innerHTML = '<span class="material-icons" style="margin-right: 8px;">mic_off</span> STOP GAME';
+            startBtn.classList.add('mui-button-danger');
+            listening = true;
+            
+            // Show prediction info panel with status
+            if (predictionInfo) predictionInfo.style.display = 'block';
+            if (gameStatus) gameStatus.textContent = 'Game started! Listening for your voice...';
+        } else {
+            // Stop the game
+            stopAudio();
+            startBtn.innerHTML = '<span class="material-icons" style="margin-right: 8px;">mic</span> START GAME';
+            startBtn.classList.remove('mui-button-danger');
+            listening = false;
+            resetFace();
+            
+            // Stop prediction interval if it exists
+            if (predictionTimeoutId) {
+                clearInterval(predictionTimeoutId);
+                predictionTimeoutId = null;
+            }
+            
+            // Clear timeout if it exists
+            if (window.speechTimeout) {
+                clearTimeout(window.speechTimeout);
+                window.speechTimeout = null;
+            }
+            
+            // Update status
+            if (gameStatus) gameStatus.textContent = 'Game stopped. Press START GAME to begin again.';
+            
+            // Hide prediction results
+            const predictionResults = document.getElementById('predictionResults');
+            if (predictionResults) predictionResults.style.display = 'none';
+        }
+    }
+    
+    // Initialize audio context and start listening
+    function initAudio() {
+        try {
+            console.log("Initializing audio...");
+            // Create audio context if not already created
+            if (window.audioContext) {
+                audioContext = window.audioContext;
+            } else {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                window.audioContext = audioContext;
+            }
+            
+            // Create analyser node for visualizing sound levels
+            analyser = audioContext.createAnalyser();
+            analyser.minDecibels = -90;
+            analyser.maxDecibels = -10;
+            analyser.smoothingTimeConstant = 0.85;
+            analyser.fftSize = 256;
+            
+            // Setup audio processing callback
+            javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+            javascriptNode.connect(audioContext.destination);
+            
+            // Get microphone input
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(function(stream) {
+                    console.log("Got microphone access");
+                    microphone = audioContext.createMediaStreamSource(stream);
+                    microphone.connect(analyser);
+                    analyser.connect(javascriptNode);
+                    
+                    // Process audio data for visualization and speech detection
+                    javascriptNode.onaudioprocess = processAudio;
+                    
+                    // Initialize a class to display
+                    updateClassToSay();
+                    
+                    // Show instructions to the user
+                    const predictionInfo = document.getElementById('predictionInfo');
+                    const gameStatus = document.getElementById('gameStatus');
+                    const feedbackMessage = document.getElementById('feedbackMessage');
+                    
+                    if (predictionInfo) {
+                        predictionInfo.style.display = 'block';
+                    }
+                    
+                    if (gameStatus) {
+                        gameStatus.textContent = `Say: "${currentClass}"`;
+                    }
+                    
+                    if (feedbackMessage) {
+                        feedbackMessage.innerHTML = `<p>Speak the displayed sound clearly into your microphone</p>`;
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error accessing microphone:', err);
+                    alert('Error accessing microphone. Please make sure your browser has permission to use the microphone.');
+                    listening = false;
+                    const startBtn = document.getElementById('startAudioBtn');
+                    startBtn.innerHTML = '<span class="material-icons" style="margin-right: 8px;">mic</span> START GAME';
+                    startBtn.classList.remove('mui-button-danger');
+                    
+                    // Show error in status
+                    const gameStatus = document.getElementById('gameStatus');
+                    if (gameStatus) {
+                        gameStatus.textContent = 'Microphone access denied. Please try again.';
+                        gameStatus.style.color = '#c62828';
+                    }
+                });
+        } catch (e) {
+            console.error('Audio context error:', e);
+            alert('Your browser does not support the Web Audio API. Please try a different browser.');
+            
+            // Show error in status
+            const gameStatus = document.getElementById('gameStatus');
+            if (gameStatus) {
+                gameStatus.textContent = 'Your browser does not support audio processing.';
+                gameStatus.style.color = '#c62828';
+            }
+        }
+    }
+    
+    // Stop audio processing
+    function stopAudio() {
+        console.log("Stopping audio...");
+        if (javascriptNode) {
+            javascriptNode.onaudioprocess = null;
+            javascriptNode.disconnect();
+        }
+        
+        if (analyser) {
+            analyser.disconnect();
+        }
+        
+        if (microphone) {
+            microphone.disconnect();
+        }
+    }
+    
+    // Process audio and check for speech
+    function processAudio(e) {
+        try {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate average volume for visualization
+            let sum = 0;
+            for(let i = 0; i < bufferLength; i++) {
+                sum += dataArray[i];
+            }
+            
+            const average = sum / bufferLength;
+            
+            // Update sound level indicator
+            const soundLevel = Math.min(100, (average / 128) * 100);
+            const soundLevelIndicator = document.getElementById('soundLevelIndicator');
+            if (soundLevelIndicator) soundLevelIndicator.style.width = soundLevel + '%';
+            
+            // Detect speech based on volume threshold
+            // Only trigger prediction if we detect significant sound and we're not already predicting
+            if (average > 20 && !window.isPredicting) {
+                const gameStatus = document.getElementById('gameStatus');
+                if (gameStatus) gameStatus.textContent = 'Hearing you speak...';
+                
+                // Visual feedback that we're hearing the user
+                const predictionInfo = document.getElementById('predictionInfo');
+                if (predictionInfo) predictionInfo.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
+                
+                // Trigger prediction only after we hear consistent speech
+                window.isPredicting = true;
+                clearTimeout(window.speechTimeout);
+                window.speechTimeout = setTimeout(() => {
+                    if (listening) {
+                        if (gameStatus) gameStatus.textContent = 'Processing your speech...';
+                        makePrediction();
+                    }
+                    if (predictionInfo) predictionInfo.style.backgroundColor = '';
+                    window.isPredicting = false;
+                }, 800); // Longer timeout to ensure we capture enough speech
+            }
+        } catch (err) {
+            console.error("Error in processAudio:", err);
+        }
+    }
+    
+    // Function to update the class to say
+    function updateClassToSay() {
+        if (!classNames || classNames.length === 0) {
+            classNames = ['Eh', 'Oh']; // Fallback
+        }
+        
+        // Pick a random class from the available ones
+        const randomIndex = Math.floor(Math.random() * classNames.length);
+        currentClass = classNames[randomIndex];
+        const classToSay = document.getElementById('classToSay');
+        if (classToSay) {
+            classToSay.textContent = currentClass;
+            classToSay.style.animation = 'pulse 0.5s';
+            setTimeout(() => {
+                classToSay.style.animation = '';
+            }, 500);
+        }
+        
+        console.log("New class to say:", currentClass);
+        
+        // Also reset the face to neutral when showing a new class
+        resetFace();
+    }
+    
+    // Show happy face when prediction is correct
+    function showHappyFace() {
+        const neutralFace = document.getElementById('neutralFace');
+        const happyFace = document.getElementById('happyFace');
+        const grimaceFace = document.getElementById('grimaceFace');
+        const faceContainer = document.getElementById('faceContainer');
+        
+        if (neutralFace) neutralFace.style.opacity = 0;
+        if (happyFace) happyFace.style.opacity = 1;
+        if (grimaceFace) grimaceFace.style.display = 'none';
+        
+        // Apply a small bounce effect
+        if (faceContainer) {
+            faceContainer.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                faceContainer.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        // Change class after a short delay
+        setTimeout(updateClassToSay, 1000);
+    }
+    
+    // Show grimace face when prediction is wrong
+    function showGrimaceFace() {
+        const neutralFace = document.getElementById('neutralFace');
+        const happyFace = document.getElementById('happyFace');
+        const grimaceFace = document.getElementById('grimaceFace');
+        const faceContainer = document.getElementById('faceContainer');
+        
+        if (neutralFace) neutralFace.style.opacity = 0;
+        if (happyFace) happyFace.style.opacity = 0;
+        if (grimaceFace) grimaceFace.style.display = 'block';
+        
+        // Shake effect for wrong answer
+        if (faceContainer) {
+            faceContainer.classList.add('shake');
+            setTimeout(() => {
+                faceContainer.classList.remove('shake');
+            }, 500);
+        }
+    }
+    
+    // Reset face to neutral
+    function resetFace() {
+        const neutralFace = document.getElementById('neutralFace');
+        const happyFace = document.getElementById('happyFace');
+        const grimaceFace = document.getElementById('grimaceFace');
+        const faceContainer = document.getElementById('faceContainer');
+        const soundLevelIndicator = document.getElementById('soundLevelIndicator');
+        
+        if (happyFace) happyFace.style.opacity = 0;
+        if (grimaceFace) grimaceFace.style.display = 'none';
+        if (neutralFace) neutralFace.style.opacity = 1;
+        if (faceContainer) faceContainer.style.transform = 'scale(1)';
+        if (soundLevelIndicator) soundLevelIndicator.style.width = '0%';
+    }
+    
+    // Make a real prediction using the API
+    async function makePrediction() {
+        if (!listening || !window.selectedModelId || !window.selectedDictionaryId) return;
+        
+        console.log(`Making prediction for class: ${currentClass}`);
+        
+        try {
+            // Convert audio data to WAV format
+            const wavBytes = await window.encodeWAV(window.audioDataArray);
+            
+            // Create a Blob and FormData
+            const wavBlob = new Blob([wavBytes], { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', wavBlob, `game_prediction_${Date.now()}.wav`);
+            formData.append('model_id', window.selectedModelId);
+            formData.append('dictionary_id', window.selectedDictionaryId);
+            
+            // Send to server
+            const response = await fetch('/api/inference/classify', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server error (${response.status})`);
+            }
+            
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || "Unknown API error");
+            }
+            
+            handlePredictionResult(result);
+        } catch (error) {
+            console.error("Error making prediction:", error);
+            
+            // Use mock prediction as fallback if there's an error
+            makeMockPrediction();
+        }
+    }
+    
+    // Make a mock prediction for testing or fallback
+    function makeMockPrediction() {
+        if (!listening) return;
+        
+        console.log("Making mock prediction for class:", currentClass);
+        
+        // Create a mock result
+        const mockResult = {
+            success: true,
+            predictions: []
+        };
+        
+        // 70% chance to make the prediction match the current class
+        const willMatch = Math.random() < 0.7;
+        
+        if (willMatch) {
+            // Correct prediction with high confidence
+            mockResult.predictions.push({
+                class: currentClass,
+                confidence: 0.75 + (Math.random() * 0.2)
+            });
+            
+            // Add some random predictions for other classes
+            for (const className of classNames) {
+                if (className !== currentClass) {
+                    mockResult.predictions.push({
+                        class: className,
+                        confidence: Math.random() * 0.2
+                    });
+                }
+            }
+        } else {
+            // Incorrect prediction - random class gets high confidence
+            const availableClasses = classNames.filter(c => c !== currentClass);
+            const wrongClass = availableClasses.length > 0 ? 
+                availableClasses[Math.floor(Math.random() * availableClasses.length)] : 
+                "Unknown";
+            
+            mockResult.predictions.push({
+                class: wrongClass,
+                confidence: 0.6 + (Math.random() * 0.3)
+            });
+            
+            mockResult.predictions.push({
+                class: currentClass,
+                confidence: 0.1 + (Math.random() * 0.3)
+            });
+        }
+        
+        // Sort predictions by confidence
+        mockResult.predictions.sort((a, b) => b.confidence - a.confidence);
+        
+        // Process the mock prediction
+        handlePredictionResult(mockResult);
+    }
+    
+    // Handle prediction result
+    function handlePredictionResult(data) {
+        try {
+            if (!data || !data.predictions || !Array.isArray(data.predictions) || data.predictions.length === 0) {
+                console.error("Invalid prediction data:", data);
+                return;
+            }
+            
+            // Get top prediction
+            const topPrediction = data.predictions[0];
+            
+            // Update prediction info display
+            const predictedClass = document.getElementById('predictedClass');
+            const confidenceValue = document.getElementById('confidenceValue');
+            const predictionResults = document.getElementById('predictionResults');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            const gameStatus = document.getElementById('gameStatus');
+            
+            if (predictedClass) predictedClass.textContent = topPrediction.class;
+            if (confidenceValue) confidenceValue.textContent = (topPrediction.confidence * 100).toFixed(1);
+            if (predictionResults) predictionResults.style.display = 'block';
+            
+            // Check if the prediction matches the currently displayed class
+            const isMatch = topPrediction.class === currentClass;
+            const confidenceThreshold = 0.5; // 50% confidence threshold
+            
+            console.log(`Prediction: ${topPrediction.class} (${(topPrediction.confidence * 100).toFixed(1)}%) - Expected: ${currentClass} - Match: ${isMatch}`);
+            
+            if (isMatch && topPrediction.confidence >= confidenceThreshold) {
+                // Correct! The user said the displayed class correctly
+                showHappyFace();
+                
+                // Show a success message
+                if (feedbackMessage) {
+                    feedbackMessage.innerHTML = `<p style="color: green; font-weight: bold;">Success! You correctly pronounced "${currentClass}"</p>`;
+                }
+                
+                if (gameStatus) {
+                    gameStatus.textContent = "Great job! Getting next sound...";
+                }
+                
+                // Change to a new class after a short delay
+                setTimeout(() => {
+                    updateClassToSay();
+                    if (gameStatus) {
+                        gameStatus.textContent = `Now say: "${currentClass}"`;
+                    }
+                }, 2000);
+            } else {
+                // Either wrong class or not enough confidence
+                showGrimaceFace();
+                
+                // Show hint message
+                if (feedbackMessage) {
+                    feedbackMessage.innerHTML = `<p style="color: #c62828;">Try again! Say the sound "${currentClass}" clearly.</p>`;
+                }
+                
+                if (gameStatus) {
+                    gameStatus.textContent = `Keep trying! Say: "${currentClass}"`;
+                }
+            }
+        } catch (err) {
+            console.error("Error in handlePredictionResult:", err);
+        }
+    }
+</script>
+
+<!-- Include Application Scripts for model and dictionary selection -->
+<script src="{{ url_for('static', filename='js/predict_api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_ui_core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_audio_core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_audio_processing.js') }}"></script>
+
+<!-- Initialization script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM fully loaded - game2.html ready");
+        
+        // Initialize by loading dictionaries
+        if (typeof window.loadAvailableDictionaries === 'function') {
+            window.loadAvailableDictionaries();
+        } else {
+            console.error("loadAvailableDictionaries function not found");
+        }
+        
+        // Set up the start game button
+        const startGameBtn = document.getElementById('startGameBtn');
+        if (startGameBtn) {
+            startGameBtn.addEventListener('click', function() {
+                // Check if model and dictionary are selected
+                if (!window.selectedModelId || !window.selectedDictionaryId) {
+                    alert('Please select a dictionary and model first.');
+                    return;
+                }
+                
+                // Hide selection interface
+                document.querySelectorAll('.mui-steps-grid > div').forEach(div => {
+                    div.style.display = 'none';
+                });
+                
+                // Show game interface
+                const gamePlaySection = document.getElementById('gamePlaySection');
+                if (gamePlaySection) {
+                    gamePlaySection.style.display = 'block';
+                }
+                
+                // Use available class names
+                if (window.globalClassNamesForFeedback && window.globalClassNamesForFeedback.length > 0) {
+                    classNames = window.globalClassNamesForFeedback;
+                }
+                
+                // Check ambient noise measurement if enabled
+                const ambientNoiseSwitch = document.getElementById('ambientNoiseSwitch');
+                if (ambientNoiseSwitch && ambientNoiseSwitch.checked && typeof window.startNoiseCapture === 'function') {
+                    window.startNoiseCapture();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

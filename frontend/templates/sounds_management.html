@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Classes - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Styles for Sound Classes Management Page (MUI Theme) */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 1rem; /* Add gap for wrapping */
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-header .mui-button {
+    padding: 0.6rem 1.2rem; /* Slightly larger button */
+}
+.page-header .mui-button .material-icons {
+    font-size: 1.2rem; /* Adjust icon size */
+    margin-right: 8px;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    max-width: 300px; /* Limit search width */
+}
+
+.search-container .mui-input {
+    flex-grow: 1;
+    border-radius: 4px 0 0 4px;
+}
+
+.search-container .mui-button {
+    border-radius: 0 4px 4px 0;
+    padding: 0.5rem; /* Smaller padding for icon button */
+    min-width: auto;
+    line-height: 1;
+    background-color: #e0e0e0; /* Lighter background for search button */
+    color: rgba(0,0,0,0.7);
+}
+.search-container .mui-button:hover {
+    background-color: #d5d5d5;
+}
+
+/* MUI-style Sound Class List Item */
+.sound-class-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.sound-class-item {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+.sound-class-item:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+.class-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1.2rem; /* Adjusted padding */
+    background-color: var(--primary-color, #3f51b5); /* Blue background */
+    color: white; /* White text */
+}
+
+.class-item-header h3 {
+    margin: 0;
+    font-size: 1.2rem; /* Slightly larger class name */
+    font-weight: 500;
+}
+
+.class-item-header .mui-button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem;
+    min-width: auto;
+    line-height: 1;
+}
+.class-item-header .mui-button:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.class-item-header .mui-button .material-icons {
+     font-size: 1.3rem;
+}
+
+.class-item-body {
+    padding: 1rem 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 1rem;
+}
+
+.class-stats {
+    color: rgba(0,0,0,0.7);
+    font-size: 0.9rem;
+    display: flex;
+    gap: 1.5rem; /* Space between stats */
+    flex-wrap: wrap;
+}
+.class-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem; /* Space between icon and text */
+}
+.class-stats .material-icons {
+    font-size: 1.1rem;
+    color: rgba(0,0,0,0.5);
+}
+
+.class-actions .mui-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+}
+.class-actions .mui-button .material-icons {
+    font-size: 1rem;
+    margin-right: 6px;
+}
+
+/* MUI-style Modal/Dialog */
+.mui-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0s 0.2s linear;
+}
+.mui-dialog-overlay.show {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease;
+}
+
+.mui-dialog {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 500px;
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+}
+.mui-dialog-overlay.show .mui-dialog {
+    transform: scale(1);
+}
+
+.mui-dialog-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mui-dialog-header h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.mui-dialog-header .close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: rgba(0,0,0,0.5);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+.mui-dialog-header .close-button:hover {
+    color: rgba(0,0,0,0.8);
+}
+
+.mui-dialog-body {
+    padding: 1.5rem;
+}
+
+.mui-form-group {
+    margin-bottom: 1rem;
+}
+
+.mui-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: rgba(0,0,0,0.7);
+}
+
+.mui-input, .mui-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+.mui-input:focus, .mui-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #3f51b5);
+}
+.mui-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.mui-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.delete-warning {
+    background-color: rgba(255, 152, 0, 0.1); /* Warning color background */
+    color: #b86c00; /* Darker warning text */
+    padding: 0.8rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--warning-color, #ff9800);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.delete-warning .material-icons {
+    font-size: 1.2rem;
+}</style>
+
+
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1><span class="material-icons" style="color: var(--primary-color);">album</span>Sound Classes</h1>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <!-- REMOVING Search Placeholder -->
+            <button class="mui-button" style="background-color: var(--primary-color); color: white;" data-action="open-create-dialog">
+                <span class="material-icons">add</span> Create New Sound Class
+            </button>
+        </div>
+    </div>
+    <p style="margin-top: -1rem; margin-bottom: 1.5rem; color: rgba(0,0,0,0.6);">Manage and organize your sound classes. These classes group similar sounds for model training.</p>
+
+    <!-- Sound Class List -->
+    <div class="sound-class-list" id="soundClassList">
+        {% if sound_classes %}
+            {% for class_info in sound_classes %}
+            <div class="sound-class-item" data-class-id="{{ class_info.id }}" data-class-name="{{ class_info.name }}">
+                <div class="class-item-header">
+                    <h3>{{ class_info.name }}</h3>
+                    <button class="mui-button" data-action="open-delete-dialog" title="Delete Class">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+                <div class="class-item-body">
+                    <div class="class-stats">
+                        <span><span class="material-icons">model_training</span> {{ class_info.get('training_count', 0) }} Training</span>
+                        <span><span class="material-icons">verified</span> {{ class_info.get('gold_count', 0) }} Gold</span>
+                        <span><span class="material-icons">auto_fix_high</span> {{ class_info.get('augmented_count', 0) }} Augmented</span>
+                        <span><span class="material-icons">hourglass_empty</span> {{ class_info.get('pending_count', 0) }} Pending</span>
+                        <span><span class="material-icons">raw_on</span> {{ class_info.get('raw_count', 0) }} Raw</span>
+                    </div>
+                    <div class="class-actions">
+                        <a href="{{ url_for('sound_class.sound_class_view', class_name=class_info.name) }}" class="mui-button mui-button-outlined">
+                            <span class="material-icons">visibility</span> View Samples
+                        </a>
+                        <a href="{{ url_for('recording_web.recordings_page', class_name=class_info.name) }}" class="mui-button" style="background-color: var(--accent-color); color: white;">
+                            <span class="material-icons">mic</span> Record Samples
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="mui-card">
+                <div class="mui-card-content" style="text-align: center; padding: 2rem;">
+                    <span class="material-icons" style="font-size: 3rem; color: rgba(0,0,0,0.3); margin-bottom: 1rem;">info_outline</span>
+                    <p>No sound classes found.</p>
+                    <button class="mui-button" style="background-color: var(--primary-color); color: white;" data-action="open-create-dialog">
+                        <span class="material-icons">add</span> Create Your First Class
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Create Class Dialog -->
+    <div id="createClassDialog" class="mui-dialog-overlay">
+        <div class="mui-dialog">
+            <div class="mui-dialog-header">
+                <h4>Create New Sound Class</h4>
+                <button class="close-button" data-action="close-dialog" aria-label="Close">&times;</button>
+            </div>
+            <form id="createClassForm">
+                <div class="mui-dialog-body">
+                    <div class="mui-form-group">
+                        <label for="newClassName">Class Name</label>
+                        <input type="text" id="newClassName" name="class_name" class="mui-input" required placeholder="e.g., 'cat', 'dog', 'doorbell'">
+                    </div>
+                    <div class="mui-form-group">
+                        <label for="newClassDescription">Description (Optional)</label>
+                        <textarea id="newClassDescription" name="description" class="mui-textarea" rows="3" placeholder="for the sound class (e.g., 'cat', 'dog')"></textarea>
+                    </div>
+                    <div id="createClassError" class="mui-alert mui-alert-error" style="display: none; margin-top: 1rem;"></div>
+                </div>
+                <div class="mui-dialog-footer">
+                    <button type="button" class="mui-button mui-button-outlined" data-action="close-dialog">Cancel</button>
+                    <button type="submit" class="mui-button" style="background-color: var(--primary-color); color: white;">Create Sound Class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Dialog -->
+     <div id="deleteConfirmDialog" class="mui-dialog-overlay">
+        <div class="mui-dialog">
+            <div class="mui-dialog-header">
+                <h4>Confirm Deletion</h4>
+                <button class="close-button" data-action="close-dialog" aria-label="Close">&times;</button>
+            </div>
+            <div class="mui-dialog-body">
+                 <div class="delete-warning">
+                     <span class="material-icons">warning_amber</span>
+                     <span><strong>Warning:</strong> This action cannot be undone.</span>
+                 </div>
+                 <p>Are you sure you want to delete the sound class "<strong id="deleteClassName"></strong>" and all its recordings?</p>
+                 <p style="font-size: 0.9rem; color: rgba(0,0,0,0.6);">This will permanently delete all recordings in this class and remove it from any dictionaries that reference it.</p>
+                 <div id="deleteClassError" class="mui-alert mui-alert-error" style="display: none; margin-top: 1rem;"></div>
+            </div>
+            <div class="mui-dialog-footer">
+                <button type="button" class="mui-button mui-button-outlined" data-action="close-dialog">Cancel</button>
+                <button type="button" id="confirmDeleteButton" class="mui-button" style="background-color: var(--danger-color); color: white;">Delete Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1100; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        const createDialog = document.getElementById('createClassDialog');
+        const deleteDialog = document.getElementById('deleteConfirmDialog');
+        const createForm = document.getElementById('createClassForm');
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+        const soundClassList = document.getElementById('soundClassList');
+        let classToDelete = null; // Store which class is targeted for deletion
+
+        // --- Dialog Management ---
+        function openDialog(dialog) {
+            if (!dialog) return;
+            dialog.classList.add('show');
+            // Trap focus (basic implementation)
+            // Consider a more robust library for full accessibility
+        }
+
+        function closeDialog(dialog) {
+            if (!dialog) return;
+            dialog.classList.remove('show');
+            // Clear errors when closing
+            const errorDiv = dialog.querySelector('.mui-alert-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+            }
+            if (dialog.id === 'createClassDialog') {
+                 createForm.reset();
+            }
+        }
+
+        // --- Toast Notification (using MUI style) ---
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                console.error("Toast container not found!");
+                return;
+            }
+            const severityClass = {
+                success: 'mui-alert-success',
+                danger: 'mui-alert-error',
+                warning: 'mui-alert-warning',
+                info: 'mui-alert-info'
+            }[type] || 'mui-alert-info';
+
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="mui-alert ${severityClass}" style="box-shadow: 0 3px 8px rgba(0,0,0,0.15); display: flex; align-items: center; min-width: 250px;">
+                    <span style="flex-grow: 1;">${message}</span>
+                    <button class="close-toast" style="margin-left: auto; background: none; border: none; cursor: pointer; padding: 0.25rem; line-height: 1;">
+                        <span class="material-icons" style="font-size: 1.2rem;">close</span>
+                    </button>
+                </div>`;
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            const newToastEl = document.getElementById(toastId);
+            const timer = setTimeout(() => removeToast(newToastEl), 5000);
+            newToastEl.querySelector('.close-toast').addEventListener('click', () => {
+                clearTimeout(timer);
+                removeToast(newToastEl);
+            });
+        }
+        function removeToast(toastElement) {
+            // (same implementation as in sound_class_view)
+             if (!toastElement) return;
+            toastElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            toastElement.style.opacity = '0';
+            toastElement.style.transform = 'translateX(100%)';
+            setTimeout(() => toastElement.remove(), 300);
+        }
+
+        // --- API Call Helper ---
+        async function apiCall(endpoint, method, body) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body ? JSON.stringify(body) : null
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error ${response.status}`);
+                }
+                return data;
+            } catch (error) {
+                console.error(`API call to ${endpoint} (${method}) failed:`, error);
+                showToast(`Error: ${error.message}`, 'danger');
+                throw error; // Rethrow to be caught by caller if needed
+            }
+        }
+
+         // --- Set Loading State --- (Simple version for dialog buttons)
+        function setDialogLoading(button, isLoading) {
+            if (!button) return;
+            const originalText = button.dataset.originalText || button.textContent;
+            if (isLoading) {
+                button.dataset.originalText = originalText;
+                button.disabled = true;
+                button.innerHTML = `<span class="material-icons" style="font-size: 1rem; margin-right: 4px; animation: spin 1s linear infinite;">autorenew</span> Processing...`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = button.dataset.originalText || originalText;
+                delete button.dataset.originalText;
+            }
+        }
+        // Add spin animation (if not already added by another page)
+        if (!document.getElementById('spin-animation-style')) {
+            const styleSheet = document.createElement("style");
+            styleSheet.id = 'spin-animation-style';
+            styleSheet.type = "text/css";
+            styleSheet.innerText = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+            document.head.appendChild(styleSheet);
+        }
+
+        // --- Show Error in Dialog ---
+        function showDialogError(dialog, message) {
+            const errorDiv = dialog.querySelector('.mui-alert-error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'flex'; // Use flex to align icon if added
+            }
+        }
+
+        // --- Create Class Form Submission ---
+        createForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(createForm);
+            const data = Object.fromEntries(formData.entries());
+            const submitButton = createForm.querySelector('button[type="submit"]');
+
+            setDialogLoading(submitButton, true);
+            showDialogError(createDialog, ''); // Clear previous errors
+
+            apiCall("{{ url_for('sound_class.api_create_sound_class') }}", 'POST', data)
+                .then(response => {
+                    if (response.success) {
+                        showToast(response.message || 'Sound class created!', 'success');
+                        closeDialog(createDialog);
+                        // Add the new class to the list dynamically (or reload page)
+                        // For simplicity, we'll just reload for now
+                        window.location.reload();
+                    } else {
+                        showDialogError(createDialog, response.error || 'Failed to create class.');
+                    }
+                })
+                .catch(error => {
+                    // API call helper shows toast, just show error in dialog
+                    showDialogError(createDialog, error.message || 'An unexpected error occurred.');
+                })
+                .finally(() => {
+                    setDialogLoading(submitButton, false);
+                });
+        });
+
+        // --- Delete Class Confirmation ---
+        confirmDeleteButton.addEventListener('click', function() {
+            if (!classToDelete) return;
+            const className = classToDelete.name;
+            const button = this;
+
+            setDialogLoading(button, true);
+            showDialogError(deleteDialog, ''); // Clear previous errors
+
+            apiCall(`/sound_classes/api/${encodeURIComponent(className)}`, 'DELETE', null)
+                .then(response => {
+                    if (response.success) {
+                        showToast(response.message || `Class '${className}' deleted.`, 'success');
+                        closeDialog(deleteDialog);
+                        // Remove class item from list or reload
+                        const itemToRemove = soundClassList.querySelector(`.sound-class-item[data-class-name="${className}"]`);
+                        if(itemToRemove) {
+                            itemToRemove.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            itemToRemove.style.opacity = '0';
+                            itemToRemove.style.transform = 'scale(0.95)';
+                            setTimeout(() => itemToRemove.remove(), 300);
+                        } else {
+                             window.location.reload(); // Fallback
+                        }
+                        classToDelete = null;
+                    } else {
+                         showDialogError(deleteDialog, response.error || 'Failed to delete class.');
+                    }
+                })
+                 .catch(error => {
+                    showDialogError(deleteDialog, error.message || 'An unexpected error occurred.');
+                })
+                .finally(() => {
+                    setDialogLoading(button, false);
+                });
+        });
+
+
+        // --- General Event Listeners for Opening/Closing Dialogs ---
+        document.body.addEventListener('click', function(event) {
+            const target = event.target;
+            const action = target.closest('[data-action]')?.dataset.action;
+
+            if (action === 'open-create-dialog') {
+                openDialog(createDialog);
+            }
+            else if (action === 'open-delete-dialog') {
+                const item = target.closest('.sound-class-item');
+                if (item) {
+                    const name = item.dataset.className;
+                    const id = item.dataset.classId;
+                    document.getElementById('deleteClassName').textContent = name;
+                    classToDelete = { id: id, name: name };
+                    openDialog(deleteDialog);
+                }
+            }
+            else if (action === 'close-dialog') {
+                closeDialog(target.closest('.mui-dialog-overlay'));
+            }
+        });
+
+        // Close dialog if clicking on the overlay itself
+        [createDialog, deleteDialog].forEach(dialog => {
+             if (dialog) {
+                dialog.addEventListener('click', function(event) {
+                    if (event.target === dialog) { // Clicked on the overlay, not the dialog content
+                        closeDialog(dialog);
+                    }
+                });
+             }
+        });
+
+        // Close dialog on Escape key press
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const openDialogs = document.querySelectorAll('.mui-dialog-overlay.show');
+                openDialogs.forEach(closeDialog);
+            }
+        });
+
+    }); // End DOMContentLoaded
+</script>
+{% endblock %} 

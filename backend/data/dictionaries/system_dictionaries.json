@@ -1,0 +1,55 @@
+{
+  "dictionaries": [
+    {
+      "id": "dict_ehoo",
+      "name": "EhOo",
+      "creator_user_id": "ronrubin",
+      "description": "",
+      "class_ids": [
+        "cls_eh",
+        "cls_oo"
+      ],
+      "created_at": "2025-08-07T15:41:16.169489",
+      "updated_at": "2025-08-07T15:41:16.175420"
+    },
+    {
+      "id": "dict_ehmoooo",
+      "name": "EhMooOo",
+      "creator_user_id": "ronrubin",
+      "description": "",
+      "class_ids": [
+        "cls_eh",
+        "cls_moo",
+        "cls_oo"
+      ],
+      "created_at": "2025-08-08T13:26:26.206726",
+      "updated_at": "2025-08-08T13:26:26.211364"
+    },
+    {
+      "id": "dict_booehmoooo",
+      "name": "BooEhMooOo",
+      "creator_user_id": "ronrubin",
+      "description": "",
+      "class_ids": [
+        "cls_boo",
+        "cls_eh",
+        "cls_moo",
+        "cls_oo"
+      ],
+      "created_at": "2025-08-11T15:17:47.977595",
+      "updated_at": "2025-08-11T15:17:47.981557"
+    },
+    {
+      "id": "dict_mohmoo",
+      "name": "MohMoo",
+      "creator_user_id": "ronrubin",
+      "description": "",
+      "class_ids": [
+        "cls_moh",
+        "cls_moo"
+      ],
+      "created_at": "2025-08-11T21:21:54.468245",
+      "updated_at": "2025-08-11T21:21:54.472470"
+    }
+  ]
+}

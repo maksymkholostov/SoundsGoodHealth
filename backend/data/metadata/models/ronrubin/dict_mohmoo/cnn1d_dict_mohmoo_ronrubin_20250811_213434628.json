@@ -1,0 +1,99 @@
+{
+  "id": "cnn1d_dict_mohmoo_ronrubin_20250811_213434628",
+  "dictionary_id": "dict_mohmoo",
+  "feature_set_id": "v0.1",
+  "user_id": "ronrubin",
+  "name": "cnn1d_model",
+  "type": "cnn1d",
+  "version": "02",
+  "parameters": {
+    "model_type": "cnn1d",
+    "epochs": 100,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "n_estimators": 100,
+    "rf_weight": 0.5,
+    "use_class_weights": "on"
+  },
+  "metrics": {
+    "accuracy": 0.5,
+    "precision": 0.25,
+    "recall": 0.5,
+    "f1": 0.3333333333333333,
+    "val_loss": 1.8333078622817993,
+    "num_train_samples": 20,
+    "num_val_samples": 6,
+    "total_parameters": 1610
+  },
+  "filename": "",
+  "status": "trained",
+  "classes": [
+    "cls_moh",
+    "cls_moo"
+  ],
+  "training_ids": [
+    "gold_moh_ronrubin_20250811_211531734_6",
+    "gold_moo_ronrubin_20250811_110046970_6",
+    "gold_moo_ronrubin_20250811_110046970_10",
+    "gold_moo_ronrubin_20250811_110201927_2",
+    "gold_moh_ronrubin_20250811_211531734_9",
+    "gold_moh_ronrubin_20250811_211531734_1",
+    "gold_moo_ronrubin_20250811_110201927_3",
+    "gold_moo_ronrubin_20250811_110046970_2",
+    "gold_moh_ronrubin_20250811_211531734_4",
+    "gold_moo_ronrubin_20250811_110046970_3",
+    "gold_moh_ronrubin_20250811_211531734_7",
+    "gold_moh_ronrubin_20250811_211531734_8",
+    "gold_moo_ronrubin_20250811_110046970_1",
+    "gold_moo_ronrubin_20250811_110201927_1",
+    "gold_moh_ronrubin_20250811_212308410_2",
+    "gold_moo_ronrubin_20250811_110046970_4",
+    "gold_moh_ronrubin_20250811_212308410_4",
+    "gold_moo_ronrubin_20250811_110046970_12",
+    "gold_moh_ronrubin_20250811_211531734_5",
+    "gold_moh_ronrubin_20250811_212308410_6",
+    "gold_moo_ronrubin_20250811_110046970_9",
+    "gold_moh_ronrubin_20250811_211531734_3",
+    "gold_moh_ronrubin_20250811_212308410_3",
+    "gold_moh_ronrubin_20250811_211531734_2",
+    "gold_moh_ronrubin_20250811_212308410_5",
+    "gold_moh_ronrubin_20250811_212308410_1"
+  ],
+  "validation_ids": [],
+  "metadata": {
+    "training_summary": {
+      "model_name": "cnn1d_model",
+      "model_type": "cnn1d",
+      "model_id": "cnn1d_dict_mohmoo_ronrubin_20250811_213434628",
+      "dictionary_id": "dict_mohmoo",
+      "classes": [
+        "cls_moh",
+        "cls_moo"
+      ],
+      "num_classes": 2,
+      "total_samples": 26,
+      "class_distribution": {
+        "cls_moh": 15,
+        "cls_moo": 11
+      },
+      "metrics": {
+        "accuracy": 0.5,
+        "precision": 0.25,
+        "recall": 0.5,
+        "f1": 0.3333333333333333,
+        "val_loss": 1.8333078622817993,
+        "num_train_samples": 20,
+        "num_val_samples": 6,
+        "total_parameters": 1610
+      },
+      "training_params": {
+        "model_type": "cnn1d",
+        "epochs": 100,
+        "batch_size": 32,
+        "learning_rate": 0.001,
+        "n_estimators": 100,
+        "rf_weight": 0.5,
+        "use_class_weights": "on",
+        "_model_id_for_log": "cnn1d_dict_mohmoo_ronrubin_20250811_213434628",
+        "num_classes": 2,
+        "progress_callback": 

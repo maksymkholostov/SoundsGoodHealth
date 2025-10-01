@@ -1,0 +1,487 @@
+/* frontend/static/css/style.css - Standardized MUI Theme */
+
+/* Define CSS Variables (Primary source of truth) */
+:root {
+    /* Colors */
+    --primary-color: #4A5CDE; /* Adjusted blue from login */
+    --secondary-color: #f50057; /* MUI default secondary */
+    --accent-color: #2196f3; /* MUI default accent */
+    --success-color: #4CAF50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+    --info-color: #055160; /* From login info alert */
+
+    /* Backgrounds */
+    --body-bg-color: #f8f9fa; /* Light grey */
+    --card-bg-color: white;
+    --input-bg-color: #f0f0f0; /* Slightly darker input background */
+    --alert-info-bg: #cff4fc;
+    --alert-error-bg: #f8d7da;
+    --alert-warning-bg: rgba(255, 152, 0, 0.1);
+    --alert-success-bg: rgba(76, 175, 80, 0.1);
+
+    /* Text */
+    --dark-color: #212121;
+    --text-muted-color: #6c757d;
+    --text-label-color: #495057;
+    --text-white: white;
+    --alert-info-text: var(--info-color);
+    --alert-error-text: #842029;
+    --alert-warning-text: #b86c00;
+    --alert-success-text: var(--success-color);
+
+    /* Borders */
+    --input-border-color: #ced4da;
+    --input-focus-border-color: #a6c9ff;
+    --card-border-color: rgba(0,0,0,0.1);
+    --alert-info-border: #b6effb;
+    --alert-error-border: #f5c2c7;
+    --alert-warning-border: var(--warning-color);
+    --alert-success-border: var(--success-color);
+
+    /* Shadows & Elevation */
+    --card-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Standard card shadow */
+    --card-hover-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    --input-focus-shadow: 0 0 0 0.25rem rgba(74, 92, 222, 0.2);
+    --dialog-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    --toast-shadow: 0 3px 8px rgba(0,0,0,0.15);
+
+    /* Rounding */
+    --card-border-radius: 8px; /* Standardized */
+    --input-border-radius: 8px;
+    --button-border-radius: 8px;
+    --dialog-border-radius: 8px;
+
+    /* Fonts */
+    --font-primary: 'Roboto', sans-serif;
+    --font-secondary: 'Poppins', sans-serif;
+}
+
+/* Base body styles */
+html {
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+body {
+    font-family: var(--font-primary);
+    background-color: var(--body-bg-color);
+    color: var(--dark-color);
+    line-height: 1.5;
+    margin: 0; /* Reset default margin */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Standard Container */
+.container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* === Shared MUI Component Styles === */
+
+/* Cards */
+.mui-card {
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: var(--card-bg-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--card-border-color); /* Subtle border */
+}
+.mui-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-hover-shadow);
+}
+.mui-card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--card-border-color);
+}
+.mui-card-content {
+    padding: 1.5rem;
+}
+.mui-card-actions {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    border-top: 1px solid var(--card-border-color);
+}
+
+/* Buttons */
+.mui-button {
+    display: inline-flex; /* Important for icon alignment */
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    border: 1px solid transparent;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--button-border-radius);
+    font-weight: 500;
+    font-family: inherit;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+.mui-button:hover {
+    filter: brightness(90%);
+}
+.mui-button:focus {
+     outline: none;
+     box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.3);
+}
+.mui-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.mui-button .material-icons {
+     font-size: 1.1rem;
+     line-height: 1; /* Help alignment */
+}
+
+.mui-button-outlined {
+    background-color: transparent;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.mui-button-outlined:hover {
+    background-color: rgba(var(--primary-color), 0.08);
+    filter: none;
+}
+
+/* Forms */
+.mui-form-group {
+    margin-bottom: 1.25rem;
+}
+.mui-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-label-color);
+}
+.mui-input-icon-wrapper {
+    position: relative;
+}
+.mui-input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd; /* Default icon color */
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+.mui-input, .mui-textarea, .mui-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    background-color: var(--input-bg-color);
+    color: var(--dark-color);
+    line-height: 1.5;
+}
+.mui-input-with-icon {
+    padding-left: 2.75rem !important;
+}
+.mui-input::placeholder, .mui-textarea::placeholder {
+    color: var(--text-muted-color);
+    opacity: 1;
+}
+.mui-input:focus, .mui-textarea:focus, .mui-select:focus {
+    color: var(--dark-color);
+    background-color: white;
+    border-color: var(--input-focus-border-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem var(--input-focus-shadow);
+}
+.mui-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Alerts */
+.mui-alert {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: var(--input-border-radius);
+    display: flex;
+    align-items: center;
+    border: 1px solid transparent;
+    border-left-width: 4px;
+    font-size: 0.9rem;
+}
+.mui-alert .material-icons {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+.mui-alert-success {
+    color: var(--alert-success-text);
+    background-color: var(--alert-success-bg);
+    border-left-color: var(--success-color);
+}
+.mui-alert-warning {
+    color: var(--alert-warning-text);
+    background-color: var(--alert-warning-bg);
+    border-left-color: var(--warning-color);
+}
+.mui-alert-error {
+    color: var(--alert-error-text);
+    background-color: var(--alert-error-bg);
+    border-left-color: var(--danger-color);
+}
+.mui-alert-info {
+    color: var(--alert-info-text);
+    background-color: var(--alert-info-bg);
+    border-left-color: var(--info-color);
+}
+
+/* Animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+    from { transform: rotate(0deg); } to { transform: rotate(360deg); }
+}
+
+/* Add chip styles from training.css */
+.mui-chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.mui-chip-primary {
+    background-color: rgba(63, 81, 181, 0.1);
+    color: var(--primary-color);
+}
+
+.mui-chip-success {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+}
+
+.mui-chip-warning {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: var(--warning-color);
+}
+
+.mui-chip-error {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: var(--danger-color);
+}
+
+/* Spinner animation component */
+.mui-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(63, 81, 181, 0.2);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+.mui-loading-text {
+    text-align: center;
+    color: var(--text-muted-color);
+    margin-top: 0.75rem;
+}
+
+/* General utility class for spinning elements */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Enhanced layout components from predict.css */
+
+/* Page header components */
+.mui-page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    position: relative;
+}
+
+.mui-page-header::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-color), rgba(63, 81, 181, 0.2));
+    border-radius: 3px;
+}
+
+.mui-page-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.mui-page-title .material-icons {
+    margin-right: 12px;
+    background: linear-gradient(45deg, var(--primary-color), var(--accent-color, #7986cb));
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.mui-page-subtitle {
+    color: var(--text-muted-color);
+    margin-top: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Grid layouts */
+.mui-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.mui-full-width {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+/* Grid container for layouts */
+.mui-grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .mui-grid-container {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+/* Enhanced form elements */
+.mui-form-select {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--input-border-color, #cfd8dc);
+    border-radius: var(--input-border-radius, 8px);
+    background-color: white;
+    color: var(--dark-color);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+    position: relative;
+}
+
+.mui-form-control {
+    margin-bottom: 16px;
+}
+
+/* Enhanced model card styles */
+.mui-model-card {
+    height: 100%;
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    background-color: var(--card-bg-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 1px solid var(--card-border-color);
+    position: relative;
+}
+
+.mui-model-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary-color), rgba(63, 81, 181, 0.3));
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.mui-model-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.mui-model-card:hover::before {
+    opacity: 1;
+}
+
+/* Icon styling */
+.mui-model-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: rgba(63, 81, 181, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.mui-model-icon .material-icons {
+    font-size: 32px;
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 768px) {
+    .mui-steps-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .mui-page-title {
+        font-size: 1.75rem;
+    }
+    
+    .mui-page-subtitle {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mui-page-title .material-icons {
+        font-size: 24px;
+        padding: 6px;
+    }
+} 

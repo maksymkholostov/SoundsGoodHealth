@@ -1,0 +1,16 @@
+{
+  "id": "feat_moo_moo_20250930_140445323",
+  "recording_id": "raw_rec_moo_ronrubin_20250920_190234063",
+  "feature_set_id": "v0.1",
+  "filename": "features\\v0.1\\ronrubin\\unknown\\Moo\\raw_rec_moo_ronrubin_20250920_190234063_features.npz",
+  "metadata": {
+    "dictionary_id": "dict_mohmoo",
+    "class_id": "cls_moo",
+    "class_name": "Moo",
+    "recording_type": "raw_recorded",
+    "subset": "raw_recorded",
+    "duration": 4.07,
+    "n_frames": 815
+  },
+  "created_at": "2025-09-30T14:04:45.323470"
+}

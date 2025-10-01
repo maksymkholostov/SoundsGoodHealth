@@ -1,0 +1,366 @@
+<!-- frontend/templates/training_sounds.html -->
+<!-- Training sounds listing page - displays gold standard and augmented sounds used in model training. -->
+<!-- Provides playback functionality for audio preview and bulk deletion management. -->
+
+{% extends "base.html" %}
+
+{% block title %}Training Sounds - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+    /* Add any specific styles for this page here */
+    .table-container {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .table-actions button {
+        margin-right: 5px;
+        padding: 5px 8px; /* Smaller padding */
+        min-width: 36px; /* Ensure buttons aren't too wide */
+    }
+    .table-actions .material-icons {
+        font-size: 18px; /* Smaller icon size */
+        vertical-align: middle;
+    }
+    th, td {
+        vertical-align: middle !important;
+    }
+    th {
+        cursor: pointer; /* Indicate sortable columns */
+        position: relative;
+        padding-right: 20px; /* Space for sort icon */
+    }
+    th::after { /* Placeholder for sort icon */
+        content: '';
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 4px solid transparent;
+        opacity: 0.5;
+    }
+    th.sort-asc::after {
+        border-bottom-color: currentColor;
+    }
+    th.sort-desc::after {
+        border-top-color: currentColor;
+    }
+
+    /* Using MUI-like table styling (can be adapted) */
+    .mui-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .mui-table th, .mui-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .mui-table th {
+        background-color: #f5f5f5;
+        font-weight: 500;
+    }
+    .mui-table tbody tr:hover {
+        background-color: #f8f8f8;
+    }
+    .mui-checkbox { /* Basic checkbox style */
+      margin: 0;
+      padding: 0;
+      vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Training Sounds (Gold & Augmented)</h2>
+    <p>This table lists all sounds marked as 'Gold' or created through augmentation, which are typically used for training models.</p>
+
+    <div class="table-container">
+        <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <button class="mui-button mui-button-outlined" id="deleteSelectedBtn" disabled>
+                <span class="material-icons">delete</span> Delete Selected
+            </button>
+            <span style="font-size: 0.85rem; color: #666;">Tip: Click on column headers to sort.</span>
+             <!-- Add Filters/Search later if needed -->
+        </div>
+
+        <table class="mui-table" id="trainingSoundsTable">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">
+                        <input type="checkbox" class="mui-checkbox" id="selectAllCheckbox" title="Select All">
+                    </th>
+                    <th data-sort-key="sound_class">Sound Class</th>
+                    <th data-sort-key="created_at">Date Created</th>
+                    <th data-sort-key="features_extracted">Features Extracted</th>
+                    <th data-sort-key="creator">Creator</th>
+                    <th data-sort-key="type">Type</th>
+                    <th style="width: 15%;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if sounds %}
+                    {% for sound in sounds %}
+                    <tr data-sound-id="{{ sound.id }}"> {# Assume sound has an ID #}
+                        <td><input type="checkbox" class="mui-checkbox sound-checkbox" value="{{ sound.id }}"></td>
+                        <td>{{ sound.sound_class_name | default('N/A') }}</td> {# Assume sound_class_name exists #}
+                        <td>{{ sound.created_at | format_datetime | default('N/A') }}</td> {# Use custom filter #}
+                        <td>{{ 'Yes' if sound.features_extracted else 'No' }}</td> {# Assume boolean flag #}
+                        <td>{{ sound.creator_username | default('N/A') }}</td> {# Assume creator_username exists #}
+                        <td>{{ sound.type | capitalize | default('N/A') }}</td> {# Assume type is 'gold' or 'augmented' #}
+                        <td class="table-actions">
+                            <button class="mui-button-icon play-sound-btn" title="Play Sound" data-stream-url="{{ sound.stream_url }}"> {# Use stream_url #}
+                                <span class="material-icons">play_arrow</span>
+                            </button>
+                            <button class="mui-button-icon mui-button-icon-error delete-sound-btn" title="Delete Sound" data-sound-id="{{ sound.id }}"> {# Added class #}
+                                <span class="material-icons">delete</span>
+                            </button>
+                            <!-- Add View Details button later if needed -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 20px;">No training sounds found.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <!-- Pagination can be added here later -->
+    </div>
+    <audio id="audioPlayer" controls style="display: none; margin-top: 1rem; width: 100%;"></audio>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Basic JavaScript for Select All and enabling Delete button
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const soundCheckboxes = document.querySelectorAll('.sound-checkbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+    function toggleDeleteButton() {
+        const anyChecked = Array.from(soundCheckboxes).some(cb => cb.checked);
+        deleteSelectedBtn.disabled = !anyChecked;
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            soundCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            toggleDeleteButton();
+        });
+    }
+
+    soundCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (!this.checked) {
+                selectAllCheckbox.checked = false;
+            } else {
+                // Check if all are checked
+                const allChecked = Array.from(soundCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            }
+            toggleDeleteButton();
+        });
+    });
+
+    // Initial check in case the page loads with checked boxes (e.g., browser back button)
+    toggleDeleteButton();
+
+    // --- Play Button Logic ---
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playButtons = document.querySelectorAll('.play-sound-btn');
+
+    playButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const streamUrl = this.dataset.streamUrl;
+            if (streamUrl && audioPlayer) {
+                console.log("Playing:", streamUrl);
+                // Stop previous playback if any
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+                // Set new source and play
+                audioPlayer.src = streamUrl;
+                audioPlayer.style.display = 'block'; // Show the player
+                audioPlayer.play().catch(e => console.error("Audio play failed:", e));
+
+                // Optional: Visually indicate which button is playing
+                playButtons.forEach(btn => btn.classList.remove('playing'));
+                this.classList.add('playing'); // Needs corresponding CSS if desired
+            } else {
+                console.error("Stream URL or audio player not found for button:", this);
+                alert("Could not play sound: Stream URL missing.");
+            }
+        });
+    });
+    // --- End Play Button Logic ---
+
+    // --- Delete Button Logic (Single & Selected) ---
+    const tableBody = document.querySelector('#trainingSoundsTable tbody');
+    const deleteSelectedButton = document.getElementById('deleteSelectedBtn');
+
+    async function deleteSoundInstance(soundId, buttonElement) {
+        // Find the table row associated with the button/ID
+        const row = tableBody.querySelector(`tr[data-sound-id="${soundId}"]`);
+
+        if (!confirm(`Are you sure you want to discard sound instance ${soundId}? This will move its files to the discarded folder.`)) {
+            return; // User cancelled
+        }
+
+        console.log(`Attempting to discard sound: ${soundId}`);
+        // Disable button during request
+        if (buttonElement) buttonElement.disabled = true;
+
+        try {
+            const response = await fetch(`/api/sounds/${soundId}`, {
+                method: 'DELETE',
+                headers: {
+                    // Add CSRF token header if needed by your setup
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                console.log(`Successfully discarded sound: ${soundId}`);
+                // Remove the row from the table
+                if (row) {
+                    row.remove();
+                }
+                // Re-evaluate if deleteSelectedBtn should be disabled
+                toggleDeleteButton();
+                // Optional: Show success flash message (requires backend setup or JS library)
+                // alert(result.message || 'Sound discarded.');
+            } else {
+                console.error(`Failed to discard sound ${soundId}:`, result.error);
+                alert(`Error discarding sound: ${result.error || 'Unknown error'}`);
+                // Re-enable button on failure
+                if (buttonElement) buttonElement.disabled = false;
+            }
+        } catch (error) {
+            console.error('Network error discarding sound:', error);
+            alert(`Network error discarding sound: ${error}`);
+            // Re-enable button on failure
+            if (buttonElement) buttonElement.disabled = false;
+        }
+    }
+
+    // Add listeners to individual delete buttons
+    tableBody.addEventListener('click', function(event) {
+        const targetButton = event.target.closest('.delete-sound-btn');
+        if (targetButton) {
+            const soundId = targetButton.dataset.soundId;
+            if (soundId) {
+                deleteSoundInstance(soundId, targetButton);
+            }
+        }
+    });
+
+    // Add listener to the "Delete Selected" button
+    if (deleteSelectedButton) {
+        deleteSelectedButton.addEventListener('click', async function() {
+            const checkedBoxes = tableBody.querySelectorAll('.sound-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert("Please select at least one sound to delete.");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to discard the ${checkedBoxes.length} selected sound instance(s)?`)) {
+                return; // User cancelled
+            }
+
+            this.disabled = true; // Disable button during batch operation
+            let errors = [];
+            let successes = 0;
+
+            // Process deletions sequentially to avoid overwhelming server (can be parallelized if needed)
+            for (const checkbox of checkedBoxes) {
+                 const soundId = checkbox.value;
+                 const row = tableBody.querySelector(`tr[data-sound-id="${soundId}"]`);
+                 try {
+                    const response = await fetch(`/api/sounds/${soundId}`, { method: 'DELETE' });
+                    const result = await response.json();
+                    if (result.success) {
+                        successes++;
+                        if (row) row.remove(); // Remove row on success
+                    } else {
+                        errors.push(`ID ${soundId}: ${result.error || 'Unknown error'}`);
+                        checkbox.checked = false; // Uncheck on error
+                    }
+                 } catch (error) {
+                    errors.push(`ID ${soundId}: Network error - ${error}`);
+                    checkbox.checked = false; // Uncheck on error
+                 }
+            }
+
+            this.disabled = false; // Re-enable button
+            toggleDeleteButton(); // Update button state based on remaining checked boxes
+
+            // Report results
+            let reportMessage = `${successes} sound(s) discarded successfully.`;
+            if (errors.length > 0) {
+                reportMessage += `\n\nErrors encountered:\n- ${errors.join('\n- ')}`;
+            }
+            alert(reportMessage);
+        });
+    }
+    // --- End Delete Button Logic ---
+
+    // --- Table Sorting Logic ---
+    const table = document.getElementById('trainingSoundsTable');
+    const headers = table.querySelectorAll('th[data-sort-key]');
+
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortKey = this.dataset.sortKey;
+            const currentIsAscending = header.classList.contains('sort-asc');
+            const direction = currentIsAscending ? -1 : 1; // -1 for desc, 1 for asc
+
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+            // Sort rows
+            rows.sort((rowA, rowB) => {
+                let valA = rowA.querySelector(`td:nth-child(${header.cellIndex + 1})`)?.textContent.trim() || '';
+                let valB = rowB.querySelector(`td:nth-child(${header.cellIndex + 1})`)?.textContent.trim() || '';
+
+                // Basic numeric/date check (improve if needed)
+                const isDate = /^\d{4}-\d{2}-\d{2}/.test(valA);
+                const isNumeric = !isNaN(parseFloat(valA)) && isFinite(valA) && !isNaN(parseFloat(valB)) && isFinite(valB);
+
+                if (isDate) {
+                    // Compare dates
+                    valA = new Date(valA.replace(' ', 'T') + 'Z'); // Handle potential space, assume UTC if no TZ
+                    valB = new Date(valB.replace(' ', 'T') + 'Z');
+                    return (valA - valB) * direction;
+                } else if (isNumeric) {
+                     // Compare numbers
+                     return (parseFloat(valA) - parseFloat(valB)) * direction;
+                } else {
+                     // Compare strings (case-insensitive)
+                     return valA.toLowerCase().localeCompare(valB.toLowerCase()) * direction;
+                }
+            });
+
+            // Remove existing sort classes
+            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+
+            // Add new sort class
+            header.classList.toggle('sort-asc', !currentIsAscending);
+            header.classList.toggle('sort-desc', currentIsAscending);
+
+            // Re-append sorted rows
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+    });
+    // --- End Table Sorting Logic ---
+
+});
+</script>
+{% endblock %}

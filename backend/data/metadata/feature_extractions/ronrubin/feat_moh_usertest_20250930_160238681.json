@@ -1,0 +1,16 @@
+{
+  "id": "feat_moh_usertest_20250930_160238681",
+  "recording_id": "gold_moh_usertest_20250930_131531174_4",
+  "feature_set_id": "v0.1",
+  "filename": "features\\v0.1\\usertest\\gold\\Moh\\gold_moh_usertest_20250930_131531174_4_features.npz",
+  "metadata": {
+    "dictionary_id": "dict_mohmoo",
+    "class_id": "cls_moh",
+    "class_name": "Moh",
+    "recording_type": "gold",
+    "subset": "gold",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-09-30T16:02:38.681798"
+}

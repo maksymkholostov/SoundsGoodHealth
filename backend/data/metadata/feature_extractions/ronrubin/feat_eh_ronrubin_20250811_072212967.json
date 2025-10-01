@@ -1,0 +1,16 @@
+{
+  "id": "feat_eh_ronrubin_20250811_072212967",
+  "recording_id": "aug_eh_ronrubin_20250811_071226241",
+  "feature_set_id": "v0.1",
+  "filename": "features/v0.1/ronrubin/augmented/Eh/aug_eh_ronrubin_20250811_071226241_features.npz",
+  "metadata": {
+    "dictionary_id": null,
+    "class_id": "cls_eh",
+    "class_name": "Eh",
+    "recording_type": "augmented",
+    "subset": "augmented",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-08-11T07:22:12.967642"
+}

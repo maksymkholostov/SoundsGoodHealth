@@ -1,0 +1,100 @@
+# Documentation - not needed for production
+*.md
+README*
+docs/
+Docs_*/
+documentation/
+
+# Test files and scripts only
+test_*.py
+*_test.py
+tests/
+scripts/tests/
+scripts/analysis/
+scripts/migration/
+scripts/utils/
+scripts/experiments/
+
+# Development and backup files
+*.bak
+*_backup/
+backup_*/
+backups/
+*.backup
+.legacy/
+.temp/
+temp/
+tmp/
+
+# Jupyter notebooks - not needed for production
+*.ipynb
+.ipynb_checkpoints/
+
+# Development tools and configs
+.git/
+.github/
+.gitignore
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Deployment scripts - not needed on Railway itself
+deploy*.py
+deploy*.sh
+railway_deploy.log
+
+# C# test project - not needed for Python server
+CSTestProject/
+
+# Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+logs/
+log/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Database files (if using SQLite locally)
+*.db
+*.sqlite3
+
+# OS files
+Thumbs.db
+ehthumbs.db
+.Spotlight-V100
+.Trashes
+._*
+
+# Node modules (if any)
+node_modules/
+
+# Any local configuration overrides
+*.local
+.env.local
+config.local.pybackend/data/features/

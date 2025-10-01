@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+
+{% block title %}How It Works - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+.how-it-works-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.return-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.return-btn:hover {
+    background-color: var(--primary-dark-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Styles for non-authenticated navigation */
+.non-auth-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.auth-button {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.auth-button:hover {
+    background-color: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+
+.slider-container {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.slides {
+    display: flex;
+    width: 700%;
+    height: 100%;
+    transition: transform 1s ease;
+}
+
+.slide {
+    width: calc(100% / 7);
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 40px;
+    color: white;
+    position: relative;
+}
+
+.slide-content {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+    padding: 20px;
+    position: relative;
+}
+
+.slide-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    animation: fadeInUp 1.2s ease;
+    margin: 0;
+    padding: 0 25px;
+    width: 100%;
+    max-height: 2.6em;
+    overflow: hidden;
+    line-height: 1.3;
+    position: absolute;
+    bottom: 25px;
+    left: 0;
+    transform: none;
+    background-color: transparent;
+    z-index: 5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Add responsive handling for smaller text on different screen sizes */
+@media (max-width: 768px) {
+    .slide-title {
+        font-size: 1rem;
+        white-space: normal;
+        line-height: 1.3;
+        bottom: 20px;
+    }
+}
+
+/* Add a semi-transparent gradient background behind text for better readability */
+.slide::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+    z-index: 1;
+}
+
+.slide-graphic {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    margin-top: 50px;
+    margin-bottom: 120px;
+}
+
+.nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.3);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background-color: rgba(255,255,255,0.6);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 15px rgba(255,255,255,0.4);
+}
+
+.nav-btn.prev {
+    left: 20px;
+}
+
+.nav-btn.next {
+    right: 20px;
+}
+
+.nav-btn i {
+    font-size: 24px;
+}
+
+.slide-indicators {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 15;
+}
+
+.slide-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.slide-indicator.active {
+    background-color: white;
+    transform: scale(1.2);
+}
+
+.music-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(0,0,0,0.3);
+    padding: 8px 16px;
+    border-radius: 30px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.music-controls:hover {
+    background-color: rgba(0,0,0,0.5);
+}
+
+.music-controls i {
+    font-size: 18px;
+}
+
+/* Slide backgrounds */
+.slide:nth-child(1) { background: linear-gradient(135deg, #FF6B6B, #FF8E53); }
+.slide:nth-child(2) { background: linear-gradient(135deg, #4ECDC4, #556270); }
+.slide:nth-child(3) { background: linear-gradient(135deg, #7F7FD5, #91EAE4); }
+.slide:nth-child(4) { background: linear-gradient(135deg, #FFD166, #FF9A5A); }
+.slide:nth-child(5) { background: linear-gradient(135deg, #70F570, #49C628); }
+.slide:nth-child(6) { background: linear-gradient(135deg, #3B2667, #BC78EC); }
+.slide:nth-child(7) { background: linear-gradient(135deg, #F761A1, #8C1BAB); }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="how-it-works-container">
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('core_web.index') }}" class="return-btn">
+        <i class="fas fa-arrow-left"></i>
+        Return to Dashboard
+    </a>
+    {% else %}
+    <div class="app-bar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                <!-- Left side - Brand (no link when logged out) -->
+                <span class="navbar-brand">
+                    <span class="material-icons brand-icon" style="margin-right: 8px; font-size: 32px; color: #FFD700;">graphic_eq</span>
+                    <span style="font-size: 1.5rem;">SoundsGood</span>
+                </span>
+
+                <!-- Right side - Login/Register buttons -->
+                <div class="non-auth-nav">
+                    <a href="{{ url_for('auth_web.login_page') }}" class="auth-button">
+                        Login
+                    </a>
+                    <a href="{{ url_for('auth_web.register_page') }}" class="auth-button">
+                        Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="height: 70px;"></div> <!-- Spacer to account for fixed header -->
+    {% endif %}
+    
+    <div class="slider-container">
+        <div class="slides">
+            <div class="slide active">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        CREATE SOUND CATEGORIES -- WE CALL THEM CLASSES
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/sounds_categories.svg') }}" alt="Sound Categories" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        CREATE DICTIONARIES: SOUNDS YOU WANT TO WORK ON.
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/dictionaries.svg') }}" alt="Dictionaries" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        RECORD SOUNDS TO TRAIN OUR "EAR" TO RECOGNIZE THEM. BECAUSE OF OUR PROPRIETARY TECHNOLOGY, ONLY NEED ABOUT 20 SAMPLES OF EACH. TAKES ALL OF ABOUT A MINUTE TO RECORD A NEW SOUND!
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/record_sounds.svg') }}" alt="Record Sounds" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        DON'T FORGET TO VERIFY YOUR RECORDINGS SO WE CAN LEARN THE SOUND.
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/verify_recordings.svg') }}" alt="Verify Recordings" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        "HEY GO TRAIN ON MY RECORDINGS!"
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/train_system.svg') }}" alt="Train System" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        CHECK THAT IT ALL WORKS USING OUR SPECIAL "LET US PREDICT" SECTION.
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/prediction.svg') }}" alt="Prediction" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-content">
+                    <div class="slide-title">
+                        PLAY GAMES TO IMPROVE YOUR SPEECH.
+                    </div>
+                    <div class="slide-graphic">
+                        <img src="{{ url_for('static', filename='img/games.svg') }}" alt="Games" onerror="this.src='{{ url_for('static', filename='img/placeholder.png') }}'">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-btn prev">
+            <i class="fas fa-chevron-left"></i>
+        </div>
+        
+        <div class="nav-btn next">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+        
+        <div class="slide-indicators">
+            <div class="slide-indicator active" data-index="0"></div>
+            <div class="slide-indicator" data-index="1"></div>
+            <div class="slide-indicator" data-index="2"></div>
+            <div class="slide-indicator" data-index="3"></div>
+            <div class="slide-indicator" data-index="4"></div>
+            <div class="slide-indicator" data-index="5"></div>
+            <div class="slide-indicator" data-index="6"></div>
+        </div>
+        
+        <div class="music-controls">
+            <i class="fas fa-volume-up"></i>
+            <span>Music On</span>
+        </div>
+        
+        <audio id="background-music" loop>
+            <source src="{{ url_for('static', filename='audio/slide_background_music_2.mp3') }}" type="audio/mp3">
+        </audio>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const slides = document.querySelector('.slides');
+        const allSlides = document.querySelectorAll('.slide');
+        const prevBtn = document.querySelector('.prev');
+        const nextBtn = document.querySelector('.next');
+        const indicators = document.querySelectorAll('.slide-indicator');
+        const musicControls = document.querySelector('.music-controls');
+        const musicIcon = musicControls.querySelector('i');
+        const musicText = musicControls.querySelector('span');
+        const bgMusic = document.getElementById('background-music');
+        
+        let currentSlide = 0;
+        let slideCount = allSlides.length;
+        let slideWidth = 100 / slideCount;
+        let autoSlideInterval;
+        let isMusicPlaying = false;
+        
+        // Set the slide duration to create a 3.5 minute presentation
+        const slideDuration = 30000; // 30 seconds per slide = 3.5 minutes total for 7 slides
+        
+        // Function to update the slides
+        function updateSlides() {
+            slides.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
+            
+            // Update indicators
+            indicators.forEach((indicator, index) => {
+                if (index === currentSlide) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+        
+        // Function to go to the next slide
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slideCount;
+            updateSlides();
+        }
+        
+        // Function to go to the previous slide
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + slideCount) % slideCount;
+            updateSlides();
+        }
+        
+        // Fade in audio over 20 seconds
+        function fadeInAudio() {
+            bgMusic.volume = 0;
+            bgMusic.play();
+            
+            let fadePoint = 0;
+            const fadeAudio = setInterval(() => {
+                if (fadePoint < 100) {
+                    fadePoint += 1;
+                    bgMusic.volume = fadePoint / 100;
+                } else {
+                    clearInterval(fadeAudio);
+                }
+            }, 200); // 20 seconds total (100 steps × 200ms)
+            
+            isMusicPlaying = true;
+            musicIcon.className = 'fas fa-volume-up';
+            musicText.textContent = 'Music On';
+        }
+        
+        // Toggle background music
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                musicIcon.className = 'fas fa-volume-mute';
+                musicText.textContent = 'Music Off';
+            } else {
+                if (bgMusic.currentTime === 0) {
+                    fadeInAudio();
+                } else {
+                    bgMusic.play();
+                    isMusicPlaying = true;
+                    musicIcon.className = 'fas fa-volume-up';
+                    musicText.textContent = 'Music On';
+                }
+            }
+        }
+        
+        // Event listeners
+        prevBtn.addEventListener('click', () => {
+            clearInterval(autoSlideInterval);
+            prevSlide();
+            startAutoSlide();
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            clearInterval(autoSlideInterval);
+            nextSlide();
+            startAutoSlide();
+        });
+        
+        indicators.forEach(indicator => {
+            indicator.addEventListener('click', () => {
+                clearInterval(autoSlideInterval);
+                currentSlide = parseInt(indicator.dataset.index);
+                updateSlides();
+                startAutoSlide();
+            });
+        });
+        
+        musicControls.addEventListener('click', toggleMusic);
+        
+        // Touch events for mobile swiping
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        slides.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        slides.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            clearInterval(autoSlideInterval);
+            
+            if (touchStartX - touchEndX > 50) {
+                // Swipe left
+                nextSlide();
+            } else if (touchEndX - touchStartX > 50) {
+                // Swipe right
+                prevSlide();
+            }
+            
+            startAutoSlide();
+        }
+        
+        // Start auto sliding
+        function startAutoSlide() {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(nextSlide, slideDuration);
+        }
+        
+        // Start slideshow and music on page load
+        startAutoSlide();
+        setTimeout(fadeInAudio, 1000); // Start music after 1 second
+        
+        // Preload all images to ensure smooth transitions
+        allSlides.forEach(slide => {
+            const img = slide.querySelector('img');
+            const actualSrc = img.getAttribute('src');
+            if (actualSrc) {
+                const preloadImg = new Image();
+                preloadImg.src = actualSrc;
+            }
+        });
+        
+        // Pause auto-advance and music when tab is inactive
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(autoSlideInterval);
+                if (isMusicPlaying) bgMusic.pause();
+            } else {
+                startAutoSlide();
+                if (isMusicPlaying) bgMusic.play();
+            }
+        });
+    });
+</script>
+{% endblock %} 

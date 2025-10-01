@@ -1,0 +1,16 @@
+{
+  "id": "feat_moo_ronrubin_20250811_130957968",
+  "recording_id": "aug_moo_ronrubin_20250811_110317710",
+  "feature_set_id": "v0.1",
+  "filename": "features/v0.1/ronrubin/augmented/Moo/aug_moo_ronrubin_20250811_110317710_features.npz",
+  "metadata": {
+    "dictionary_id": "dict_ehmoooo",
+    "class_id": "cls_moo",
+    "class_name": "Moo",
+    "recording_type": "augmented",
+    "subset": "augmented",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-08-11T13:09:57.968365"
+}

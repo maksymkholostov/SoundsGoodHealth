@@ -1,0 +1,1151 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Augmentation{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Styles for Header, Cards, Table, Modal, Buttons, Forms */
+.mui-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mui-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    /* transition: all 0.3s ease; */ /* Removed hover effect for main card */
+}
+
+/* Removed .mui-card:hover */
+
+.mui-card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mui-card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mui-card-content {
+    padding: 1.5rem;
+}
+
+/* Removed .mui-option-card styles */
+
+/* Removed .mui-stats-grid and related styles */
+
+/* Removed .mui-recent-table and related styles */
+
+/* Removed .mui-badge and related styles */
+
+.mui-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem; /* Slightly smaller buttons for table */
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border: none;
+}
+
+.mui-button-primary {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.mui-button-primary:hover {
+    background-color: var(--accent-color) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Removed .mui-alert styles */
+
+.mui-form-field {
+    /* position: relative; */ /* May not be needed */
+    margin-bottom: 1rem; /* Adjusted margin */
+}
+
+.mui-form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Removed .mui-select styles */
+
+.mui-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.mui-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+    outline: none;
+}
+
+/* Removed .mui-form-helper */
+/* Removed .mui-tooltip styles */
+
+/* Removed old .augmentation-card styles */
+
+/* Styles for Augmentation Method Cards (Used in Modal) */
+.augmentation-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjust minmax */
+    gap: 24px;
+    margin-bottom: 1.5rem;
+}
+
+.augmentation-method-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem; /* Slightly less padding */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Removed hover effect for method cards to simplify */
+/* Removed :nth-child gradient backgrounds to simplify */
+
+.method-checkbox {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.mui-checkbox input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.method-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px; /* Smaller icon */
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(var(--primary-color-rgb), 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.method-icon .material-icons {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.method-content {
+    text-align: center;
+}
+
+.method-content h3 {
+    font-size: 1.1rem; /* Slightly smaller */
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+    margin-bottom: 0.5rem;
+}
+
+.method-content p {
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.4;
+    margin-bottom: 1rem;
+}
+
+.method-slider {
+    width: 100%;
+    margin-top: auto; /* Push slider to bottom */
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 0.5rem;
+}
+
+.mui-slider {
+    width: 100%;
+    height: 4px; /* Thinner slider */
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.mui-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.mui-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.augmentation-method-card.disabled {
+    opacity: 0.6;
+    filter: grayscale(70%);
+}
+
+.augmentation-method-card.disabled .mui-slider {
+    pointer-events: none;
+}
+
+.slider-tooltip {
+    font-size: 0.7rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin-top: 4px;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Responsive adjustments for method grid */
+@media (max-width: 1200px) {
+    .augmentation-methods-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 48%)); /* Adjust for 2 columns */
+    }
+}
+@media (max-width: 768px) {
+    .augmentation-methods-grid {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+    }
+}
+
+/* Styles for the NEW Gold Recordings Table */
+.mui-recordings-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1rem;
+}
+
+.mui-recordings-table th,
+.mui-recordings-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.mui-recordings-table th {
+    background: rgba(0,0,0,0.02);
+    font-weight: 500;
+}
+
+.mui-recordings-table tbody tr:hover {
+    background-color: rgba(0,0,0,0.015);
+}
+
+/* Styles for the NEW Modal */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1050; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-dialog {
+    position: relative;
+    margin: 5% auto;
+    width: 90%;
+    max-width: 900px; /* Wider modal for options */
+}
+
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    padding: 2rem;
+    border: 1px solid #888;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.modal-body {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.modal-footer {
+    padding-top: 1rem;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.close-button {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* Ensure range labels inside cards are styled */
+.augmentation-method-card .mui-form-label.range-label {
+    font-size: 0.75rem; /* Smaller label for range */
+    margin-bottom: 0.25rem;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+/* --- Add Basic noUiSlider Styling --- */
+/* (Assuming noUiSlider CSS is included separately) */
+/* You might need to adjust these or rely solely on the library's CSS */
+.nouislider-target {
+    height: 10px;
+    margin: 15px 5px 30px 5px; /* Add margin for handles */
+    background: #E9E9E9;
+    border-radius: 5px;
+    border: 1px solid #D9D9D9;
+    box-shadow: inset 0 1px 1px #F0F0F0, 0 3px 6px -5px #BBB;
+}
+.nouislider-connect {
+    background: var(--primary-color);
+    box-shadow: inset 0 0 3px rgba(51,51,51,0.45);
+    height: 100%;
+    border-radius: inherit;
+}
+.nouislider-handle {
+    width: 18px;
+    height: 18px;
+    right: -9px; /* Half the width */
+    top: -5px;  /* Adjust vertical position */
+    border-radius: 50%;
+    background: #FFF;
+    border: 1px solid #D9D9D9;
+    box-shadow: 0px 0px 2px rgba(0,0,0,0.3);
+    cursor: grab;
+}
+.nouislider-handle:focus {
+    outline: none;
+}
+.nouislider-handle:active {
+    cursor: grabbing;
+}
+/* Styling for disabled state */
+.nouislider-target[disabled] {
+    background: #F0F0F0;
+    opacity: 0.6;
+    pointer-events: none;
+}
+.nouislider-target[disabled] .nouislider-connect {
+    background: #BDBDBD;
+}
+.nouislider-target[disabled] .nouislider-handle {
+    background: #E0E0E0;
+    cursor: not-allowed;
+}
+/* --- End noUiSlider Styling --- */
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- REMOVED hidden div for embedding options -->
+    <!-- <div id="augmentationOptionsData" data-options="{{ augmentation_options | tojson | safe }}" style="display: none;"></div> -->
+
+    <!-- Header -->
+    <div class="mui-header">
+            <h1 class="mb-2">Sound Augmentation</h1>
+        <p class="mb-0">Select Gold Standard recordings and generate augmented variations.</p>
+    </div>
+
+    <!-- Gold Recordings Table -->
+    <div class="mui-card">
+        <div class="mui-card-header">
+            <h2 class="mui-card-title">
+                <span class="material-icons">verified</span>
+                Gold Standard Recordings
+            </h2>
+            <div>
+                <span class="badge bg-primary" id="selectedCount">0 Selected</span>
+            </div>
+        </div>
+        <div class="mui-card-content">
+            <!-- Bulk Action Controls -->
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="selectAll()">
+                        <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">select_all</span>
+                        Select All
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-2" onclick="deselectAll()">
+                        <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">deselect</span>
+                        Deselect All
+                    </button>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label for="bulkNumAugmentations" class="me-2">Augmentations per recording:</label>
+                    <input type="number" id="bulkNumAugmentations" class="form-control form-control-sm" style="width: 80px;" value="5" min="1" max="20">
+                    <button class="btn btn-primary btn-sm" onclick="bulkAugment()" id="bulkAugmentBtn">
+                        <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">auto_awesome</span>
+                        Augment Selected
+                    </button>
+                </div>
+            </div>
+            {% if gold_recordings %}
+            <div class="table-responsive">
+                <table class="mui-recordings-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
+                            <th>Class Name</th>
+                            <th>Recording ID</th>
+                            <th>Original User</th>
+                            <th>Class Gold Count</th>
+                            <th>Class Augmented Count</th>
+                            <th>Existing Augs</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for recording in gold_recordings %}
+                        {% set rec_meta = recording.metadata or {} %}
+                        {% set class_name = rec_meta.get('class_name', 'Unknown') %}
+                        {% set counts = class_counts.get(class_name, {'gold': 0, 'augmented': 0}) %}
+                        <tr>
+                            <td><input type="checkbox" class="recording-checkbox" data-recording-id="{{ recording.id }}" data-class-name="{{ class_name }}" data-user-id="{{ recording.user_id }}"></td>
+                            <td>{{ class_name }}</td>
+                            <td>{{ recording.id }}</td>
+                            <td>{{ rec_meta.get('username', 'N/A') }}</td>
+                            <td>{{ counts.gold }}</td>
+                            <td>{{ counts.augmented }}</td>
+                            <td>{{ recording.augmentation_count | default(0) }}</td>
+                            <td>
+                                <button class="mui-button mui-button-primary open-augment-modal-button"
+                                        data-recording-id="{{ recording.id }}"
+                                        data-class-name="{{ class_name }}"
+                                        data-user-id="{{ recording.user_id }}"
+                                        title="Augment this recording">
+                                    <span class="material-icons" style="font-size: 1.1rem;">auto_fix_high</span>
+                                    Augment
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                    </div>
+            {% else %}
+            <p>No Gold Standard recordings found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Augmentation Modal -->
+    <div id="augmentationModal" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Augment Recording: <span id="modalRecordingId"></span></h5>
+                    <button type="button" class="close-button" onclick="closeModal()">&times;</button>
+                    </div>
+                <form id="augmentationForm">
+                    <div class="modal-body">
+                        <!-- Hidden fields to store context -->
+                        <input type="hidden" id="modalHiddenRecordingId" name="recording_id">
+                        <input type="hidden" id="modalHiddenClassName" name="class_name">
+                        <input type="hidden" id="modalHiddenUserId" name="user_id">
+                        
+                        <div class="mb-3 mui-form-field">
+                            <label for="numAugmentations" class="mui-form-label">Number of Augmentations to Generate</label>
+                            <input type="number" class="mui-input" id="numAugmentations" name="num_augmentations" value="5" min="1" max="100" required>
+                    </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h6 class="mb-3">Configure Augmentation Methods:</h6>
+                        <div id="modalAugmentationOptions" class="augmentation-methods-grid">
+                            <!-- Augmentation options will be loaded here -->
+                            <p>Loading augmentation options...</p>
+                    </div>
+            </div>
+                    <div class="modal-footer">
+                        <button type="button" class="mui-button" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="mui-button mui-button-primary">
+                            <span class="material-icons" style="font-size: 1.1rem;">rocket_launch</span>
+                            Start Augmentation
+                        </button>
+        </div>
+                </form>
+    </div>
+        </div>
+    </div>
+
+    <!-- Template for Augmentation Method Card (used by JS) -->
+    <template id="augmentationMethodTemplate">
+        <div class="augmentation-method-card" data-method-key="{key}">
+                    <div class="method-checkbox">
+                        <label class="mui-checkbox">
+                    <input type="checkbox" class="method-enable-checkbox" value="true" checked>
+                    <!-- Name attribute removed, will be handled by JS on submit -->
+                        </label>
+                    </div>
+                    <div class="method-icon">
+                <span class="material-icons">{icon}</span>
+                    </div>
+                    <div class="method-content">
+                <h3>{name}</h3>
+                <p>{description}</p>
+                    </div>
+                    <div class="method-slider">
+                 <!-- Labels to display current slider values -->
+                        <div class="slider-labels">
+                     <span>Min: <span class="min-value-display">{min_val}</span></span>
+                     <span>Max: <span class="max-value-display">{max_val}</span></span>
+                        </div>
+                 <!-- Target div for noUiSlider -->
+                 <div class="nouislider-target"></div>
+                 <!-- Tooltip/Description specific to the slider -->
+                 <div class="slider-tooltip">{slider_description}</div>
+                 <!-- Hidden inputs (optional, values will be read from slider state) -->
+                 <!-- <input type="hidden" class="hidden-min-val" name="config[{key}][range][0]"> -->
+                 <!-- <input type="hidden" class="hidden-max-val" name="config[{key}][range][1]"> -->
+                    </div>
+                </div>
+    </template>
+    </div>
+
+<!-- IMPORTANT: Include noUiSlider library -->
+<!-- Example using CDN (place these preferably in your base template or before this script) -->
+<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" rel="stylesheet"> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script> -->
+
+<script>
+const modal = document.getElementById('augmentationModal');
+const modalRecordingIdSpan = document.getElementById('modalRecordingId');
+const modalHiddenRecordingIdInput = document.getElementById('modalHiddenRecordingId');
+const modalHiddenClassNameInput = document.getElementById('modalHiddenClassName');
+const modalHiddenUserIdInput = document.getElementById('modalHiddenUserId');
+const modalOptionsContainer = document.getElementById('modalAugmentationOptions');
+const augmentationForm = document.getElementById('augmentationForm');
+const methodTemplate = document.getElementById('augmentationMethodTemplate');
+
+// Store options globally
+let cachedAugmentationOptions = null;
+let optionsLoading = false;
+let optionsLoadError = null;
+
+// Function to fetch augmentation options from the API
+async function fetchAugmentationOptions() {
+    if (cachedAugmentationOptions || optionsLoading) {
+        return; // Already loaded or loading
+    }
+    optionsLoading = true;
+    optionsLoadError = null;
+    console.log("Fetching augmentation options...");
+    try {
+        const response = await fetch("{{ url_for('augmentation_api.get_augmentation_options') }}");
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        cachedAugmentationOptions = await response.json();
+        console.log("Augmentation options loaded:", cachedAugmentationOptions);
+    } catch (error) {
+        console.error("Error fetching augmentation options:", error);
+        optionsLoadError = error.message || "Failed to fetch options";
+        // Clear cache on error
+        cachedAugmentationOptions = null; 
+    } finally {
+        optionsLoading = false;
+    }
+}
+
+// Function to open the modal and pass recording context
+function openModal(recordingId, className, userId) {
+    modalRecordingIdSpan.textContent = recordingId;
+    modalHiddenRecordingIdInput.value = recordingId;
+    modalHiddenClassNameInput.value = className;
+    modalHiddenUserIdInput.value = userId;
+    
+    // Populate options based on fetch status
+    if (optionsLoading) {
+        modalOptionsContainer.innerHTML = '<p>Loading augmentation options...</p>';
+    } else if (optionsLoadError) {
+        modalOptionsContainer.innerHTML = `<p class="text-danger">Error loading options: ${optionsLoadError}</p>`;
+    } else if (cachedAugmentationOptions) {
+        populateModalOptions(cachedAugmentationOptions);
+    } else {
+        // Should ideally not happen if fetch is triggered on load, but handle defensively
+        modalOptionsContainer.innerHTML = '<p class="text-danger">Error: Options not available. Please try refreshing.</p>';
+    }
+    
+    modal.style.display = 'block';
+}
+
+// Function to close the modal
+function closeModal() {
+    modal.style.display = 'none';
+}
+
+// Function to populate the modal form with augmentation options
+function populateModalOptions(options) {
+    modalOptionsContainer.innerHTML = ''; 
+    console.log("Populating modal with options object:", options);
+
+    const actualOptions = options.options;
+    if (!actualOptions || typeof actualOptions !== 'object' || Object.keys(actualOptions).length === 0) {
+        modalOptionsContainer.innerHTML = '<p>No augmentation methods found.</p>';
+        console.error("Invalid or empty actualOptions data:", actualOptions);
+        return;
+    }
+
+    const methodTemplateElement = document.getElementById('augmentationMethodTemplate');
+    if (!methodTemplateElement) {
+        modalOptionsContainer.innerHTML = '<p class="text-danger">Error: Method template not found.</p>';
+        console.error("Cannot find template element with id 'augmentationMethodTemplate'");
+        return;
+    }
+    const templateContent = methodTemplateElement.innerHTML;
+
+    // --- Descriptions for sliders ---
+    const sliderDescriptions = {
+        background_noise: "Set the min/max range for added noise level (relative to original signal).",
+        pitch_shift: "Set the min/max range for pitch shifting (in semitones).",
+        time_stretch: "Set the min/max range for time stretching factor (e.g., 0.8-1.2).",
+        gain: "Set the min/max range for gain adjustment (in dB).",
+        reverb: "Set the min/max range for reverb intensity/mix (0 to 1).",
+        eq_boost: "Set the min/max range for EQ boost/cut amount (in dB).",
+        time_shift: "Set the min/max range for random time shift (fraction of duration).",
+        default: "Set the minimum and maximum range for this parameter."
+    };
+    // --- End Descriptions ---
+
+    for (const key in actualOptions) {
+        if (!actualOptions.hasOwnProperty(key)) continue;
+        
+        try { 
+            const option = actualOptions[key];
+            if (typeof option !== 'object' || option === null) {
+                console.warn(`Skipping invalid option data for key '${key}':`, option);
+                continue;
+            }
+
+            const abs_min = option.abs_min ?? option.min ?? 0;
+            const abs_max = option.abs_max ?? option.max ?? 1;
+            const min_val = option.min ?? abs_min;
+            const max_val = option.max ?? abs_max;
+            const step_val = option.step ?? 0.01;
+            const icon_val = option.icon || 'settings';
+            const name_val = option.name || 'Unknown Method';
+            const description_val = option.description || 'No description.';
+            // Get specific slider description or default
+            const slider_description_val = sliderDescriptions[key] || sliderDescriptions.default;
+
+            // Replace placeholders including the new slider description
+            let cardHtml = templateContent
+                .replace(/{key}/g, key)
+                .replace(/{icon}/g, icon_val)
+                .replace(/{name}/g, name_val)
+                .replace(/{description}/g, description_val)
+                .replace(/{abs_min}/g, abs_min) // Still needed for slider range
+                .replace(/{abs_max}/g, abs_max) // Still needed for slider range
+                .replace(/{min_val}/g, min_val) // For display span initial value
+                .replace(/{max_val}/g, max_val) // For display span initial value
+                .replace(/{step}/g, step_val)   // Still needed for slider step
+                .replace(/{slider_description}/g, slider_description_val);
+
+            const cardElementWrapper = document.createElement('div');
+            cardElementWrapper.innerHTML = cardHtml.trim(); 
+            const cardElement = cardElementWrapper.firstChild;
+
+            if (cardElement && cardElement.nodeType === Node.ELEMENT_NODE) {
+                modalOptionsContainer.appendChild(cardElement);
+
+                // --- Initialize noUiSlider --- 
+                const sliderElement = cardElement.querySelector('.nouislider-target');
+                const minValueSpan = cardElement.querySelector('.min-value-display');
+                const maxValueSpan = cardElement.querySelector('.max-value-display');
+                
+                if (sliderElement && typeof noUiSlider !== 'undefined') {
+                    try {
+                        const sliderInstance = noUiSlider.create(sliderElement, {
+                            start: [min_val, max_val],
+                            connect: true,
+                            step: step_val,
+                            range: {
+                                'min': abs_min,
+                                'max': abs_max
+                            },
+                            format: { // Format values for display
+                                to: function (value) {
+                                    // Adjust precision based on step
+                                    const precision = step_val < 0.01 ? 3 : (step_val < 0.1 ? 2 : (step_val < 1 ? 1 : 0));
+                                    return parseFloat(value).toFixed(precision);
+                                },
+                                from: function (value) {
+                                    return Number(value);
+                                }
+                            },
+                            // Optional: Tooltips on handles
+                            // tooltips: [true, true] 
+                        });
+
+                        // Update display spans and store values on slider change
+                        sliderInstance.on('update', function (values, handle, unencoded) {
+                            const numericMin = unencoded[0]; // Use unencoded for storing raw number
+                            const numericMax = unencoded[1];
+                            if (minValueSpan) minValueSpan.textContent = values[0]; // Formatted value for display
+                            if (maxValueSpan) maxValueSpan.textContent = values[1]; // Formatted value for display
+                            // Store raw numeric values in dataset for form submission
+                            sliderElement.dataset.minValue = numericMin;
+                            sliderElement.dataset.maxValue = numericMax;
+                        });
+
+                        // Store initial values
+                        sliderElement.dataset.minValue = min_val;
+                        sliderElement.dataset.maxValue = max_val;
+                        
+                    } catch (sliderError) {
+                         console.error(`Error initializing noUiSlider for ${key}:`, sliderError);
+                         sliderElement.innerHTML = "<p style='color:red;'>Slider init failed.</p>";
+                    }
+
+                } else if (!sliderElement) {
+                     console.error(`Could not find .nouislider-target for ${key}`);
+            } else {
+                    console.error("noUiSlider library not found. Cannot create range slider for " + key);
+                    sliderElement.innerHTML = "<p style='color:red;'>Slider library missing. Please include noUiSlider CSS and JS.</p>";
+                }
+                // --- End noUiSlider Initialization ---
+
+            } else {
+                console.error(`Failed to create valid card element for key '${key}'.`);
+            }
+        } catch (error) {
+             console.error(`Error processing method '${key}':`, error);
+             // Optionally append an error message card to the UI
+             const errorCard = document.createElement('div');
+             errorCard.className = 'augmentation-method-card'; // Use same class for layout
+             errorCard.innerHTML = `<h3 style="color: red;">Error loading ${key}</h3><p>${error.message}</p>`;
+             modalOptionsContainer.appendChild(errorCard);
+        }
+    }
+
+    // --- Update Event Listeners to handle noUiSlider disable state --- 
+    modalOptionsContainer.querySelectorAll('.method-enable-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.augmentation-method-card');
+            const sliderElement = card.querySelector('.nouislider-target');
+            if (this.checked) {
+                card.classList.remove('disabled');
+                if (sliderElement) {
+                    // Check if slider has the disable method (it does)
+                    if (sliderElement.noUiSlider) {
+                       sliderElement.removeAttribute('disabled'); 
+                       // sliderElement.noUiSlider.enable(); // Preferred if available
+                    } else {
+                        sliderElement.removeAttribute('disabled'); // Fallback for non-initialized
+                    }
+                }
+            } else {
+                card.classList.add('disabled');
+                if (sliderElement) {
+                    if (sliderElement.noUiSlider) {
+                       sliderElement.setAttribute('disabled', true);
+                       // sliderElement.noUiSlider.disable(); // Preferred if available
+                    } else {
+                        sliderElement.setAttribute('disabled', true); // Fallback for non-initialized
+                    }
+                }
+            }
+        });
+        // Initial state check
+        checkbox.dispatchEvent(new Event('change'));
+    });
+}
+
+// Add event listeners to buttons in the table
+document.querySelectorAll('.open-augment-modal-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const recordingId = this.dataset.recordingId;
+        const className = this.dataset.className;
+        const userId = this.dataset.userId;
+        openModal(recordingId, className, userId);
+    });
+});
+
+// Handle form submission
+augmentationForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(augmentationForm);
+    const data = {};
+    const config = {};
+    
+    // Get top-level fields (num_augmentations, hidden IDs)
+    data.recording_id = formData.get('recording_id');
+    data.class_name = formData.get('class_name');
+    data.user_id = formData.get('user_id');
+    // Parse num_augmentations as an integer
+    data.num_augmentations = parseInt(formData.get('num_augmentations'), 10) || 1; // Default to 1 if parsing fails
+
+    // --- Build config by iterating through cards and reading slider state --- 
+    modalOptionsContainer.querySelectorAll('.augmentation-method-card').forEach(card => {
+        const methodKey = card.dataset.methodKey;
+        const checkbox = card.querySelector('.method-enable-checkbox');
+        const sliderElement = card.querySelector('.nouislider-target');
+        
+        if (methodKey) {
+            const isEnabled = checkbox ? checkbox.checked : false;
+            config[methodKey] = { enabled: isEnabled };
+
+            if (isEnabled && sliderElement && sliderElement.dataset.minValue !== undefined && sliderElement.dataset.maxValue !== undefined) {
+                // Read values stored in dataset attributes
+                const minValue = parseFloat(sliderElement.dataset.minValue);
+                const maxValue = parseFloat(sliderElement.dataset.maxValue);
+                
+                // Ensure min <= max before assigning
+                config[methodKey].range = minValue <= maxValue ? [minValue, maxValue] : [maxValue, minValue];
+            } else if (isEnabled) {
+                 console.warn(`Could not read slider values for enabled method ${methodKey}`);
+            }
+        }
+    });
+    // --- End building config ---
+
+    data.augmentation_config = config;
+
+    // Clean up range arrays and rename keys (only for enabled methods)
+    for (const methodKey in data.augmentation_config) {
+        if (data.augmentation_config[methodKey].enabled) {
+            if (data.augmentation_config[methodKey].range) {
+                const range = data.augmentation_config[methodKey].range;
+                // Basic validation (already parsed float, check length)
+                if (!Array.isArray(range) || range.length !== 2) {
+                    console.warn(`Invalid range array for ${methodKey}, removing:`, range);
+                    delete data.augmentation_config[methodKey].range;
+                } else {
+                    // Rename 'range' key to match AudioAugmentor expectation
+                    data.augmentation_config[methodKey][`${methodKey}_range`] = range;
+                    delete data.augmentation_config[methodKey].range; 
+                }
+            } else {
+                 // If range wasn't found/read correctly, remove potential empty key
+                 delete data.augmentation_config[methodKey].range;
+            }
+        } else {
+            // Remove range key if method is disabled
+            delete data.augmentation_config[methodKey].range;
+            delete data.augmentation_config[methodKey][`${methodKey}_range`];
+        }
+    }
+
+    console.log('Submitting augmentation request:', JSON.stringify(data, null, 2)); // Pretty print for debugging
+    // Hardcode the URL since url_for seems to be failing
+    const apiUrl = "/api/augmentation/start_single_augmentation";
+    
+    fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+            }).catch(() => {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
+    .then(result => {
+        console.log('API Response:', result);
+        if (result.success) {
+            showToast(`Successfully started augmentation for ${data.recording_id}. Created ${result.augmentations_created} files.`);
+            closeModal();
+            setTimeout(() => { window.location.reload(); }, 1500);
+        } else {
+            showToast(`Error: ${result.error || 'Unknown error occurred.'}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting augmentation:', error);
+        showToast(`Submission failed: ${error.message}`, 'error');
+    });
+});
+
+// Checkbox selection functions
+function updateSelectedCount() {
+    const selectedCheckboxes = document.querySelectorAll('.recording-checkbox:checked');
+    document.getElementById('selectedCount').textContent = `${selectedCheckboxes.length} Selected`;
+    
+    // Enable/disable bulk augment button
+    const bulkBtn = document.getElementById('bulkAugmentBtn');
+    if (bulkBtn) {
+        bulkBtn.disabled = selectedCheckboxes.length === 0;
+    }
+}
+
+function toggleSelectAll() {
+    const isChecked = document.getElementById('selectAllCheckbox').checked;
+    document.querySelectorAll('.recording-checkbox').forEach(checkbox => {
+        checkbox.checked = isChecked;
+    });
+    updateSelectedCount();
+}
+
+function selectAll() {
+    document.getElementById('selectAllCheckbox').checked = true;
+    document.querySelectorAll('.recording-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateSelectedCount();
+}
+
+function deselectAll() {
+    document.getElementById('selectAllCheckbox').checked = false;
+    document.querySelectorAll('.recording-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateSelectedCount();
+}
+
+// Bulk augmentation function
+async function bulkAugment() {
+    console.log("bulkAugment() function called!");
+    const selectedCheckboxes = document.querySelectorAll('.recording-checkbox:checked');
+    console.log(`Found ${selectedCheckboxes.length} selected checkboxes`);
+    if (selectedCheckboxes.length === 0) {
+        showToast('Please select at least one recording to augment', 'error');
+        return;
+    }
+    
+    const numAugmentations = parseInt(document.getElementById('bulkNumAugmentations').value);
+    if (isNaN(numAugmentations) || numAugmentations < 1) {
+        showToast('Please enter a valid number of augmentations', 'error');
+        return;
+    }
+    
+    // Collect selected recordings
+    const recordings = [];
+    selectedCheckboxes.forEach(checkbox => {
+        const recId = checkbox.getAttribute('data-recording-id');
+        const className = checkbox.getAttribute('data-class-name');
+        console.log(`Adding recording: id=${recId}, class=${className}`);
+        recordings.push({
+            recording_id: recId,
+            class_name: className
+        });
+    });
+    
+    console.log(`Bulk augment starting for ${recordings.length} recordings:`, recordings);
+    
+    // Show processing message
+    const bulkBtn = document.getElementById('bulkAugmentBtn');
+    const originalText = bulkBtn.innerHTML;
+    bulkBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    bulkBtn.disabled = true;
+    
+    try {
+        // Process recordings sequentially for better control
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (let i = 0; i < recordings.length; i++) {
+            const recording = recordings[i];
+            bulkBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Processing ${i+1}/${recordings.length}...`;
+            
+            try {
+                const requestData = {
+                    recording_id: recording.recording_id,
+                    class_name: recording.class_name,
+                    num_augmentations: numAugmentations,
+                    augmentation_config: {}  // Use default config
+                };
+                
+                console.log(`Sending augmentation request ${i+1}/${recordings.length}:`, requestData);
+                
+                // Hardcode the URL since url_for seems to be failing
+                const apiUrl = "/api/augmentation/start_single_augmentation";
+                console.log(`API URL: ${apiUrl}`);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log(`Response status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Server error (${response.status}):`, errorText);
+                    let errorMessage = `Server error: ${response.status}`;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.error || errorJson.message || errorMessage;
+                    } catch (e) {
+                        console.error('Could not parse error response as JSON:', e);
+                        errorMessage = errorText || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const responseText = await response.text();
+                console.log(`Response for recording ${recording.recording_id}:`, responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Failed to parse response as JSON:', responseText);
+                    throw new Error('Invalid server response');
+                }
+                
+                if (result.success) {
+                    successCount++;
+                    console.log(`✓ Successfully augmented ${recording.recording_id}`);
+                } else {
+                    errorCount++;
+                    console.error(`✗ Failed to augment ${recording.recording_id}:`, result.error || 'Unknown error');
+                }
+            } catch (error) {
+                errorCount++;
+                console.error(`✗ Error augmenting ${recording.recording_id}:`, error);
+            }
+        }
+        
+        // Show results
+        if (successCount > 0 && errorCount === 0) {
+            showToast(`Successfully augmented ${successCount} recordings!`, 'success');
+        } else if (successCount > 0) {
+            showToast(`Augmented ${successCount} recordings. ${errorCount} failed.`, 'warning');
+        } else {
+            showToast(`Failed to augment recordings`, 'error');
+        }
+        
+        // Reload page after a delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Bulk augmentation error:', error);
+        showToast('An error occurred during bulk augmentation', 'error');
+    } finally {
+        bulkBtn.innerHTML = originalText;
+        bulkBtn.disabled = false;
+    }
+}
+
+// Fetch options when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAugmentationOptions(); // Start fetching options immediately
+    
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.recording-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    updateSelectedCount();
+});
+
+// Close modal if clicking outside the content
+window.onclick = function(event) {
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+// Simple Toast Notification Function
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.right = '20px';
+    toast.style.padding = '15px 25px';
+    toast.style.borderRadius = '8px';
+    toast.style.color = 'white';
+    toast.style.backgroundColor = type === 'error' ? '#d32f2f' : '#388e3c';
+    toast.style.zIndex = '1060';
+    toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '1'; }, 50);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            if (toast.parentNode) { toast.parentNode.removeChild(toast); }
+        }, 300);
+    }, 4000);
+}
+</script>
+{% endblock %} 

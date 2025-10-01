@@ -1,0 +1,130 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Flask
+instance/
+.webassets-cache
+
+# Project specific
+# Runtime data: exclude from git (persist via Railway volume in prod)
+backend/data/sounds/
+backend/data/features/
+backend/data/models/
+backend/data/inference/
+backend/data/users/
+backend/data/logs/
+backend/data_backup_*/
+data_backup_*/
+logs/
+
+# Keep small source-of-truth metadata and registries
+!backend/data/
+!backend/data/dictionaries/
+!backend/data/dictionaries/system_dictionaries.json
+!backend/data/classes/
+!backend/data/classes/global_registry.json
+!backend/data/metadata/
+!backend/data/metadata/feature_sets/
+!backend/data/metadata/feature_sets/v0.1.json
+!backend/data/metadata/stats/
+!backend/data/metadata/stats/global_stats.json
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Node modules if you use npm
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temp files
+temp/
+tmp/
+.legacy/
+.temp/
+
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs
+*.log
+log/
+logs/
+
+# Database files
+*.db
+*.sqlite3
+
+# Ignore C# test project build artifacts and user files
+CSTestProject/bin/
+CSTestProject/obj/
+CSTestProject/*.userprefs
+CSTestProject/.vs/
+
+# Backup directories
+backup_before_*/
+*_backup/
+*.backup/
+backups/
+
+# Documentation directories
+Docs_07292025/
+
+# Development scripts (not needed for runtime)
+scripts/tests/
+scripts/analysis/
+scripts/migration/
+scripts/utils/
+# Keep deployment scripts in version control
+# scripts/deployment/ 

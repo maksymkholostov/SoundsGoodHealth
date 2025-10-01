@@ -1,0 +1,16 @@
+{
+  "id": "feat_eh_ronrubin_20250811_072241359",
+  "recording_id": "gold_eh_ronrubin_20250811_070820338_9",
+  "feature_set_id": "v0.1",
+  "filename": "features/v0.1/ronrubin/gold/Eh/gold_eh_ronrubin_20250811_070820338_9_features.npz",
+  "metadata": {
+    "dictionary_id": null,
+    "class_id": "cls_eh",
+    "class_name": "Eh",
+    "recording_type": "gold",
+    "subset": "gold",
+    "duration": 1.25,
+    "n_frames": 251
+  },
+  "created_at": "2025-08-11T07:22:41.359542"
+}

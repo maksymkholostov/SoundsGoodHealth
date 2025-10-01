@@ -1,0 +1,1272 @@
+{% extends "base.html" %}
+
+{% block title %}Real-Time Sound Predictor - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/predict.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/predict_compact_improvements.css') }}">
+{% endblock %}
+
+{% block additional_head %}
+<style>
+/* CSS grid equalization: right card spans both left cards */
+.mui-steps-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  align-items: stretch;
+}
+/* Place major cards */
+#dictionaryCard { grid-column: 1; grid-row: 1; }
+#predictorInterfaceCard { grid-column: 1; grid-row: 2; }
+#modelSelectionCard { grid-column: 2; grid-row: 1 / span 2; }
+/* Controls, Game Mode and Analysis full width (stacked) */
+.mui-controls-below-cards { grid-column: 1 / -1; grid-row: 3; z-index: 2; }
+#gamePlaySection { grid-column: 1 / -1; grid-row: 4; }
+#predictionHistoryCard { grid-column: 1 / -1; grid-row: 5; }
+.mui-model-card, .mui-card-content { height: 100%; min-height: 0; }
+.mui-card-content::after { pointer-events: none; }
+/* Hide delete buttons on predict page and reduce bottom white space in models list */
+.mui-model-item .delete-model-btn { display: none; }
+#modelsList { margin-bottom: 0.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mui-predict-container mui-container">
+    <div class="mui-page-header">
+        <h1 class="mui-page-title">
+            <span class="material-icons" style="margin-right: 12px;">graphic_eq</span>
+            Real-Time Sound Predictor
+        </h1>
+    </div>
+
+    <!-- Debug info - can be hidden in production -->
+    {% if config.DEBUG %}
+    <div class="mui-alert mui-alert-info" style="margin-bottom: 1.5rem;">
+        <span class="material-icons">bug_report</span>
+        <span><strong>Debug Info:</strong> User ID: {{ current_user.id if current_user else 'Not logged in' }}</span>
+    </div>
+    {% endif %}
+
+    <div class="mui-steps-grid">
+        <!-- STEP 1: Select Dictionary -->
+        <div class="mui-model-card" id="dictionaryCard">
+            <div class="mui-card-header">
+                <h2>
+                    <span class="material-icons">source</span>
+                    1. Select Dictionary
+                </h2>
+            </div>
+            <div class="mui-card-content">
+                <p class="mui-helper-text">Choose the dictionary containing the model you want to use.</p>
+                <div>
+                    <label for="dictionarySelect" class="mui-form-label">Dictionary:</label>
+                    <select class="mui-form-select" id="dictionarySelect" aria-label="Select Dictionary" onchange="if(window.handleDictionaryChange) window.handleDictionaryChange({target: this})">
+                        <option selected disabled value="">Loading dictionaries...</option>
+                    </select>
+                    <div id="dictionaryLoadingError" class="mui-error-text" style="display: none;"></div>
+                    
+                    {% if config.DEBUG %}
+                    <!-- Debug button -->
+                    <button onclick="debugDictionarySelection()" class="mui-debug-button" style="margin-top: 0.75rem;">Debug Selection</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Predictor Interface (Moved up, Initially Hidden) -->
+        <div id="predictorInterfaceCard" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">graphic_eq</span>
+                        2. Real-Time Predictor
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <!-- === Prediction modes using the P > ICON > INPUT > TEXT structure === -->
+                    <div class="mui-mode-cards-row">
+                        <p>
+                            <span class="material-icons">repeat</span>
+                            <input type="radio" name="predictionMode" value="continuous" checked id="continuousModeRadio">
+                            <span class="mode-title">Continuous Prediction</span>
+                        </p>
+                        <p>
+                            <!-- Feedback mode hidden but retained -->
+                            <span class="material-icons" style="display:none;">rate_review</span>
+                            <input type="radio" name="predictionMode" value="feedback" id="feedbackModeRadio" style="display:none;">
+                            <span class="mode-title" style="display:none;">Give Feedback After Each Sound</span>
+                        </p>
+                        <p>
+                            <span class="material-icons">videogame_asset</span>
+                            <input type="radio" name="predictionMode" value="game" id="gameModeRadio">
+                            <span class="mode-title">Game Mode</span>
+                        </p>
+                        <!-- Removed the <label> and <span class="mode-desc"> structure -->
+                    </div>
+                    <!-- Feedback mode instruction hint -->
+                    <div id="feedbackHint" class="mui-helper-text" style="display:none; text-align:center; margin-top:1rem;">
+                        In Feedback mode: Speak when prompted, then press <strong>SPACEBAR</strong> to continue.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls moved OUTSIDE and BELOW the cards, centered -->
+        <div class="mui-controls-below-cards" style="text-align: center; margin-top: 1.5rem; margin-bottom: 1.5rem; grid-column: 1 / -1; display: none;">
+            <!-- Hidden checkbox to integrate with existing noise-capture logic -->
+            <input type="checkbox" id="ambientNoiseSwitch" style="display: none;">
+            <!-- Measure Noise Button (hidden per request) -->
+            <button class="mui-button" id="measureNoiseBtn" style="margin-bottom: 0.5rem; display: none !important; visibility: hidden;">
+                <span class="material-icons">tune</span> Measure Ambient Noise
+            </button>
+            <p id="noiseStatus" class="ambient-helper" style="margin-bottom: 1.5rem; font-size: 0.85rem; color: #555;"></p>
+
+            <!-- Predict/End Session button -->
+            <button class="mui-button session-btn" id="predictButton" style="display: inline-block; margin: 0 auto;">
+                <span class="material-icons">mic</span> Predict
+            </button>
+            <!-- Session instruction replaces ambient noise text -->
+            <div id="sessionInstruction" class="mui-helper-text" style="display:none; font-size:1rem; color:#333; margin-top:1rem;">
+                <!-- Populated via JS when feedback mode or feedback result -->
+            </div>
+        </div>
+
+        <!-- STEP 3: Select Model (Initially Hidden) - RIGHT column spans rows -->
+        <div id="modelSelectionCard" style="display: none; width: 100%;">
+            <div class="mui-model-card" style="width: 100%;">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">memory</span>
+                        3. Select ML Model
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                        <p class="mui-helper-text">Choose a trained ml model for sound prediction</p>
+                    
+                    <!-- Models List (replaces dropdown for better multi-select) -->
+                    <div id="modelsList" style="margin-bottom: 1rem;">
+                        <div id="modelsLoadingMessage">
+                            <div class="mui-spinner" style="width: 16px; height: 16px; border-width: 2px; display: inline-block; margin-right: 5px;"></div>
+                            <span class="mui-loading-text" style="font-size: 0.9em;">Loading models...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Comparison info display (moved after list) -->
+                    <div id="comparisonInfo" style="display: none; margin-top: 1rem;"></div>
+                    
+                    <!-- Multi-model comparison button -->
+                    <div id="comparisonControls" style="display: none; margin-top: 1rem; text-align: center;">
+                        <button id="runComparisonBtn" class="mui-button mui-button-primary" style="background: #4CAF50; font-size: 1.1rem; padding: 12px 24px;">
+                            <span class="material-icons">compare_arrows</span>
+                            Run Model Comparison
+                        </button>
+                        <p class="mui-helper-text" style="margin-top: 0.5rem;">Compare predictions from selected models side-by-side</p>
+                    </div>
+                    
+                    <!-- Keep old select hidden for compatibility -->
+                    <select class="mui-form-select" id="modelSelect" aria-label="Select Model" style="display: none;">
+                         <option selected disabled value="">Loading models...</option>
+                    </select>
+                    
+                    <div id="modelInfo" style="display: none; padding: 0.5rem; background-color: rgba(63, 81, 181, 0.05); border-radius: 8px;">
+                        
+                        <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem;">Selected Model Info </h3>
+                        <div style="display: flex; flex-wrap: wrap;">
+                                <strong>Recognized Classes:</strong> 
+                                <span id="modelClassNames">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Keep feedback section but hidden (for feedback mode only) -->
+        <div id="feedbackSection" class="mui-feedback-section" style="display: none;">
+            <form id="feedbackForm" class="mui-feedback-form">
+                <div id="feedbackOptions" class="mui-feedback-options">
+                    <!-- Feedback options will be loaded here -->
+                    <p class="mui-loading-text">Loading feedback options...</p>
+                </div>
+                <div id="feedbackMessage" style="margin-top: 0.75rem;"></div>
+            </form>
+        </div>
+            
+        <!-- Analysis Card at the very bottom (visible by default) -->
+        <div id="predictionHistoryCard" class="mui-full-width" style="display: block; width: 100%;">
+            <div class="mui-model-card" style="width: 100%; min-height: auto;">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">insights</span>
+                        Analysis
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                <div class="mui-helper-text" style="margin-bottom: 0.75rem; font-size: 0.9rem; color:#555;">
+                    1) Press Predict to begin. 2) Say the words for your classes. 3) Click End Session to end; press Space to pause/resume.
+                </div>
+                <div id="predictionTableContainer" style="overflow-x: auto;">
+                    <table id="predictionResultsTable" class="mui-prediction-table" style="width: auto; border-collapse: collapse;">
+                        <thead>
+                            <tr id="tableHeader">
+                                <th style="text-align: left; padding: 10px; border-bottom: 2px solid #333; min-width: 150px; position: sticky; left: 0; background: white; z-index: 10;">Model</th>
+                                <!-- Dynamic columns for each prediction will be added here -->
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Keep old history div for backwards compatibility -->
+                <div id="predictionHistory" style="display: none;">
+                    <!-- Old prediction history entries -->
+                </div>
+                <div id="analysisConfusionMatrices" style="margin-top: 2rem; display: none;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">Performance Tracking</h3>
+                    <div id="analysisConfusionContainer" style="display: flex; flex-wrap: wrap; gap: 1.5rem;"></div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game UI Card -->
+        <div id="gamePlaySection" class="mui-full-width" style="display: none; width: 100%; grid-column: 1 / -1;">
+            <div class="mui-model-card" style="width: 100%;">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">videogame_asset</span>
+                        Game Mode
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <!-- Model selector for game mode (shown only in comparison mode) -->
+                    <div id="gameModelSelector" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px;">
+                        <label style="font-weight: 500; margin-right: 1rem;">Select model for game feedback:</label>
+                        <select id="gameModelSelect" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">-- Select Model --</option>
+                        </select>
+                    </div>
+                    <!-- Game variant selector: Game 1 (current) or Game 2 (scored) -->
+                    <div id="gameVariantSelector" style="display: block; margin: 0 0 1rem 0;">
+                        <span class="mui-helper-text" style="margin-right: 0.75rem;">Game variant:</span>
+                        <label style="margin-right: 1rem;">
+                            <input type="radio" name="gameVariant" value="game1" id="gameVariant1" checked>
+                            <span>Instant Feedback</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="gameVariant" value="game2" id="gameVariant2">
+                            <span>Tower Stack</span>
+                        </label>
+                        <label style="margin-left: 1rem;">
+                            <input type="radio" name="gameVariant" value="game3" id="gameVariant3">
+                            <span>Tile Puzzle</span>
+                        </label>
+                        <span id="gameVariantStatus" class="mui-helper-text" style="margin-left: 1rem; color: #333; font-weight: 500;">Active: Instant Feedback</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: flex-start; padding: 2rem;">
+                        <div style="margin-right: 2rem;">
+                            <div class="class-display" id="classToSay" style="font-size: 2.5rem; font-weight: 500; color: var(--primary-color); text-align: center; margin-bottom: 0.25rem;">
+                                Say: ...
+                            </div>
+                            <!-- Game 2 HUD (hidden unless Game 2 selected) -->
+                            <div id="game2Hud" style="display:none; margin: 0.1rem 0 0.5rem 0;">
+                                <div style="display:flex; gap: 1rem; align-items:center;">
+                                    <span>Score: <strong id="game2Score">0</strong></span>
+                                    <span>Round: <strong id="game2Round">1</strong></span>
+                                    <span>Lives: <strong id="game2Lives">3</strong></span>
+                                    <span id="game2ResultBadge" style="display:none; padding: 4px 8px; border-radius: 12px; font-weight:600; font-size:0.9rem;">Win</span>
+                                </div>
+                            </div>
+                            <!-- Hide legacy face container -->
+                            <div class="face-container" id="faceContainer" style="display:none; height: 0; width: 0; min-height: 0;"></div>
+                            <!-- Centered feedback icon & play again (stacked) -->
+                            <div id="gameFeedbackWrap" style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height: 280px;">
+                                <div id="gameFeedbackIcon" style="display:flex; align-items:center; justify-content:center; width:100%; height: 220px;">
+                                    <span class="material-icons" style="font-size: 200px; color: #9E9E9E;">horizontal_rule</span>
+                                </div>
+                                <button id="gameResetBtn" type="button" class="mui-button" style="height:44px; margin-top: 8px;">
+                                    <span class="material-icons">replay</span> Play again
+                                </button>
+                            </div>
+                            <!-- Tower Stack Game canvas container (shown in Game 2) -->
+                            <div id="towerGameContainer" style="display:none; width: 320px; height: 480px; margin-top: 1rem; border-radius: 8px; overflow:hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15); background: linear-gradient(180deg, #bbdefb 0%, #e3f2fd 100%);"></div>
+                            <!-- Puzzle Game container (shown in Game 3) -->
+                            <div id="puzzleGameContainer" data-img-url="{{ url_for('static', filename='img/puzzle.png') }}" style="display:none; width: 480px; height: 480px; margin: 1rem auto 0; border-radius: 8px; overflow:hidden; position: relative; z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"></div>
+                        </div>
+                        <div style="flex: 1; padding-left: 2rem;">
+                            <div id="latestGamePrediction" style="font-size: 2rem; font-weight: 600; color: var(--primary-color); margin-top: 0.25rem;"></div>
+                            <!-- Confusion matrices for game mode -->
+                            <div id="gameConfusionMatrices" style="margin-top: 2rem; display: none;">
+                                <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">Performance Tracking</h3>
+                                <div id="confusionMatrixContainer" style="display: flex; flex-wrap: wrap; gap: 1.5rem;">
+                                    <!-- Matrices will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Third-Party Libraries first -->
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<!-- Phaser for Tower Stack Game (Game 2) -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+
+<!-- Define global variables needed by the custom scripts -->
+<script>
+    const currentUserId = "{{ current_user.id if current_user else '' }}";
+    console.log(`📋 DEBUG [predict.html]: Initializing with UserID: ${currentUserId}`);
+</script>
+
+<!-- Hard-bind variant radio handlers to ensure status/visibility update even if other loaders fail -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function handleVariantChange(ev){
+    const variant = ev.target && ev.target.value ? ev.target.value : (document.getElementById('gameVariant2')?.checked ? 'game2' : (document.getElementById('gameVariant3')?.checked ? 'game3' : 'game1'));
+    console.log('[GameVariant/inline] change ->', variant);
+    if (typeof window.setGameVariant === 'function') window.setGameVariant(variant); else window.currentGameVariant = variant;
+    const status = document.getElementById('gameVariantStatus');
+    if (status) status.textContent = 'Active: ' + (variant === 'game2' ? 'Game 2' : (variant === 'game3' ? 'Puzzle' : 'Game 1'));
+    // Toggle containers
+    const tower = document.getElementById('towerGameContainer');
+    const puzzle = document.getElementById('puzzleGameContainer');
+    if (tower){ tower.style.display = (variant==='game2') ? 'block' : 'none'; if (variant==='game2' && typeof window.initTowerGame==='function') window.initTowerGame('towerGameContainer'); }
+    if (puzzle){ puzzle.style.display = (variant==='game3') ? 'block' : 'none'; if (variant==='game3' && typeof window.initPuzzleGame==='function') window.initPuzzleGame(); }
+  }
+  ['gameVariant1','gameVariant2','gameVariant3'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', handleVariantChange);
+  });
+});
+</script>
+<!-- Simple Puzzle Game (Game 3) -->
+<script src="{{ url_for('static', filename='js/puzzle_game.js') }}"></script>
+<!-- Tower Stack game implementation -->
+<script>
+(function(){
+  let game = null;
+  let scene = null;
+  let movingBlock = null;
+  let direction = 1;
+  let speed = 2.2;
+  let stack = [];
+  let dropAllowed = true;
+
+  function createBlock(y){
+    const width = stack.length ? stack[stack.length-1].displayWidth : 200;
+    const block = scene.add.rectangle(160, y, width, 24, 0x42a5f5).setOrigin(0.5, 0.5);
+    scene.physics.add.existing(block);
+    block.body.setAllowGravity(false);
+    return block;
+  }
+
+  function spawnMoving(){
+    movingBlock = createBlock(80);
+    direction = 1;
+    // Faster progression per block
+    speed = Math.min(5.0, 2.2 + stack.length*0.20);
+    // subtle easing start position
+    movingBlock.x = 160 + Math.sin(stack.length * 0.8) * 40;
+  }
+
+  function settle(block){
+    block.body.setAllowGravity(true);
+    block.body.setVelocityY(0);
+    block.body.setBounce(0);
+    block.y = 120 + (stack.length*24);
+    stack.push(block);
+  }
+
+  function shake(){
+    if (scene && scene.cameras && scene.cameras.main){
+      scene.cameras.main.shake(150, 0.01);
+    }
+  }
+
+  function update(){
+    if (!movingBlock) return;
+    movingBlock.x += direction * speed;
+    if (movingBlock.x > 300){ direction = -1; }
+    if (movingBlock.x < 20){ direction = 1; }
+  }
+
+  function drop(){
+    if (!movingBlock || !dropAllowed) return;
+    dropAllowed = false;
+    const prev = stack[stack.length-1];
+    if (prev){
+      const overlap = Math.max(0, (prev.displayWidth/2 + movingBlock.displayWidth/2) - Math.abs(prev.x - movingBlock.x));
+      if (overlap <= 4){
+        shake();
+        movingBlock.destroy();
+        movingBlock = null;
+        setTimeout(()=>{ dropAllowed = true; spawnMoving(); }, 600);
+        return;
+      }
+      // Trim and ease horizontally toward overlap center
+      movingBlock.displayWidth = Math.max(24, overlap);
+      movingBlock.x = Phaser.Math.Linear(prev.x, movingBlock.x, 0.6);
+    }
+    // Drop animation then settle
+    const targetY = 120 + (stack.length*24);
+    scene.tweens.add({ targets: movingBlock, y: targetY, duration: 180, ease: 'Quad.easeIn', onComplete: ()=>{
+        settle(movingBlock);
+        movingBlock = null;
+        setTimeout(()=>{ dropAllowed = true; spawnMoving(); }, 250);
+    }});
+  }
+
+  window.initTowerGame = function(containerId){
+    if (game) return;
+    const container = document.getElementById(containerId);
+    if (!container || typeof Phaser === 'undefined') return;
+    stack = [];
+    const config = {
+      type: Phaser.AUTO,
+      width: 320,
+      height: 480,
+      parent: containerId,
+      physics: { default: 'arcade', arcade: { gravity: { y: 800 }, debug: false } },
+      scene: {
+        preload(){},
+        create(){
+          scene = this;
+          const base = this.add.rectangle(160, 440, 220, 28, 0x90caf9);
+          this.physics.add.existing(base, true);
+          const first = this.add.rectangle(160, 120, 200, 24, 0x1e88e5);
+          this.physics.add.existing(first);
+          first.body.setAllowGravity(false);
+          stack.push(first);
+          spawnMoving();
+        },
+        update(){ update(); }
+      }
+    };
+    game = new Phaser.Game(config);
+  };
+
+  window.destroyTowerGame = function(){
+    if (game){ game.destroy(true); game = null; scene = null; movingBlock = null; stack = []; }
+  };
+
+  window.towerGameOnAnswer = function(isCorrect){
+    const container = document.getElementById('towerGameContainer');
+    if (!container || container.style.display === 'none') return;
+    if (isCorrect){ drop(); } else { shake(); }
+  };
+})();
+</script>
+<!-- Include Custom Application Scripts -->
+<script src="{{ url_for('static', filename='js/recorder.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_main.js') }}"></script>
+
+<!-- Handle game mode selection AND Model Dropdown -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const predictButton = document.getElementById('predictButton');
+        const feedbackModeRadio = document.getElementById('feedbackModeRadio');
+        const continuousModeRadio = document.getElementById('continuousModeRadio');
+        const gameModeRadio = document.getElementById('gameModeRadio');
+        const modelSelect = document.getElementById('modelSelect');
+        const feedbackHint = document.getElementById('feedbackHint');
+        const sessionInstruction = document.getElementById('sessionInstruction');
+        const modelClassNames = document.getElementById('modelClassNames');
+
+        window.currentGameModeActive = false;
+        window.currentGameTargetClassId = null;
+        window.gameSelectedModelId = null; // Model to use for game face reactions
+        window.gameConfusionData = {}; // Store confusion matrix data for each model
+        
+        // Override displayTargetSound: show friendly names without 'cls_'
+        window.displayTargetSound = function(targetClass) {
+            const classToSay = document.getElementById('classToSay');
+            if (!classToSay) return;
+            let displayName = targetClass || '...';
+            if (targetClass) {
+                if (window.IdMapper) {
+                    const mapped = window.IdMapper.getClassName(targetClass);
+                    displayName = mapped || targetClass.replace(/^cls_/,'');
+                } else {
+                    displayName = targetClass.replace(/^cls_/,'');
+                }
+            }
+            classToSay.innerHTML = `Say: <span style="color: var(--accent-color);">${displayName}</span>`;
+        };
+        
+        // Handle game model selection
+        const gameModelSelect = document.getElementById('gameModelSelect');
+        if (gameModelSelect) {
+            gameModelSelect.addEventListener('change', function() {
+                window.gameSelectedModelId = this.value;
+                console.log(`Game mode will use model: ${window.gameSelectedModelId}`);
+            });
+        }
+        
+        // Function to update game model selector with selected models
+        // Initialize confusion matrix for a model
+        window.initializeGameConfusionMatrix = function(modelId) {
+            console.log(`=== initializeGameConfusionMatrix called for model: ${modelId} ===`);
+            console.log(`Current soundClasses:`, window.soundClasses);
+            console.log(`soundClasses length: ${window.soundClasses ? window.soundClasses.length : 'undefined'}`);
+            
+            if (!window.gameConfusionData[modelId]) {
+                window.gameConfusionData[modelId] = {};
+                // Initialize empty matrix for all class combinations
+                if (window.soundClasses && window.soundClasses.length > 0) {
+                    console.log(`Creating matrix with ${window.soundClasses.length} classes`);
+                    window.soundClasses.forEach(actualClass => {
+                        window.gameConfusionData[modelId][actualClass] = {};
+                        window.soundClasses.forEach(predictedClass => {
+                            window.gameConfusionData[modelId][actualClass][predictedClass] = 0;
+                        });
+                    });
+                    console.log(`Matrix initialized:`, window.gameConfusionData[modelId]);
+                } else {
+                    console.warn(`Cannot initialize matrix - soundClasses is empty or undefined`);
+                }
+            } else {
+                console.log(`Matrix already exists for model ${modelId}`);
+            }
+        };
+        
+        // Debug function to check confusion matrix state
+        window.debugConfusionMatrix = function() {
+            console.log("=== CONFUSION MATRIX DEBUG INFO ===");
+            console.log("Functions exist:", {
+                initializeConfusionMatrix: typeof window.initializeGameConfusionMatrix,
+                updateConfusionMatrix: typeof window.updateGameConfusionMatrix, 
+                displayConfusionMatrices: typeof window.displayGameConfusionMatrices,
+                resetConfusionMatrices: typeof window.resetConfusionMatrices
+            });
+            console.log("Data structures:", {
+                gameConfusionData: window.gameConfusionData,
+                soundClasses: window.soundClasses,
+                selectedModelId: window.selectedModelId,
+                selectedModelIds: window.selectedModelIds,
+                currentGameModeActive: window.currentGameModeActive,
+                currentGameTargetClassId: window.currentGameTargetClassId
+            });
+            console.log("=== END DEBUG INFO ===");
+        };
+        
+        // Test function to manually update confusion matrix
+        window.testConfusionMatrixUpdate = function() {
+            console.log("=== TESTING CONFUSION MATRIX UPDATE ===");
+            
+            // Get the first model and first two classes
+            const modelId = window.selectedModelId || (window.selectedModelIds && window.selectedModelIds[0]);
+            if (!modelId) {
+                console.error("No model selected");
+                return;
+            }
+            
+            if (!window.soundClasses || window.soundClasses.length < 2) {
+                console.error("Not enough sound classes loaded");
+                return;
+            }
+            
+            const actualClass = window.soundClasses[0];
+            const predictedClass = window.soundClasses[1];
+            
+            console.log(`Testing update with modelId=${modelId}, actual=${actualClass}, predicted=${predictedClass}`);
+            
+            // Initialize if needed
+            if (!window.gameConfusionData[modelId]) {
+                console.log("Initializing matrix first...");
+                window.initializeGameConfusionMatrix(modelId);
+            }
+            
+            // Try to update
+            window.updateGameConfusionMatrix(modelId, actualClass, predictedClass);
+            
+            console.log("=== TEST COMPLETE ===");
+        };
+        
+        // Auto-run diagnostic to check everything works
+        window.runConfusionMatrixDiagnostic = function() {
+            console.log("\n\n=== CONFUSION MATRIX DIAGNOSTIC ===");
+            console.log("1. Checking window variables:");
+            console.log("   - gameConfusionData exists:", !!window.gameConfusionData);
+            console.log("   - gameConfusionData content:", JSON.stringify(window.gameConfusionData));
+            console.log("   - soundClasses:", window.soundClasses);
+            console.log("   - selectedModelId:", window.selectedModelId);
+            console.log("   - selectedModelIds:", window.selectedModelIds);
+            console.log("   - currentGameModeActive:", window.currentGameModeActive);
+            console.log("   - currentGameTargetClassId:", window.currentGameTargetClassId);
+            
+            console.log("\n2. Checking functions:");
+            console.log("   - initializeConfusionMatrix:", typeof window.initializeGameConfusionMatrix);
+            console.log("   - updateConfusionMatrix:", typeof window.updateGameConfusionMatrix);
+            console.log("   - displayConfusionMatrices:", typeof window.displayGameConfusionMatrices);
+            
+            console.log("\n3. Checking DOM elements:");
+            const container = document.getElementById('confusionMatrixContainer');
+            const matricesDiv = document.getElementById('gameConfusionMatrices');
+            console.log("   - confusionMatrixContainer exists:", !!container);
+            console.log("   - gameConfusionMatrices exists:", !!matricesDiv);
+            if (matricesDiv) {
+                console.log("   - gameConfusionMatrices display:", matricesDiv.style.display);
+                console.log("   - gameConfusionMatrices HTML length:", matricesDiv.innerHTML.length);
+            }
+            if (container) {
+                console.log("   - confusionMatrixContainer HTML length:", container.innerHTML.length);
+                console.log("   - confusionMatrixContainer children:", container.children.length);
+            }
+            
+            console.log("\n4. Testing matrix update:");
+            if (window.selectedModelId && window.soundClasses && window.soundClasses.length >= 2) {
+                const testActual = window.soundClasses[0];
+                const testPredicted = window.soundClasses[1];
+                console.log(`   - Updating matrix: actual=${testActual}, predicted=${testPredicted}`);
+                
+                // Get before count
+                const beforeCount = window.gameConfusionData[window.selectedModelId]?.[testActual]?.[testPredicted] || 0;
+                console.log(`   - Count before: ${beforeCount}`);
+                
+                // Update
+                window.updateGameConfusionMatrix(window.selectedModelId, testActual, testPredicted);
+                
+                // Get after count
+                const afterCount = window.gameConfusionData[window.selectedModelId]?.[testActual]?.[testPredicted] || 0;
+                console.log(`   - Count after: ${afterCount}`);
+                console.log(`   - Successfully incremented: ${afterCount > beforeCount}`);
+                
+                // Try to display
+                console.log("   - Calling displayConfusionMatrices...");
+                window.displayGameConfusionMatrices();
+                
+                // Check DOM again
+                const containerAfter = document.getElementById('confusionMatrixContainer');
+                console.log(`   - Container children after display: ${containerAfter?.children.length}`);
+                console.log(`   - Container HTML length after display: ${containerAfter?.innerHTML.length}`);
+                
+                // Check if the increment is visible in DOM
+                if (containerAfter && containerAfter.innerHTML.length > 0) {
+                    const tables = containerAfter.querySelectorAll('table');
+                    console.log(`   - Number of tables in container: ${tables.length}`);
+                    if (tables.length > 0) {
+                        console.log("   - Checking first table for non-zero values...");
+                        const cells = tables[0].querySelectorAll('td');
+                        let nonZeroFound = false;
+                        cells.forEach(cell => {
+                            const value = parseInt(cell.textContent);
+                            if (value > 0) {
+                                nonZeroFound = true;
+                                console.log(`     - Found non-zero value: ${value}`);
+                            }
+                        });
+                        if (!nonZeroFound) {
+                            console.log("     - WARNING: All cells are zero!");
+                        }
+                    }
+                }
+            } else {
+                console.log("   - Cannot test: missing selectedModelId or soundClasses");
+            }
+            
+            console.log("\n=== END DIAGNOSTIC ===");
+        };
+        
+        // Update confusion matrix with a prediction (game mode)
+        window.updateGameConfusionMatrix = function(modelId, actualClassId, predictedClassId) {
+            console.log(`=== updateConfusionMatrix CALLED ===`);
+            console.log(`modelId=${modelId}, actual=${actualClassId}, predicted=${predictedClassId}`);
+            console.log('Current gameConfusionData:', window.gameConfusionData);
+            console.log('Current soundClasses:', window.soundClasses);
+            
+            if (!window.gameConfusionData[modelId]) {
+                console.log(`Initializing confusion matrix for model ${modelId}`);
+                window.initializeGameConfusionMatrix(modelId);
+            }
+            
+            // Check if the matrix structure exists
+            if (!window.gameConfusionData[modelId]) {
+                console.error(`Matrix not initialized for model ${modelId}`);
+                window.initializeGameConfusionMatrix(modelId);
+            }
+            
+            if (!window.gameConfusionData[modelId][actualClassId]) {
+                console.error(`Actual class ${actualClassId} not found in matrix for model ${modelId}`);
+                console.log('Available actual classes:', Object.keys(window.gameConfusionData[modelId]));
+                console.log('Current soundClasses:', window.soundClasses);
+                // Try to reinitialize with current soundClasses
+                window.initializeGameConfusionMatrix(modelId);
+            }
+            
+            if (window.gameConfusionData[modelId] && 
+                window.gameConfusionData[modelId][actualClassId] && 
+                window.gameConfusionData[modelId][actualClassId][predictedClassId] !== undefined) {
+                // INCREMENT THE COUNT
+                const oldCount = window.gameConfusionData[modelId][actualClassId][predictedClassId];
+                window.gameConfusionData[modelId][actualClassId][predictedClassId]++;
+                const newCount = window.gameConfusionData[modelId][actualClassId][predictedClassId];
+                console.log(`✓ INCREMENTED: ${actualClassId}->${predictedClassId} from ${oldCount} to ${newCount}`);
+                console.log('Matrix after update:', JSON.stringify(window.gameConfusionData[modelId]));
+                
+                // Force redisplay
+                window.displayGameConfusionMatrices();
+                console.log('Called displayConfusionMatrices - check if display updated');
+            } else {
+                console.error(`✗ Could not update confusion matrix: predicted=${predictedClassId} not found for actual=${actualClassId}`);
+                if (window.gameConfusionData[modelId][actualClassId]) {
+                    console.log('Available predicted classes for this actual:', Object.keys(window.gameConfusionData[modelId][actualClassId]));
+                }
+            }
+        };
+        
+        // Display confusion matrices (game mode)
+        window.displayGameConfusionMatrices = function() {
+            const container = document.getElementById('analysisConfusionContainer') || document.getElementById('confusionMatrixContainer');
+            const matricesDiv = document.getElementById('analysisConfusionMatrices') || document.getElementById('gameConfusionMatrices');
+            
+            if (!container || !matricesDiv) return;
+            if (!window.soundClasses || window.soundClasses.length === 0) {
+                console.warn('displayConfusionMatrices: no sound classes yet; skipping render');
+                return;
+            }
+            
+            // Show the container
+            matricesDiv.style.display = 'block';
+            container.innerHTML = '';
+            
+            // Get selected models for comparison
+            const modelsToShow = window.selectedModelIds && window.selectedModelIds.length > 0 
+                ? window.selectedModelIds 
+                : (window.selectedModelId ? [window.selectedModelId] : []);
+            
+            modelsToShow.forEach(modelId => {
+                if (!window.gameConfusionData[modelId]) {
+                    window.initializeGameConfusionMatrix(modelId);
+                }
+                
+                const matrixDiv = document.createElement('div');
+                matrixDiv.style.cssText = 'border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background: #f9f9f9;';
+                
+                // Get model name
+                const modelName = modelId.split('_').slice(0, 2).join(' ').toUpperCase();
+                matrixDiv.innerHTML = `<h4 style="margin-bottom: 0.5rem; font-size: 1rem;">${modelName}</h4>`;
+                
+                // Create table
+                const table = document.createElement('table');
+                table.style.cssText = 'border-collapse: collapse; font-size: 0.9rem;';
+                
+                // Header row
+                const headerRow = document.createElement('tr');
+                headerRow.innerHTML = '<th style="padding: 5px; border: 1px solid #ccc; background: #e0e0e0;">Actual\\Pred</th>';
+                
+                // Get class names
+                const classNames = [];
+                if (window.soundClasses && window.IdMapper) {
+                    window.soundClasses.forEach(classId => {
+                        const className = window.IdMapper.getClassName(classId) || classId;
+                        classNames.push(className);
+                        headerRow.innerHTML += `<th style="padding: 5px; border: 1px solid #ccc; background: #e0e0e0;">${className}</th>`;
+                    });
+                }
+                table.appendChild(headerRow);
+                
+                // Data rows
+                let correctCount = 0;
+                let totalCount = 0;
+                
+                window.soundClasses.forEach((actualClassId, i) => {
+                    const row = document.createElement('tr');
+                    const actualClassName = classNames[i];
+                    row.innerHTML = `<th style="padding: 5px; border: 1px solid #ccc; background: #e0e0e0;">${actualClassName}</th>`;
+                    
+                    window.soundClasses.forEach((predictedClassId, j) => {
+                        // Debug logging for first cell
+                        if (i === 0 && j === 0) {
+                            console.log(`Getting count for ${actualClassId}->${predictedClassId} from matrix:`, window.gameConfusionData[modelId]);
+                        }
+                        const count = (window.gameConfusionData[modelId] && 
+                                     window.gameConfusionData[modelId][actualClassId] && 
+                                     window.gameConfusionData[modelId][actualClassId][predictedClassId]) || 0;
+                        const isCorrect = (i === j);
+                        
+                        if (isCorrect) correctCount += count;
+                        totalCount += count;
+                        
+                        const cellStyle = isCorrect 
+                            ? 'background: #c8e6c9; font-weight: bold;' 
+                            : (count > 0 ? 'background: #ffcdd2;' : '');
+                        
+                        row.innerHTML += `<td style="padding: 5px; border: 1px solid #ccc; text-align: center; ${cellStyle}">${count}</td>`;
+                    });
+                    table.appendChild(row);
+                });
+                
+                matrixDiv.appendChild(table);
+                
+                // Calculate and display accuracy
+                const accuracy = totalCount > 0 ? (correctCount / totalCount * 100).toFixed(1) : 0;
+                const accuracyDiv = document.createElement('div');
+                accuracyDiv.style.cssText = 'margin-top: 0.5rem; font-weight: bold;';
+                accuracyDiv.innerHTML = `Accuracy: ${accuracy}% (${correctCount}/${totalCount})`;
+                matrixDiv.appendChild(accuracyDiv);
+                
+                container.appendChild(matrixDiv);
+            });
+        };
+        
+        // Reset confusion matrices
+        window.resetConfusionMatrices = function() {
+            console.log("Resetting all confusion matrices");
+            window.gameConfusionData = {};
+            const matricesDiv = document.getElementById('gameConfusionMatrices');
+            if (matricesDiv) {
+                matricesDiv.style.display = 'none';
+            }
+        };
+        
+        // Reinitialize all confusion matrices with current soundClasses
+        window.reinitializeAllMatrices = function() {
+            console.log("=== REINITIALIZING ALL CONFUSION MATRICES ===");
+            console.log("Current soundClasses:", window.soundClasses);
+            
+            // Clear existing data
+            window.gameConfusionData = {};
+            
+            // Reinitialize for all selected models
+            if (window.selectedModelIds && window.selectedModelIds.length > 0) {
+                window.selectedModelIds.forEach(modelId => {
+                    console.log(`Reinitializing matrix for model: ${modelId}`);
+                    window.initializeGameConfusionMatrix(modelId);
+                });
+            } else if (window.selectedModelId) {
+                console.log(`Reinitializing matrix for single model: ${window.selectedModelId}`);
+                window.initializeGameConfusionMatrix(window.selectedModelId);
+            }
+            
+            // Redisplay if game mode is active
+            if (window.currentGameModeActive) {
+                window.displayGameConfusionMatrices();
+            }
+            
+            console.log("=== REINITIALIZATION COMPLETE ===");
+        };
+        
+        window.updateGameModelSelector = function() {
+            const gameModelSelector = document.getElementById('gameModelSelector');
+            const gameModelSelect = document.getElementById('gameModelSelect');
+            
+            if (!gameModelSelector || !gameModelSelect) return;
+            
+            // Check if we're in comparison mode (multiple models selected)
+            const selectedModels = window.selectedModelIds || [];
+            
+            if (selectedModels.length > 1) {
+                // Show selector and populate with selected models
+                gameModelSelector.style.display = 'block';
+                gameModelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+                
+                selectedModels.forEach(modelId => {
+                    const option = document.createElement('option');
+                    option.value = modelId;
+                    // Try to get model name from the list
+                    const modelItem = document.querySelector(`input[value="${modelId}"]`);
+                    if (modelItem && modelItem.parentElement) {
+                        const modelName = modelItem.parentElement.querySelector('label')?.textContent || modelId;
+                        option.textContent = modelName;
+                    } else {
+                        option.textContent = modelId;
+                    }
+                    gameModelSelect.appendChild(option);
+                });
+                
+                // Auto-select first model if none selected
+                if (!window.gameSelectedModelId && selectedModels.length > 0) {
+                    gameModelSelect.value = selectedModels[0];
+                    window.gameSelectedModelId = selectedModels[0];
+                }
+            } else if (selectedModels.length === 1) {
+                // Single model - hide selector and use that model
+                gameModelSelector.style.display = 'none';
+                window.gameSelectedModelId = selectedModels[0];
+            } else {
+                // No models selected
+                gameModelSelector.style.display = 'none';
+                window.gameSelectedModelId = null;
+            }
+        };
+
+        function updatePredictionModeState() {
+            console.log("--- updatePredictionModeState called ---");
+            const feedbackActive = !!(feedbackModeRadio && feedbackModeRadio.checked);
+            const gameActive = !!(gameModeRadio && gameModeRadio.checked);
+            const continuousActive = !feedbackActive && !gameActive;
+
+            window.pauseForFeedback = feedbackActive;
+            window.currentGameModeActive = gameActive;
+
+            console.log(` Mode State Update: 
+                pauseForFeedback=${window.pauseForFeedback}, 
+                currentGameModeActive=${window.currentGameModeActive}, 
+                (Continuous implicitly: ${continuousActive})`);
+            
+            // Handle Game Mode UI elements
+            const gamePlaySection = document.getElementById('gamePlaySection');
+            
+            if (window.currentGameModeActive) {
+                // Show game section
+                if (gamePlaySection) {
+                    gamePlaySection.style.display = 'block';
+                }
+                
+                // Show confusion matrices container
+                const gameConfusionMatrices = document.getElementById('gameConfusionMatrices');
+                if (gameConfusionMatrices) {
+                    gameConfusionMatrices.style.display = 'block';
+                }
+                
+                // Don't reset matrices - we want to accumulate data
+                // Only initialize if they don't exist yet
+                console.log("Game mode starting - checking confusion matrices");
+                if (!window.gameConfusionData || Object.keys(window.gameConfusionData).length === 0) {
+                    console.log("No existing confusion data, will initialize when models are ready");
+                } else {
+                    console.log("Keeping existing confusion matrix data");
+                }
+                
+                // Update game model selector for comparison mode
+                if (typeof window.updateGameModelSelector === 'function') {
+                    window.updateGameModelSelector();
+                }
+                
+                // Initialize with neutral face
+                if (typeof window.showFace === 'function') {
+                    window.showFace('neutral');
+                }
+                
+                // Stop feedback monitoring if running
+                if (typeof window.stopFeedbackOptionsMonitoring === 'function') {
+                    window.stopFeedbackOptionsMonitoring();
+                }
+            } else {
+                // Hide game section
+                if (gamePlaySection) {
+                    gamePlaySection.style.display = 'none';
+                }
+                
+                // Hide confusion matrices container
+                const gameConfusionMatrices = document.getElementById('gameConfusionMatrices');
+                if (gameConfusionMatrices) {
+                    gameConfusionMatrices.style.display = 'none';
+                }
+                
+                if (typeof window.showFace === 'function') {
+                    window.showFace('neutral');
+                }
+            }
+            
+            // Handle Feedback Mode UI elements
+            if (feedbackActive) {
+                // Start feedback options monitoring
+                if (typeof window.startFeedbackOptionsMonitoring === 'function') {
+                    window.startFeedbackOptionsMonitoring();
+                    console.log('>>> Started feedback options monitoring');
+                    
+                    // Force recreate feedback options initially when mode is first selected
+                    if (typeof window.updateFeedbackOptions === 'function') {
+                        window.updateFeedbackOptions();
+                    }
+                }
+            } else {
+                // Stop feedback monitoring when not in feedback mode
+                if (typeof window.stopFeedbackOptionsMonitoring === 'function') {
+                    window.stopFeedbackOptionsMonitoring();
+                    console.log('>>> Stopped feedback options monitoring');
+                }
+            }
+            
+            if (!window.currentGameModeActive && window.currentGameTargetClassId && typeof window.stopGameLoop === 'function') {
+                console.log("Switched away from game mode, stopping game loop.");
+                window.stopGameLoop();
+            }
+            
+            if (continuousActive && window.isWaitingForFeedback && typeof window.resumeListeningAfterFeedback === 'function') {
+                console.log("Switched to continuous while waiting for feedback, resuming...");
+                window.resumeListeningAfterFeedback();
+            }
+        }
+        
+        if (modelSelect) {
+            modelSelect.addEventListener('change', function(event) {
+                const selectedModelId = event.target.value;
+                console.log(`Model selection changed via dropdown. Selected ID: ${selectedModelId}`);
+                if (selectedModelId && typeof window.selectModel === 'function') {
+                    const modelInfo = document.getElementById('modelInfo');
+                    const predictorInterface = document.getElementById('predictorInterfaceCard');
+                    const latestPrediction = document.getElementById('latestPrediction');
+                    const historyCard = document.getElementById('predictionHistoryCard');
+                    
+                    if (modelInfo) modelInfo.style.display = 'none';
+                    if (predictorInterface) predictorInterface.style.display = 'none'; 
+                    if (latestPrediction) latestPrediction.style.display = 'none';
+                    if (historyCard) historyCard.style.display = 'none';
+
+                    if (typeof window.resetPredictionState === 'function') {
+                        window.resetPredictionState();
+                    } else if(window.endPredictionSession) {
+                         if (window.isListening || window.isCapturingNoise) window.endPredictionSession();
+                    }
+                    
+                    window.selectModel(selectedModelId);
+                } else if (!selectedModelId) {
+                    const modelInfo = document.getElementById('modelInfo');
+                    const predictorInterface = document.getElementById('predictorInterfaceCard');
+                    const latestPrediction = document.getElementById('latestPrediction');
+                    const historyCard = document.getElementById('predictionHistoryCard');
+                    if (modelInfo) modelInfo.style.display = 'none';
+                    if (predictorInterface) predictorInterface.style.display = 'none';
+                    if (latestPrediction) latestPrediction.style.display = 'none';
+                    if (historyCard) historyCard.style.display = 'none';
+                    const predictBtn = document.getElementById('predictButton');
+                    if (predictBtn) predictBtn.disabled = true;
+                    if (window.isListening || window.isCapturingNoise) window.endPredictionSession?.();
+
+                } else {
+                    console.error("selectModel function not found or invalid model ID selected.");
+                }
+            });
+        } else {
+             console.error("Model select dropdown 'modelSelect' not found!");
+        }
+
+        if (feedbackModeRadio) {
+            feedbackModeRadio.addEventListener('change', function() {
+                console.log("--- Feedback radio button CHANGED ---");
+                updatePredictionModeState();
+                if (feedbackHint) feedbackHint.style.display = this.checked ? 'block' : 'none';
+            });
+        } else {
+            console.error("Feedback mode radio button not found!");
+        }
+        if (continuousModeRadio) {
+            continuousModeRadio.addEventListener('change', function() {
+                 console.log("--- Continuous radio button CHANGED ---");
+                 updatePredictionModeState();
+                 if (feedbackHint) feedbackHint.style.display = 'none';
+            });
+        } else {
+             console.error("Continuous mode radio button not found!");
+        }
+        if (gameModeRadio) {
+            gameModeRadio.addEventListener('change', function() {
+                 console.log("--- Game mode radio button CHANGED ---");
+                 updatePredictionModeState();
+                 if (feedbackHint) feedbackHint.style.display = 'none';
+                 
+                 // Start game loop when game mode is selected AND we're listening
+                 if (gameModeRadio.checked && window.isListening && typeof window.startGameLoop === 'function') {
+                     console.log("Game mode selected while listening, starting game loop.");
+                     window.startGameLoop();
+                 } else if (gameModeRadio.checked) {
+                     console.log("Game mode selected but not listening yet. Game will start when listening begins.");
+                 }
+            });
+        } else {
+             console.error("Game mode radio button not found!");
+        }
+
+        updatePredictionModeState();
+
+        // Toggle controls visibility when all steps are filled
+        function updateControlsVisibility() {
+            const controls = document.querySelector('.mui-controls-below-cards');
+            const dictVal = document.getElementById('dictionarySelect')?.value;
+            // Check if we have selected model(s) - either single or multiple for comparison
+            const hasSelectedModels = window.selectedModelId || 
+                                    document.getElementById('modelSelect')?.value || 
+                                    (window.selectedModelIds && window.selectedModelIds.length > 0);
+            const anyMode = Array.from(document.getElementsByName('predictionMode')).some(r => r.checked);
+            controls.style.display = (dictVal && hasSelectedModels && anyMode) ? 'block' : 'none';
+        }
+        document.getElementById('dictionarySelect')?.addEventListener('change', updateControlsVisibility);
+        document.getElementById('modelSelect')?.addEventListener('change', updateControlsVisibility);
+        document.querySelectorAll('input[name="predictionMode"]').forEach(r => r.addEventListener('change', updateControlsVisibility));
+        updateControlsVisibility();
+        
+        // Make updateControlsVisibility globally accessible so model selection can trigger it
+        window.updateControlsVisibility = updateControlsVisibility;
+
+        // Feedback Mode: show initial instruction when selected
+        if (feedbackModeRadio) {
+            feedbackModeRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    // Hide noise controls
+                    if (measureBtn) measureBtn.style.display = 'none';
+                    if (noiseStatus) noiseStatus.style.display = 'none';
+                    // Show session instruction
+                    if (sessionInstruction && modelClassNames) {
+                        const names = modelClassNames.textContent.trim();
+                        sessionInstruction.textContent = `Say one of the words ${names}`;
+                        sessionInstruction.style.display = 'block';
+                    }
+                } else {
+                    // Hide instruction for other modes
+                    if (sessionInstruction) sessionInstruction.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+
+<!-- REMOVED Backup loading script -->
+
+{% if config.DEBUG %}
+<script>
+function debugDictionarySelection() {
+    const select = document.getElementById('dictionarySelect');
+    if (!select) {
+        alert('Debug: dictionarySelect element not found!');
+        return;
+    }
+    
+    const selectedIndex = select.selectedIndex;
+    const selectedOption = select.options[selectedIndex];
+    const selectedValue = selectedOption ? selectedOption.value : 'None';
+    
+    alert(`Debug Info:\n- Selected Index: ${selectedIndex}\n- Selected Value: ${selectedValue}\n- Options Count: ${select.options.length}`);
+    
+    const globalInfo = [
+        `currentUserId: ${window.currentUserId || 'NOT SET'}`,
+        `selectedDictionaryId: ${window.selectedDictionaryId || 'NOT SET'}`,
+        `currentDictionaryId: ${window.currentDictionaryId || 'NOT SET'}`
+    ].join('\n');
+    
+    alert('Global Variables:\n' + globalInfo);
+    
+    const functionsInfo = [
+        `loadAvailableModels: ${typeof window.loadAvailableModels === 'function' ? 'EXISTS' : 'MISSING'}`,
+        `handleDictionaryChange: ${typeof window.handleDictionaryChange === 'function' ? 'EXISTS' : 'MISSING'}`,
+        `populateModelList: ${typeof window.populateModelList === 'function' ? 'EXISTS' : 'MISSING'}`
+    ].join('\n');
+    
+    alert('Functions:\n' + functionsInfo);
+    
+    if (selectedValue && selectedValue !== 'None' && typeof window.loadAvailableModels === 'function') {
+        alert(`Attempting to force load models for dictionary ${selectedValue}`);
+        window.loadAvailableModels(selectedValue);
+    }
+}
+</script>
+{% endif %}
+
+<script>
+(function wrapProcessPredictionResponseWhenReady() {
+  if (typeof window.processPredictionResponse !== 'function') {
+    setTimeout(wrapProcessPredictionResponseWhenReady, 50);
+    return;
+  }
+  const orig = window.processPredictionResponse;
+  window.processPredictionResponse = function(result, audioId, skipTableUpdate = false) {
+    orig(result, audioId, skipTableUpdate);
+    // Only augment UI in GAME mode
+    if (window.currentGameModeActive) {
+      const pred = window.currentPrediction;
+      const el = document.getElementById('latestGamePrediction');
+      if (el && pred && pred.class) {
+        el.textContent = `Latest Prediction: ${pred.class}`;
+        setTimeout(() => { el.textContent = ''; }, 1500);
+      }
+      // Tower/Puzzle hooks
+      try {
+        if (typeof window.towerGameOnAnswer === 'function' && typeof window.currentGameTargetClassId !== 'undefined') {
+          const isCorrect = (pred && pred.class_id && window.currentGameTargetClassId && pred.class_id === window.currentGameTargetClassId);
+          window.towerGameOnAnswer(isCorrect);
+        }
+        if (typeof window.puzzleOnAnswer === 'function' && typeof window.currentGameTargetClassId !== 'undefined') {
+          const isCorrect2 = (pred && pred.class_id && window.currentGameTargetClassId && pred.class_id === window.currentGameTargetClassId);
+          window.puzzleOnAnswer(isCorrect2);
+        }
+      } catch(e){ console.warn('towerGameOnAnswer error', e); }
+    }
+  };
+})();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const measureBtn = document.getElementById('measureNoiseBtn');
+    const noiseStatus = document.getElementById('noiseStatus');
+    const ambientCheckbox = document.getElementById('ambientNoiseSwitch');
+
+    async function handleMeasureNoise() {
+        measureBtn.disabled = true;
+        // Countdown 3..2..1
+        for (let i = 3; i > 0; i--) {
+            noiseStatus.textContent = `Please remain silent while we measure the background: ${i}`;
+            await new Promise(r => setTimeout(r, 1000));
+        }
+        noiseStatus.textContent = 'Measuring ambient noise...';
+        try {
+            if (typeof window.startNoiseCapture === 'function') {
+                await window.startNoiseCapture();
+            }
+            noiseStatus.textContent = 'Ambient noise measured';
+            ambientCheckbox.checked = true;
+            // Hide the button once measurement is complete
+            measureBtn.style.display = 'none';
+        } catch (err) {
+            console.error('Noise measurement failed:', err);
+            noiseStatus.textContent = 'Error measuring ambient noise';
+        }
+    }
+
+    if (measureBtn) measureBtn.addEventListener('click', handleMeasureNoise);
+
+    // Reset measurement on new session setup
+    function resetNoiseMeasurement() {
+        ambientCheckbox.checked = false;
+        // Show the measure button again for a new session
+        measureBtn.style.display = 'inline-block';
+        noiseStatus.textContent = '';
+    }
+    // Hook into controls visibility update
+    const origUpdate = window.updateControlsVisibility;
+    if (typeof origUpdate === 'function') {
+        window.updateControlsVisibility = function() {
+            origUpdate();
+            resetNoiseMeasurement();
+        };
+    }
+});
+</script>
+
+<script>
+// Ensure both old and new names resolve to the game-mode functions
+// Initialize
+if (!window.initializeGameConfusionMatrix && window.initializeConfusionMatrix) {
+  window.initializeGameConfusionMatrix = window.initializeConfusionMatrix;
+}
+if (window.initializeGameConfusionMatrix) {
+  window.initializeConfusionMatrix = window.initializeGameConfusionMatrix;
+}
+
+// Update
+if (!window.updateGameConfusionMatrix && window.updateConfusionMatrix) {
+  window.updateGameConfusionMatrix = window.updateConfusionMatrix;
+}
+if (window.updateGameConfusionMatrix) {
+  window.updateConfusionMatrix = window.updateGameConfusionMatrix;
+}
+
+// Display
+if (!window.displayGameConfusionMatrices && window.displayConfusionMatrices) {
+  window.displayGameConfusionMatrices = window.displayConfusionMatrices;
+}
+if (window.displayGameConfusionMatrices) {
+  window.displayConfusionMatrices = window.displayGameConfusionMatrices;
+}
+</script>
+{% endblock %} 

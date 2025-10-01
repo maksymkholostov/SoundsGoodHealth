@@ -1,0 +1,27 @@
+{
+  "id": "cnn1d_dict_ehoo_ronrubin_20250811_075543321",
+  "dictionary_id": "dict_ehoo",
+  "feature_set_id": "v0.1",
+  "user_id": "ronrubin",
+  "name": "CNN1D - dict_ehoo",
+  "type": "cnn1d",
+  "version": "02",
+  "parameters": {
+    "epochs": 200,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "use_class_weights": true
+  },
+  "metrics": {},
+  "filename": "cnn1d_v02",
+  "status": "failed",
+  "classes": [
+    "cls_eh",
+    "cls_oo"
+  ],
+  "training_ids": [],
+  "validation_ids": [],
+  "metadata": {"error": "Training interrupted - manually marked as failed"},
+  "created_at": "2025-08-11T07:55:43.321402",
+  "updated_at": "2025-08-11T07:55:43.325092"
+}

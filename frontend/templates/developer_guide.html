@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}Developer Guide - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Add specific styles for code blocks, headings, etc. if needed */
+.guide-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+.guide-section h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+.guide-section h3 {
+    color: #555;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+.guide-section h4 {
+    color: #666;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+.code-block { /* Reusing style from old downloads page */
+    background-color: #1a1a1a;
+    color: #f8f8f8;
+    border-radius: 4px;
+    padding: 16px;
+    margin: 16px 0;
+    font-family: "Courier New", monospace;
+    overflow-x: auto;
+    position: relative; /* Needed for button positioning */
+}
+.copy-btn { /* Reusing style */
+    background-color: #424242;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    position: absolute; /* Position top-right */
+    top: 5px;
+    right: 5px;
+    transition: background-color 0.2s ease;
+}
+.copy-btn:hover { background-color: #616161; }
+.nav-links { margin-bottom: 20px; }
+.nav-links a { margin-right: 15px; }
+.download-pdf-link { margin-left: 20px; }</style>
+
+{% endblock %}
+
+{% block additional_head %}
+<!-- Include jsPDF library from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Include html2canvas library from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Developer Guide</h1>
+
+<div class="nav-links">
+    <a href="{{ url_for('core_web.developer_downloads_quickstart') }}">Go to Quick Start & Downloads Page</a>
+    <button id="downloadPdfButton" class="pdf-download-button mui-button mui-button--raised">
+        <span class="material-icons" style="vertical-align: middle; margin-right: 4px;">picture_as_pdf</span> Download Guide as PDF
+    </button>
+</div>
+
+<div id="guide-content-area">
+    <div class="guide-section">
+        <p>This guide covers two main parts:</p>
+        <ol>
+            <li><strong>Using the SoundsGood Platform:</strong> How to register, manage your sound data (classes, dictionaries, recordings), and train custom sound recognition models.</li>
+            <li><strong>C# Integration:</strong> How to integrate the SoundClassifiers API into your C# application using the provided client library to make predictions with your trained models.</li>
+        </ol>
+    </div>
+
+    <div class="guide-section">
+        <h2>Part 1: Using the SoundsGood Platform (soundsgood.health)</h2>
+        <p>This section walks you through the process of creating and training your custom sound classification models on the platform.</p>
+
+        <h3>1. Registration and Login</h3>
+        <ul>
+            <li><strong>Register:</strong> Go to <a href="{{ url_for('auth_api.register') }}"><code>/register</code></a> to create a new account. You'll need to provide a username, email, and password.</li>
+            <li><strong>Login:</strong> Once registered, log in via <a href="{{ url_for('auth_web.login_page') }}"><code>/login</code></a>.</li>
+        </ul>
+
+        <h3>2. Understanding Core Concepts</h3>
+        <ul>
+            <li><strong>Sound Class:</strong> A specific sound you want to recognize (e.g., "Ah", "Ee", "Oh", "Siren", "Dog Bark"). Each class needs a unique name. You define these first.</li>
+            <li><strong>Dictionary:</strong> A collection of Sound Classes that a specific model will be trained to distinguish between. For example, a dictionary named "Vowels" might contain the classes "Ah", "Ee", "Ih", "Oh", "Oo". A model trained on this dictionary will only predict one of these vowel sounds.</li>
+            <li><strong>Recording:</strong> An audio sample (.wav file) of a specific Sound Class. Recordings are used to train the model.
+                <ul>
+                    <li><strong>Raw/Pending:</strong> Recordings initially uploaded or recorded are often in a pending state.</li>
+                    <li><strong>Gold:</strong> Recordings that have been reviewed and confirmed to be good examples of their assigned Sound Class. <strong>Only Gold recordings are used for training.</strong></li>
+                </ul>
+            </li>
+            <li><strong>Model:</strong> The machine learning algorithm trained on the "Gold" recordings within a specific Dictionary. It learns to differentiate between the Sound Classes in that dictionary.</li>
+        </ul>
+
+        <h3>3. Workflow: Training Your First Model</h3>
+        <p>Here's the typical process from start to finish:</p>
+
+        <h4>Step 3.1: Define Your Sound Classes</h4>
+         <ul>
+             <li>Navigate to the "Classes" section (usually via a sidebar link or <a href="{{ url_for('dictionary_web.dictionaries_page') }}"><code>/classes</code></a>).</li>
+             <li>Click "Create New Class" (or similar).</li>
+             <li>Enter a unique name for the sound (e.g., "Mah").</li>
+             <li>Repeat for all the distinct sounds you want your model to recognize.</li>
+         </ul>
+
+         <h4>Step 3.2: Create a Dictionary</h4>
+          <ul>
+              <li>Navigate to the "Dictionaries" section (<a href="{{ url_for('dictionary_web.dictionaries_page') }}"><code>/dictionaries</code></a>).</li>
+              <li>Click "Create New Dictionary".</li>
+              <li>Give the dictionary a descriptive name (e.g., "Basic Syllables", "Environmental Sounds").</li>
+              <li>Select the Sound Classes (created in Step 3.1) that you want this dictionary to include. A model trained on this dictionary will <em>only</em> be able to predict the classes within it.</li>
+              <li>Save the dictionary.</li>
+          </ul>
+
+         <h4>Step 3.3: Add Recordings for Each Class</h4>
+          <ul>
+              <li>Navigate to the "Record" or "Upload" section (<a href="{{ url_for('recording_web.recordings_page') }}"><code>/record</code></a>, <a href="{{ url_for('recording_web.upload_sounds_page') }}"><code>/upload</code></a>).</li>
+              <li>For <em>each</em> Sound Class in your Dictionary:
+                  <ul>
+                      <li>Select the target Sound Class.</li>
+                      <li>Either <strong>Record</strong> new samples directly through your browser (if supported) or <strong>Upload</strong> existing <code>.wav</code> files from your computer.</li>
+                      <li><strong>Aim for variety:</strong> Record sounds with slightly different intonations, volumes, etc.</li>
+                      <li><strong>Quantity:</strong> More high-quality recordings (10-20+ per class) generally lead to better models.</li>
+                 </ul>
+             </li>
+         </ul>
+
+         <h4>Step 3.4: Verify Recordings (Create "Gold" Data)</h4>
+          <ul>
+              <li>Navigate to the "Verify" or "Manage Recordings" section (<a href="{{ url_for('recording_web.recordings_page') }}"><code>/verify</code></a>).</li>
+              <li>Select a Dictionary or Sound Class to review its recordings.</li>
+              <li>Listen to each "Pending" recording.</li>
+              <li>If it's a clear, accurate example, mark it as <strong>"Gold"</strong> (or "Approve").</li>
+              <li>If it's poor quality or incorrect, <strong>Discard</strong> or <strong>Reject</strong> it.</li>
+              <li><strong>This step is crucial.</strong> Only Gold recordings are used for training.</li>
+          </ul>
+
+         <h4>Step 3.5: Train the Model</h4>
+          <ul>
+              <li>Navigate to the "Training" section (<a href="{{ url_for('training_web.training_page') }}"><code>/training</code></a>).</li>
+              <li>Select the <strong>Dictionary</strong> you want to train a model for.</li>
+              <li>Choose the <strong>Model Type</strong> (e.g., CNN, RF).</li>
+              <li>Give your model a descriptive <strong>Name</strong>.</li>
+              <li>Click <strong>"Start Training"</strong>.</li>
+          </ul>
+
+         <h4>Step 3.6: Monitor Training and View Results</h4>
+          <ul>
+              <li>The platform should indicate training status.</li>
+              <li>Once "Trained", you can usually view results (Accuracy, etc.).</li>
+              <li>The **Model ID** is assigned upon successful training. **This is the ID you need for API integration.**</li>
+          </ul>
+
+        <h3>4. Using Your Trained Model (via API)</h3>
+         <ul>
+             <li>Navigate to the "Developer Resources" page (<a href="{{ url_for('core_web.developer_guide') }}"><code>/developer</code></a>) or the "Quick Start" page (<a href="{{ url_for('core_web.developer_downloads_quickstart') }}"><code>/developer/downloads</code></a>).</li>
+             <li>Find your trained model in the list and copy its **Model ID**.</li>
+             <li>Follow the steps in **Part 2: C# Integration** below.</li>
+         </ul>
+    </div>
+
+    <div class="guide-section">
+        <h2>Part 2: C# Integration</h2>
+        <p>This section explains how to integrate the SoundClassifiers API into your C# application using the provided client library.</p>
+
+        <h3>Prerequisites</h3>
+         <ol>
+             <li><strong>Trained Model:</strong> You need at least one model trained on the SoundsGood platform.</li>
+             <li><strong>.NET Environment:</strong> A working C# development environment.</li>
+         </ol>
+
+        <h3>Integration Steps</h3>
+
+        <h4>1. Get the C# Client Library:</h4>
+         <ul>
+             <li>Download the client package: <a href="{{ url_for('core_web.download_csharp_client') }}" class="mui-button">SoundClassifiers_CSharp_Client_Package.zip</a></li>
+             <li>Extract the ZIP file.</li>
+             <li>Add the <code>SoundClassifiersClient.cs</code> file to your C# project.</li>
+         </ul>
+
+        <h4>2. Add Required NuGet Packages:</h4>
+         <p>Ensure your project references these NuGet packages:</p>
+         <ul>
+             <li><code>Newtonsoft.Json</code></li>
+             <li><code>NAudio</code> (Optional, only if capturing microphone audio)</li>
+         </ul>
+
+        <h4>3. Find Your Model ID:</h4>
+         <ul>
+             <li>Go to the <a href="{{ url_for('core_web.developer_downloads_quickstart') }}">Quick Start page</a>.</li>
+             <li>In the "Your Trained Models" section, find the model you want to use.</li>
+             <li>Copy the **Model ID**.</li>
+         </ul>
+
+        <h4>4. Initialize the SoundClassifiers Client:</h4>
+         <p>Replace Azure initialization with this:</p>
+         <div class="code-block">
+            <button class="copy-btn" onclick="copyToClipboard('code-init')">Copy</button>
+            <pre id="code-init"><code>// Add this at the top of your file
+using SoundClassifiersClient;
+
+// --- SoundClassifiers Integration ---
+// Remove or comment out Azure SpeechConfig and SpeechRecognizer initialization
+
+// Initialize the SoundClassifiers client:
+var scClient = new SoundClassifiersClient(
+    baseUrl: "https://www.soundsgood.health", // Base URL of the SoundsGood API
+    modelId: "PASTE_YOUR_MODEL_ID_HERE", // Paste the Model ID you copied
+    apiKey: null // *** API Key is not currently required, pass null ***
+);
+// --- End SoundClassifiers Integration ---</code></pre>
+         </div>
+
+        <h4>5. Perform Recognition:</h4>
+         <p>Replace Azure event handlers and `StartContinuousRecognitionAsync` with direct calls:</p>
+         <div class="code-block">
+             <button class="copy-btn" onclick="copyToClipboard('code-rec-file')">Copy</button>
+            <pre id="code-rec-file"><code>// --- Example: Recognize from an audio file path ---
+async Task RecognizeSoundFromFile(string filePath)
+{
+    try
+    {
+        // Call the SoundClassifiers API
+        RecognitionResult result = await scClient.RecognizeFromFileAsync(filePath);
+
+        // Process the result (replace Azure event handling logic)
+        if (result != null && result.Success)
+        {
+            string recognizedPhoneme = result.Phoneme; // The top prediction
+            double confidence = result.Confidence; // The confidence score (0.0 to 1.0)
+
+            Console.WriteLine($"API Recognized: {recognizedPhoneme} (Confidence: {confidence:P})");
+
+            // --- Insert your application logic here ---
+            // Use the recognizedPhoneme variable where you previously used
+            // the text from the Azure recognition event arguments.
+            // Example:
+            // if (recognizedPhoneme.ToLower() == choice1) { /* ... */ }
+            // --- End application logic ---
+
+            // Optional: Log alternative predictions
+            // ... (loop through result.Alternatives) ...
+        }
+        else
+        {
+            // Handle cases where recognition wasn't successful
+            string errorMessage = result?.Error ?? "Unknown recognition error";
+            Console.WriteLine($"Recognition failed: {errorMessage}");
+        }
+    }
+    catch (Exception ex)
+    {
+         Console.WriteLine($"Error calling SoundClassifiers API: {ex.Message}");
+    }
+}
+
+// --- Example: Recognize from raw audio data (byte array) ---
+async Task RecognizeSoundFromBytes(byte[] audioBytes)
+{
+    try
+    {
+        // IMPORTANT: audioBytes MUST be in WAV format
+        RecognitionResult result = await scClient.RecognizeFromDataAsync(audioBytes);
+        // Process the 'result' object similarly...
+        if (result != null && result.Success) { /* ... */ }
+        else { /* ... */ }
+    }
+    catch (Exception ex) { /* ... */ }
+}</code></pre>
+         </div>
+
+        <h4>6. Adapting Existing Code:</h4>
+         <ul>
+             <li><strong>Remove Azure SDK:</strong> Delete <code>using Microsoft.CognitiveServices.Speech;</code>. Uninstall the NuGet package.</li>
+             <li><strong>Replace Initialization:</strong> Swap `SpeechConfig`/`SpeechRecognizer` for `SoundClassifiersClient` creation.</li>
+             <li><strong>Replace Event Logic:</strong> Remove `speechRecognizer.Recognizing += ...`, etc.</li>
+             <li><strong>Replace Recognition Trigger:</strong> Replace `Start...Async`/`RecognizeOnceAsync` with `await scClient.Recognize...Async(...)`.</li>
+             <li><strong>Use New Result:</strong> Adapt logic to use `result.Phoneme`, `result.Confidence`.</li>
+         </ul>
+
+        <h3>Understanding the Recognition Result</h3>
+         <p>The `RecognitionResult` object contains:</p>
+         <ul>
+             <li><strong>`Success` (bool):</strong> API call status.</li>
+             <li><strong>`Phoneme` (string):</strong> Top prediction (null/empty if no match or !Success).</li>
+             <li><strong>`Confidence` (double):</strong> Score (0.0-1.0).</li>
+             <li><strong>`Alternatives` (List&lt;RecognitionAlternative&gt;):</strong> Other possibilities.</li>
+             <li><strong>`Error` (string):** Error details if !Success.</li>
+         </ul>
+         <p><strong>Important:</strong> Always check `result.Success` before using other properties.</p>
+
+        <h3>Handling Audio Data</h3>
+         <ul>
+             <li><strong>Expected Format:</strong> WAV format (16kHz, 16-bit PCM, mono recommended).</li>
+             <li><strong>`RecognizeFromFileAsync`:** Needs a path to a valid WAV file.</li>
+             <li><strong>`RecognizeFromDataAsync`:** Needs a `byte[]` containing data *already in WAV format*.</li>
+             <li><strong>Recording:** Use `NAudio` (like in `SoundClassifiersExample.cs`) to capture and convert to WAV bytes before sending.</li>
+         </ul>
+
+        <h3>Error Handling Strategy</h3>
+         <ol>
+             <li>Check `result.Success`.</li>
+             <li>If `false`, check `result.Error`.</li>
+             <li>If `true` but `Phoneme` is empty, handle "No Match".</li>
+             <li>Wrap `await scClient.Recognize...` in `try...catch` for network/file errors.</li>
+         </ol>
+          <div class="code-block">
+             <button class="copy-btn" onclick="copyToClipboard('code-error-handling')">Copy</button>
+            <pre id="code-error-handling"><code>// Example incorporating error handling
+try
+{
+    RecognitionResult result = await scClient.RecognizeFromFileAsync(filePath);
+
+    if (result != null && result.Success)
+    {
+        if (!string.IsNullOrEmpty(result.Phoneme))
+        {
+            // Successfully recognized
+            Console.WriteLine($"OK: {result.Phoneme} ({result.Confidence:P})");
+            // >> Your logic <<
+        }
+        else { /* Handle No Match */ }
+    }
+    else { /* Handle API Error using result?.Error */ }
+}
+catch (System.Net.Http.HttpRequestException httpEx) { /* Handle network error */ }
+catch (Exception ex) { /* Handle general exception */ }</code></pre>
+         </div>
+
+
+        <h3>Troubleshooting Common Issues</h3>
+         <ul>
+             <li><strong>"Model not found":</strong> Check Model ID, ensure model is trained.</li>
+             <li><strong>Connection Errors:</strong> Check internet, base URL (`https://www.soundsgood.health`), Railway status.</li>
+             <li><strong>"Invalid audio format":</strong> Ensure WAV format (16kHz, 16-bit PCM, mono). Check WAV header if using `RecognizeFromDataAsync`.</li>
+             <li><strong>Low Confidence/Incorrect Recognitions:** Retrain model with more/better data.</li>
+             <li><strong>No Recognition / "No Match":</strong> Check mic, audio levels, background noise.</li>
+         </ul>
+
+        <h3>Reference Example</h3>
+         <p>See `SoundClassifiersExample.cs` in the downloaded client package for a basic WinForms example using NAudio.</p>
+
+    </div>
+
+    <div class="guide-section">
+        <h2>Support</h2>
+        <p>If you encounter issues beyond this guide, please contact Ron Rubin at ronshairubin@gmail.com. Provide details about the step you were on, the Model ID you are using, and any specific error messages received.</p>
+    </div>
+</div>
+
+<!-- Toast Notification Area -->
+<div id="copy-toast" class="success-toast">Copied to clipboard!</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} {# Include base template scripts if any #}
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    // Find the <code> or <pre> tag within the code block
+    const codeElement = element.querySelector('code') || element.querySelector('pre');
+    if (!codeElement) return; // Exit if no code found
+
+    const text = codeElement.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        // Show toast notification
+        const toast = document.getElementById('copy-toast');
+        if (toast) {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000); // Hide after 2 seconds
+        }
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        // Fallback for older browsers (less reliable)
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+             // Show toast (duplicate code, consider refactoring)
+            const toast = document.getElementById('copy-toast');
+            if (toast) { /* ... show toast ... */ }
+        } catch (fallbackErr) {
+            console.error('Fallback copy method failed:', fallbackErr);
+            alert('Failed to copy code automatically. Please copy manually.');
+        }
+    });
+}
+
+// Style for the toast (add to custom_styles block or your CSS file)
+/*
+.success-toast { ... }
+.success-toast.show { ... }
+*/
+
+// --- NEW: PDF Generation Logic (wrapped and with checks) ---
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded and parsed."); // Check if this runs
+
+    const downloadButton = document.getElementById('downloadPdfButton');
+    const guideContent = document.getElementById('guide-content-area');
+
+    // Check if elements exist
+    if (!downloadButton) {
+        console.error("ERROR: PDF Download Button (#downloadPdfButton) not found in the DOM.");
+        return; // Stop if button isn't found
+    }
+     if (!guideContent) {
+        console.error("ERROR: Guide Content Area (#guide-content-area) not found in the DOM.");
+        return; // Stop if content area isn't found
+    }
+    console.log("Found PDF button and content area.");
+
+    // Check if libraries are loaded (basic check)
+     if (typeof html2canvas === 'undefined') {
+         console.error("ERROR: html2canvas library is not defined. Check CDN link.");
+         alert("PDF generation library (html2canvas) failed to load. Please check your connection or ad blocker.");
+         return;
+     }
+     if (typeof jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+         console.error("ERROR: jsPDF library is not defined. Check CDN link.");
+         alert("PDF generation library (jsPDF) failed to load. Please check your connection or ad blocker.");
+         return;
+     }
+     console.log("jsPDF and html2canvas libraries seem to be loaded.");
+
+
+    // Attach the event listener *after* confirming elements exist
+    downloadButton.addEventListener('click', function () {
+        console.log("PDF Download button clicked."); // Check if listener fires
+
+        const { jsPDF } = window.jspdf;
+        const button = this;
+
+        button.disabled = true;
+        button.innerHTML = '<span class="material-icons spin" style="vertical-align: middle; margin-right: 4px;">hourglass_empty</span> Generating PDF...';
+        console.log("Starting PDF generation process...");
+
+        html2canvas(guideContent, {
+            scale: 2,
+            useCORS: true,
+            logging: false, // Turn off verbose html2canvas logs unless debugging canvas issues
+            onclone: (clonedDoc) => {
+                 try { // Add try-catch for safety during cloning modifications
+                     clonedDoc.querySelectorAll('.copy-btn, #downloadPdfButton, .nav-links').forEach(el => {
+                         if (el) el.style.display = 'none';
+                     });
+                 } catch (cloneError) {
+                     console.error("Error modifying cloned document:", cloneError);
+                 }
+            }
+        }).then(canvas => {
+            console.log("html2canvas rendering complete.");
+            try {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgProps = pdf.getImageProperties(imgData);
+                const imgWidth = imgProps.width;
+                const imgHeight = imgProps.height;
+                const aspectRatio = imgWidth / imgHeight;
+                const margin = 40;
+                const usableWidth = pdfWidth - 2 * margin;
+                let scaledWidth = usableWidth;
+                let scaledHeight = scaledWidth / aspectRatio;
+                let heightLeft = scaledHeight;
+                let position = margin;
+
+                pdf.addImage(imgData, 'PNG', margin, position, scaledWidth, scaledHeight);
+                heightLeft -= (pdfHeight - 2 * margin);
+
+                while (heightLeft > 0) {
+                    position = margin - scaledHeight + (pdfHeight - 2 * margin);
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', margin, position, scaledWidth, scaledHeight);
+                    heightLeft -= (pdfHeight - 2 * margin);
+                }
+                console.log("Saving PDF...");
+                pdf.save('SoundsGood_Developer_Guide.pdf');
+            } catch (pdfError) {
+                 console.error("Error generating PDF with jsPDF:", pdfError);
+                 alert("An error occurred while generating the PDF.");
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 4px;">picture_as_pdf</span> Download Guide as PDF';
+                 console.log("PDF generation process finished (success or pdfError).");
+            }
+        }).catch(canvasError => {
+             console.error("Error rendering content with html2canvas:", canvasError);
+             alert("An error occurred while preparing the content for PDF conversion.");
+             button.disabled = false;
+             button.innerHTML = '<span class="material-icons" style="vertical-align: middle; margin-right: 4px;">picture_as_pdf</span> Download Guide as PDF';
+        });
+    }); // End of addEventListener
+
+    console.log("PDF download click listener attached."); // Confirm listener attachment
+
+}); // End of DOMContentLoaded
+</script>
+{% endblock %}

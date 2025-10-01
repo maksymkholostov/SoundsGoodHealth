@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+    /* Profile page styling to match dashboard */
+    .profile-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* Profile header banner */
+    .profile-banner {
+        background: linear-gradient(135deg, #3f51b5 0%, #283593 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 3rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(0.8); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1.5rem;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .profile-avatar-large .material-icons {
+        font-size: 60px;
+        color: white;
+    }
+
+    .profile-name {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .profile-email {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Profile content cards */
+    .profile-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .profile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+
+    .profile-card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f5f5f5;
+    }
+
+    .profile-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+
+    .profile-card-icon .material-icons {
+        color: white;
+        font-size: 24px;
+    }
+
+    .profile-card-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1a237e;
+        margin: 0;
+    }
+
+    /* Form styling */
+    .profile-form {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #5f6368;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        border: 2px solid #e8eaf6;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        background-color: #fafafa;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #3f51b5;
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+    }
+
+    .form-group input:hover {
+        border-color: #c5cae9;
+    }
+
+    /* Button styling */
+    .btn-profile {
+        background: linear-gradient(135deg, #3f51b5 0%, #283593 100%);
+        color: white;
+        border: none;
+        padding: 0.875rem 2.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-profile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(63, 81, 181, 0.4);
+    }
+
+    .btn-profile:active {
+        transform: translateY(0);
+    }
+
+    .btn-profile .material-icons {
+        font-size: 20px;
+    }
+
+    /* Form actions */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn-secondary {
+        background: transparent;
+        color: #5f6368;
+        border: 2px solid #e8eaf6;
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-secondary:hover {
+        border-color: #c5cae9;
+        background-color: #f5f5f5;
+    }
+
+    /* Password strength indicator */
+    .password-strength {
+        height: 4px;
+        background: #e8eaf6;
+        border-radius: 2px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+
+    .password-strength-bar {
+        height: 100%;
+        width: 0;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+
+    .strength-weak { background: #f44336; width: 33%; }
+    .strength-medium { background: #ff9800; width: 66%; }
+    .strength-strong { background: #4caf50; width: 100%; }
+
+    /* Success message */
+    .success-message {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .success-message .material-icons {
+        font-size: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-wrapper">
+    <!-- Profile Banner -->
+    <div class="profile-banner">
+        <div class="profile-avatar-large">
+            <span class="material-icons">person</span>
+        </div>
+        <h1 class="profile-name">{{ current_user.username }}</h1>
+        <p class="profile-email">{{ current_user.email }}</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="success-message">
+                    <span class="material-icons">check_circle</span>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Account Information Card -->
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <div class="profile-card-icon">
+                <span class="material-icons">account_circle</span>
+            </div>
+            <h2 class="profile-card-title">Account Information</h2>
+        </div>
+        <form method="POST" class="profile-form">
+            <input type="hidden" name="form_type" value="profile_update"/>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-profile">
+                    <span class="material-icons">save</span>
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Security Settings Card -->
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <div class="profile-card-icon">
+                <span class="material-icons">lock</span>
+            </div>
+            <h2 class="profile-card-title">Security Settings</h2>
+        </div>
+        <form method="POST" class="profile-form" id="password-form">
+            <input type="hidden" name="form_type" value="password_change"/>
+            <div class="form-group">
+                <label for="current_password">Current Password</label>
+                <input type="password" id="current_password" name="current_password" required>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New Password</label>
+                <input type="password" id="new_password" name="new_password" required>
+                <div class="password-strength">
+                    <div class="password-strength-bar" id="strength-bar"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm New Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('password-form').reset()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-profile">
+                    <span class="material-icons">security</span>
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password strength indicator
+    const newPassword = document.getElementById('new_password');
+    const strengthBar = document.getElementById('strength-bar');
+    
+    newPassword.addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+        
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        if (password.match(/[^a-zA-Z0-9]/)) strength++;
+        
+        strengthBar.className = 'password-strength-bar';
+        if (password.length > 0) {
+            if (strength <= 1) strengthBar.classList.add('strength-weak');
+            else if (strength === 2) strengthBar.classList.add('strength-medium');
+            else strengthBar.classList.add('strength-strong');
+        }
+    });
+
+    // Password confirmation validation
+    const passwordForm = document.getElementById('password-form');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    passwordForm.addEventListener('submit', function(e) {
+        if (newPassword.value !== confirmPassword.value) {
+            e.preventDefault();
+            alert('New passwords do not match!');
+        }
+    });
+});
+</script>
+{% endblock %}

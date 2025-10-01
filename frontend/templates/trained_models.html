@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+
+{% block title %}Trained Models - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Page header styling */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.page-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.page-header p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 1.1rem;
+}
+
+/* Train new model button */
+.train-button-container {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.train-new-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.train-new-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    text-decoration: none;
+    color: white;
+}
+
+.train-new-btn .material-icons {
+    font-size: 24px;
+}
+
+/* Model cards grid */
+.models-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+/* Individual model card */
+.model-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    overflow: hidden;
+}
+
+.model-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.model-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.model-card h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #1f2937;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.model-info {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.model-info .label {
+    font-weight: 600;
+    color: #6b7280;
+    min-width: 100px;
+}
+
+.model-info .value {
+    color: #1f2937;
+}
+
+/* Model type badge */
+.model-type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.model-type-badge.cnn {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.model-type-badge.cnn1d {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.model-type-badge.rf {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.model-type-badge.svm {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.model-type-badge.ensemble {
+    background: #fce7f3;
+    color: #9f1239;
+}
+
+.model-type-badge.unknown {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Accuracy display */
+.accuracy-display {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #059669;
+    margin: 16px 0;
+}
+
+.accuracy-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 400;
+}
+
+/* Training stats */
+.training-stats {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 16px 0;
+}
+
+.training-stats h4 {
+    margin: 0 0 8px 0;
+    color: #4b5563;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* Class breakdown */
+.class-breakdown {
+    margin-top: 12px;
+}
+
+.class-breakdown h5 {
+    margin: 0 0 8px 0;
+    color: #4b5563;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.class-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.class-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+}
+
+.class-name {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.class-count {
+    color: #6b7280;
+}
+
+/* Model ID section */
+.model-id-section {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    position: relative;
+}
+
+.model-id-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.model-id-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #1f2937;
+    word-break: break-all;
+    padding-right: 80px;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.copy-btn:hover {
+    background: #5a67d8;
+}
+
+.copy-btn .material-icons {
+    font-size: 16px;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    color: #9ca3af;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin-bottom: 24px;
+}
+
+/* Error state */
+.error-box {
+    padding: 20px;
+    background-color: #fef2f2;
+    border-left: 4px solid #ef4444;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.error-box h4 {
+    color: #991b1b;
+    margin: 0 0 8px 0;
+}
+
+.error-box p {
+    color: #7f1d1d;
+    margin: 0;
+}
+
+/* Toast notification */
+.success-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.success-toast.show {
+    opacity: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .models-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Trained Models</h1>
+    <p>View and manage all your trained machine learning models</p>
+</div>
+
+<div class="train-button-container">
+    <a href="{{ url_for('training_web.training_page') }}" class="train-new-btn">
+        <span class="material-icons">add_circle</span>
+        Train New Model
+    </a>
+</div>
+
+{% if error_loading %}
+<div class="error-box">
+    <h4>Error loading models</h4>
+    <p>{{ error_message }}</p>
+</div>
+{% endif %}
+
+{% if models %}
+<div class="models-container">
+    {% for model in models %}
+    <div class="model-card">
+        <h3>{{ model.name }}</h3>
+        
+        <div class="model-info">
+            <span class="label">Type:</span>
+            {% set model_type_class = model.model_type.lower().replace(' ', '-').replace('random-forest', 'rf') %}
+            <span class="model-type-badge {{ model_type_class }}">
+                {{ model.model_type }}
+            </span>
+        </div>
+        
+        {% if model.dictionary_name %}
+        <div class="model-info">
+            <span class="label">Dictionary:</span>
+            <span class="value">{{ model.dictionary_name }}</span>
+        </div>
+        {% endif %}
+        
+        <div class="model-info">
+            <span class="label">Created:</span>
+            <span class="value">{{ model.created_at[:10] if model.created_at and model.created_at != 'Unknown' else 'Unknown' }}</span>
+        </div>
+        
+        {% if model.training_stats and model.training_stats.accuracy %}
+        <div class="accuracy-display">
+            <div class="accuracy-label">Accuracy</div>
+            {{ "%.1f"|format(model.training_stats.accuracy * 100) }}%
+        </div>
+        {% elif model.metadata and model.metadata.accuracy is defined %}
+        <div class="accuracy-display">
+            <div class="accuracy-label">Accuracy</div>
+            {{ "%.1f"|format(model.metadata.accuracy * 100) }}%
+        </div>
+        {% endif %}
+        
+        {% if model.training_stats %}
+        <div class="training-stats">
+            <h4>Training Statistics</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">{{ model.training_stats.total_samples }}</div>
+                    <div class="stat-label">Training Samples</div>
+                </div>
+                {% if model.training_stats.validation_samples > 0 %}
+                <div class="stat-item">
+                    <div class="stat-value">{{ model.training_stats.validation_samples }}</div>
+                    <div class="stat-label">Validation Samples</div>
+                </div>
+                {% endif %}
+                <div class="stat-item">
+                    <div class="stat-value">{{ model.training_stats.class_counts|length if model.training_stats.class_counts else 0 }}</div>
+                    <div class="stat-label">Classes</div>
+                </div>
+            </div>
+            
+            {% if model.training_stats.class_counts %}
+            <div class="class-breakdown">
+                <h5>Samples per Class</h5>
+                <div class="class-list">
+                    {% for class_name, count in model.training_stats.class_counts.items() %}
+                    <div class="class-item">
+                        <span class="class-name">{{ class_name }}:</span>
+                        <span class="class-count">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="model-id-section">
+            <div class="model-id-label">Model ID</div>
+            <div class="model-id-value" id="model-id-{{ loop.index }}">{{ model.id }}</div>
+            <button class="copy-btn" onclick="copyModelId('model-id-{{ loop.index }}')">
+                <span class="material-icons">content_copy</span>
+                Copy
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="material-icons empty-state-icon">model_training</div>
+    <h3>No Trained Models Yet</h3>
+    <p>Start by training your first model to see it here</p>
+    <a href="{{ url_for('training_web.training_page') }}" class="train-new-btn">
+        <span class="material-icons">add_circle</span>
+        Train Your First Model
+    </a>
+</div>
+{% endif %}
+
+<!-- Toast Notification -->
+<div id="copy-toast" class="success-toast">Model ID copied to clipboard!</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function copyModelId(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const text = element.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('copy-toast');
+        if (toast) {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy model ID');
+    });
+}
+</script>
+{% endblock %}

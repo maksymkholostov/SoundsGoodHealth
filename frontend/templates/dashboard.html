@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+<style>
+/* Material UI styling for dashboard */
+.mui-welcome-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #3f51b5 0%, #283593 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Stats grid styling - responsive layout with 4 columns on desktop, 2 on tablet, 1 on mobile */
+.mui-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+    .mui-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .mui-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mui-stats-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.mui-stats-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+}
+
+.mui-stats-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mui-stats-card:hover::after {
+    opacity: 1;
+}
+
+.mui-stats-card-content {
+    position: relative;
+    z-index: 2;
+}
+
+.mui-stats-header {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.mui-stats-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.mui-stats-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mui-stats-icon .material-icons {
+    font-size: 24px;
+}
+
+.mui-card-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mui-welcome-banner h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0;
+    margin-bottom: 0.5rem;
+}
+
+.mui-welcome-banner p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.mui-features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+    .mui-features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .mui-features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.mui-feature-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.mui-feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.12);
+}
+
+.mui-feature-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+}
+
+.mui-feature-icon {
+    background-color: rgba(63, 81, 181, 0.1);
+    color: var(--primary-color);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.mui-feature-icon .material-icons {
+    font-size: 28px;
+}
+
+.mui-feature-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--dark-color);
+}
+
+.mui-feature-text {
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.mui-feature-actions {
+    padding: 1rem 1.5rem;
+    background-color: #f5f5f5;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+/* Rest of your existing styles for activity section */
+.recent-activity {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-time {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.bg-record {
+    background-color: #ff4d6d;
+    color: white;
+}
+
+.bg-train {
+    background-color: #7209b7;
+    color: white;
+}
+
+.bg-predict {
+    background-color: #4361ee;
+    color: white;
+}
+
+.bg-dict {
+    background-color: #4cc9f0;
+    color: white;
+}
+
+/* Dropdown styling */
+.mui-dropdown {
+    position: relative;
+}
+
+.mui-dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Main Dashboard Content -->
+<div class="container">
+    <div class="welcome-section" style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 500; color: var(--primary-color); margin-bottom: 0.5rem;">
+            Welcome to SoundsGood
+        </h1>
+        <p class="lead" style="color: var(--dark-color); margin-bottom: 0;">
+            A powerful tool for speech sound classification and pronunciation training.
+        </p>
+    </div>
+</div>
+
+<!-- Stats Cards Grid -->
+<div class="mui-stats-grid">
+    <a href="{{ url_for('sound_class.sound_classes_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Verified Recordings</div>
+            <div class="mui-stats-value">{{ stats.original_recordings }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('augmentation.augmentation_landing_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Augmented Recordings</div>
+            <div class="mui-stats-value">{{ stats.augmented_recordings }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('sound_class.sound_classes_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Total Recordings</div>
+            <div class="mui-stats-value">{{ stats.total_recordings }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('dictionary_web.dictionaries_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Dictionaries</div>
+            <div class="mui-stats-value">{{ stats.dictionaries }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('sound_class.sound_classes_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Sound Classes</div>
+            <div class="mui-stats-value">{{ stats.classes }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('training_web.training_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #607D8B 0%, #455A64 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Models</div>
+            <div class="mui-stats-value">{{ stats.models }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('recording_web.recordings_page') }}#verify-section" class="mui-stats-card" style="background: linear-gradient(135deg, #FF5722 0%, #E64A19 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Pending</div>
+            <div class="mui-stats-value">{{ stats.pending_recordings }}</div>
+        </div>
+    </a>
+    <a href="{{ url_for('core_web.play_page') }}" class="mui-stats-card" style="background: linear-gradient(135deg, #00BCD4 0%, #0097A7 100%); text-decoration: none; color: white;">
+        <div class="mui-stats-card-content">
+            <div class="mui-stats-header">Play with Sounds</div>
+            <div style="height: 36px; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons" style="font-size: 30px;">sentiment_very_satisfied</span>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- Sound Approval Section - updated to use Material UI styling -->
+{# Use Jinja to conditionally display based on stats passed from backend #}
+{% if stats.pending_recordings > 0 %}
+<div id="approvalSection" class="mui-card" style="margin-bottom: 24px; background: linear-gradient(135deg, #43a047, #2e7d32); color: white;">
+    <div class="mui-card-content" style="padding: 1rem 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin-top: 0; display: flex; align-items: center;">
+                    <span class="material-icons" style="margin-right: 8px;">check_circle</span>
+                    Approve Recordings
+                </h4>
+                {# Use the stats variable directly #}
+                <p style="margin-bottom: 0;">You have <span id="pendingApprovalCount" style="font-weight: 500;">{{ stats.pending_recordings }}</span> recordings waiting for approval. Approved recordings will be used in future model training.</p>
+            </div>
+            <a href="{{ url_for('recording_web.verify_sounds_page') }}" class="mui-button" style="background-color: white; color: #43a047;" id="reviewNowBtn">
+                <span class="material-icons" style="margin-right: 8px;">headphones</span>
+                Review Now
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Getting Started Card - Material UI styling -->
+<div class="mui-card" style="background-color: #f5f5f5; margin-bottom: 40px;">
+    <div class="mui-card-content" style="padding: 24px; text-align: center;">
+        <h3 style="margin-top: 0; font-weight: 500; color: var(--dark-color);">How It Works</h3>
+        <p style="margin-bottom: 16px;">Learn how SoundsGood helps you improve your pronunciation with our interactive guide.</p>
+        <a href="{{ url_for('core_web.how_it_works_page') }}" class="mui-button mui-button-primary" style="background-color: var(--primary-color); color: white; padding: 10px 24px; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-weight: 500; box-shadow: 0 3px 5px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+            <span class="material-icons" style="margin-right: 8px;">play_circle_filled</span>
+            View Interactive Guide
+        </a>
+    </div>
+</div>
+
+{# --- INSERT DEVELOPER TOOLS SECTION HERE --- #}
+{% if config.DEBUG %} {# Check if app is running in debug mode #}
+<div class="mt-4 p-3 border rounded bg-light shadow-sm">
+  <h5>Developer Tools</h5>
+  <button id="regenerate-id-map-btn" class="btn btn-warning btn-sm">Regenerate Developer ID Map</button>
+  <span id="id-map-status" class="ms-2" style="font-size: 0.8em; color: #6c757d;"></span>
+  {# Link to view the map - assumes the /api/_dev/get-id-map route exists #}
+  <p class="mb-0"><small>This regenerates <code>backend/data/developer_id_map.json</code>.
+     (<a href="{{ url_for('developer.get_id_map') }}" target="_blank" rel="noopener noreferrer">View Current Map</a>)
+  </small></p>
+</div>
+
+{# --- JavaScript for the button (place towards end of file or in a static JS file) --- #}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const regenButton = document.getElementById('regenerate-id-map-btn');
+    const statusSpan = document.getElementById('id-map-status');
+
+    if (regenButton && statusSpan) {
+      regenButton.addEventListener('click', () => {
+        statusSpan.textContent = 'Regenerating...';
+        statusSpan.style.color = '#6c757d'; // Reset color
+        regenButton.disabled = true; // Prevent multiple clicks
+
+        fetch('{{ url_for("developer.regenerate_id_map") }}', { // Use url_for for robustness
+            method: 'POST',
+         })
+          .then(response => {
+            // Check if response is ok (status in the range 200-299)
+            if (!response.ok) {
+              // Attempt to parse JSON error body, otherwise use status text
+              return response.json().then(errData => {
+                 throw new Error(errData.error || `HTTP error! Status: ${response.status}`);
+              }).catch(() => {
+                 // Fallback if response is not JSON or parsing fails
+                 throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+              });
+            }
+            // If response is ok, parse the JSON body
+            return response.json();
+          })
+          .then(data => {
+            // Handle successful response
+            if (data.success) {
+              statusSpan.textContent = `Map regenerated: ${new Date().toLocaleTimeString()}`;
+              statusSpan.style.color = '#198754'; // Bootstrap success green
+            } else {
+              // Handle error reported in the JSON body
+              statusSpan.textContent = `Error: ${data.error || 'Unknown error from server'}`;
+              statusSpan.style.color = '#dc3545'; // Bootstrap danger red
+            }
+          })
+          .catch(error => {
+            // Handle network errors or errors thrown from .then()
+            statusSpan.textContent = `Error: ${error.message}`;
+            statusSpan.style.color = '#dc3545'; // Bootstrap danger red
+            console.error('Error regenerating ID map:', error);
+          })
+          .finally(() => {
+             regenButton.disabled = false; // Re-enable button regardless of outcome
+          });
+      });
+    } else {
+       if (!regenButton) console.error("Regenerate button not found");
+       if (!statusSpan) console.error("Status span not found");
+    }
+  });
+</script>
+{% endif %} {# End of debug mode check #}
+{# --- END OF DEVELOPER TOOLS SECTION --- #}
+
+{# Active Users Panel (Admin Only) #}
+{% if is_admin %}
+<div class="mui-card active-users-panel" style="margin-bottom: 24px; background: linear-gradient(135deg, #673AB7, #512DA8); color: white;">
+    <div class="mui-card-content" style="padding: 1rem 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="margin: 0; display: flex; align-items: center;">
+                <span class="material-icons" style="margin-right: 8px;">people</span>
+                Active Users
+            </h4>
+            <button id="refresh-active-users-btn" class="mui-button-icon" style="background: none; border: none; color: white; cursor: pointer;">
+                <span class="material-icons">refresh</span>
+            </button>
+        </div>
+        
+        <div id="active-users-container" style="min-height: 50px;">
+            <p id="active-users-loading">Loading active users...</p>
+            <div id="active-users-list" style="display: none;"></div>
+            <p id="active-users-empty" style="display: none;">No users currently active</p>
+            <p id="active-users-error" style="display: none; color: #ffccbc;">Error loading active users</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Function to fetch and display active users
+function fetchActiveUsers() {
+    const container = document.getElementById('active-users-container');
+    const loadingEl = document.getElementById('active-users-loading');
+    const listEl = document.getElementById('active-users-list');
+    const emptyEl = document.getElementById('active-users-empty');
+    const errorEl = document.getElementById('active-users-error');
+    
+    // Show loading, hide others
+    loadingEl.style.display = 'block';
+    listEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    
+    // Fetch active users from API
+    fetch('/api/admin/active-users')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingEl.style.display = 'none';
+            
+            if (data.success && data.active_users && data.active_users.length > 0) {
+                // Display active users
+                listEl.innerHTML = '';
+                data.active_users.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.style.display = 'flex';
+                    userItem.style.alignItems = 'center';
+                    userItem.style.marginBottom = '8px';
+                    
+                    const userIcon = document.createElement('div');
+                    userIcon.className = 'active-user-icon';
+                    userIcon.style.width = '32px';
+                    userIcon.style.height = '32px';
+                    userIcon.style.borderRadius = '50%';
+                    userIcon.style.backgroundColor = 'rgba(255,255,255,0.2)';
+                    userIcon.style.display = 'flex';
+                    userIcon.style.alignItems = 'center';
+                    userIcon.style.justifyContent = 'center';
+                    userIcon.style.marginRight = '12px';
+                    userIcon.innerHTML = '<span class="material-icons" style="font-size: 16px;">person</span>';
+                    
+                    const userInfo = document.createElement('div');
+                    userInfo.className = 'active-user-info';
+                    
+                    const userName = document.createElement('div');
+                    userName.className = 'active-user-name';
+                    userName.style.fontWeight = '500';
+                    userName.textContent = user.username;
+                    
+                    const userTime = document.createElement('div');
+                    userTime.className = 'active-user-time';
+                    userTime.style.fontSize = '0.8rem';
+                    userTime.style.opacity = '0.8';
+                    
+                    // Format the last active time
+                    const lastActive = new Date(user.last_active);
+                    const now = new Date();
+                    const diffMs = now - lastActive;
+                    const diffMins = Math.round(diffMs / 60000);
+                    
+                    if (diffMins < 1) {
+                        userTime.textContent = 'Just now';
+                    } else if (diffMins === 1) {
+                        userTime.textContent = '1 minute ago';
+                    } else {
+                        userTime.textContent = `${diffMins} minutes ago`;
+                    }
+                    
+                    userInfo.appendChild(userName);
+                    userInfo.appendChild(userTime);
+                    
+                    userItem.appendChild(userIcon);
+                    userItem.appendChild(userInfo);
+                    
+                    listEl.appendChild(userItem);
+                });
+                
+                listEl.style.display = 'block';
+            } else {
+                // Show empty message
+                emptyEl.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            console.error('Error fetching active users:', error);
+        });
+}
+
+// Fetch active users when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    fetchActiveUsers();
+    
+    // Set up refresh button
+    const refreshBtn = document.getElementById('refresh-active-users-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', fetchActiveUsers);
+    }
+    
+    // Auto-refresh every 60 seconds
+    setInterval(fetchActiveUsers, 60000);
+});
+</script>
+{% endif %}
+
+{% endblock %} 

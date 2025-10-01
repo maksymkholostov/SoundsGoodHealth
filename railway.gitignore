@@ -1,0 +1,42 @@
+# Railway-specific .gitignore
+
+# Environment variables
+.env
+.flaskenv
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local development settings
+instance/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Large media files
+backend/data/**/audio/
+backend/data/**/recordings/
+!backend/data/**/audio/.gitkeep
+!backend/data/**/recordings/.gitkeep
+
+# Temporary files
+*.tmp
+*.swp
+*~ 

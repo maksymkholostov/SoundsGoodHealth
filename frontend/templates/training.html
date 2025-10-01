@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Model Training - SoundsGood{% endblock %}
+
+{% block custom_styles %}
+{# Link to the external CSS file #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/training.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 24px">
+        <h1 class="page-title">
+            <span class="material-icons" style="vertical-align: middle; margin-right: 8px;">settings</span>
+            Model Training
+        </h1>
+        <p style="color: #666; margin-top: 8px;">Train machine learning models on your sound dictionaries to classify sounds</p>
+    </div>
+
+    <!-- Dictionary Selection Card -->
+    <div class="mui-card mui-dictionary-card">
+        <div class="mui-card-header" style="display: flex; align-items: center;">
+            <span class="material-icons" style="margin-right: 8px; color: var(--primary-color);">folder</span>
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 500;">Select Dictionary</h2>
+        </div>
+        <div class="mui-card-content">
+            <p style="color: #666; margin-bottom: 16px;">Choose a dictionary to use for training your model</p>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
+                <div style="flex: 3; min-width: 250px;">
+                    <div class="mui-form-control">
+                        <select class="mui-select" id="dictionarySelect">
+                            <option value="">-- Select a dictionary --</option>
+                            {% for dict_item in dictionaries %}
+                            <option value="{{ dict_item.name }}"
+                                    data-id="{{ dict_item.id }}"
+                                    {% if selected_dict == dict_item.name %}selected{% endif %}>
+                                {{ dict_item.name }} ({{ dict_item.classes|length }} classes, {{ dict_item.sample_count }} samples)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <a href="/dictionaries" class="mui-button mui-button-outlined" style="display: inline-flex; align-items: center; text-decoration: none;">
+                        <span class="material-icons" style="font-size: 16px; margin-right: 4px;">add_circle</span>
+                        Create New Dictionary
+                    </a>
+                </div>
+            </div>
+            
+            <div id="dictionaryInfo" style="display: none; margin-top: 24px;">
+                <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 16px;">Dictionary Information:</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+                    <div style="flex: 1; min-width: 150px;" class="mui-chip mui-chip-primary">
+                        <strong>Classes:</strong> <span id="classCount">0</span>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;" class="mui-chip mui-chip-primary">
+                        <strong>Samples:</strong> <span id="sampleCount">0</span>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;" class="mui-chip mui-chip-primary">
+                        <strong>Created by:</strong> <span id="createdBy">-</span>
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    {# Button to reset feature cache - event listener added in JS #}
+                    <button type="button" id="resetFeatureCache" class="mui-button mui-button-outlined" style="display: inline-flex; align-items: center;">
+                        <span class="material-icons" style="font-size: 16px; margin-right: 4px;">refresh</span>
+                        Reset Feature Cache
+                    </button>
+                    <small style="display: block; margin-top: 8px; color: #666;">
+                        Use this when feature extraction has been updated to ensure all audio is processed with the latest extractor.
+                    </small>
+                </div>
+                
+                <!-- Feature Extraction Status -->
+                {# This section is dynamically shown/hidden based on server-side rendering #}
+                {% if selected_dict and feature_status %}
+                <div class="feature-status-section" style="margin-top: 24px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 24px;">
+                    <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 16px;">Feature Extraction Status:</h3>
+                    <div class="{% if feature_status.files_missing_features > 0 %}mui-alert mui-alert-warning{% else %}mui-alert mui-alert-success{% endif %}">
+                        <div class="mui-feature-status">
+                            <div class="mui-feature-item">
+                                <strong>Total Files:</strong> {{ feature_status.total_files }}
+                            </div>
+                            <div class="mui-feature-item">
+                                <strong>With Features:</strong> {{ feature_status.files_with_features }}
+                            </div>
+                            <div class="mui-feature-item">
+                                <strong>Missing Features:</strong> {{ feature_status.files_missing_features }}
+                            </div>
+                        </div>
+                        
+                        {% if feature_status.files_missing_features > 0 %}
+                        <div style="margin-top: 16px;">
+                             {# Note: extract_features=true now triggers a redirect on select change #}
+                            <div class="mui-alert mui-alert-info" style="display: flex; align-items: center; justify-content: space-between;">
+                                <p style="margin: 0;"><span class="material-icons" style="vertical-align: middle; margin-right: 8px;">warning</span> Some files need feature extraction before training.</p>
+                                {# Button is illustrative; actual extraction happens on backend or via dedicated process #}
+                                <button class="mui-button" style="text-decoration: none;" disabled>
+                                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">build</span>
+                                    Extraction Required
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if extract_done %}
+                        <div class="mui-alert mui-alert-success" style="margin-top: 16px;">
+                            <p style="margin: 0;"><span class="material-icons" style="vertical-align: middle; margin-right: 8px;">check_circle</span> Feature extraction completed successfully!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Selection Cards -->
+    <h2 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 500;">Select Model Type</h2>
+    <div class="mui-grid-container">
+        <!-- CNN Model Card - HIDDEN FOR NOW -->
+        {% if false %}  {# This will never render, effectively hiding the CNN option #}
+        <div class="mui-card mui-model-card">
+            <div class="mui-card-content" style="text-align: center; padding: 24px;">
+                <div class="mui-model-icon">
+                    <span class="material-icons">memory</span>
+                </div>
+                <h3 style="margin: 16px 0; font-size: 1.25rem; font-weight: 500;">CNN Model</h3>
+                <p style="color: #666; margin-bottom: 8px;">Convolutional Neural Network for audio classification.</p>
+                <p class="small">Good for complex sound patterns.</p>
+                {# JS adds data-model-type="cnn" and removes onclick #}
+                <button class="mui-button" style="margin-top: 16px;" onclick="selectModel('cnn')">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">settings</span>
+                    Select CNN
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mui-card mui-model-card">
+            <div class="mui-card-content" style="text-align: center; padding: 24px;">
+                <div class="mui-model-icon">
+                    <span class="material-icons">account_tree</span>
+                </div>
+                <h3 style="margin: 16px 0; font-size: 1.25rem; font-weight: 500;">Random Forest</h3>
+                <p style="color: #666; margin-bottom: 8px;">Ensemble tree-based model for audio classification.</p>
+                <p class="small">Good balance of accuracy and training speed.</p>
+                 {# JS adds data-model-type="rf" and removes onclick #}
+                <button class="mui-button" style="margin-top: 16px;" onclick="selectModel('rf')">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">settings</span>
+                    Select Random Forest
+                </button>
+            </div>
+        </div>
+
+        <!-- Ensemble Model Card - HIDDEN FOR NOW -->
+        {% if false %}  {# This will never render, effectively hiding the Ensemble option #}
+        <div class="mui-card mui-model-card">
+            <div class="mui-card-content" style="text-align: center; padding: 24px;">
+                <div class="mui-model-icon">
+                    <span class="material-icons">auto_awesome</span>
+                </div>
+                <h3 style="margin: 16px 0; font-size: 1.25rem; font-weight: 500;">Ensemble Model</h3>
+                <p style="color: #666; margin-bottom: 8px;">Combines multiple classifiers for improved accuracy.</p>
+                <p class="small">Often best overall performance.</p>
+                 {# JS adds data-model-type="ensemble" and removes onclick #}
+                <button class="mui-button" style="margin-top: 16px;" onclick="selectModel('ensemble')">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">settings</span>
+                    Select Ensemble
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mui-card mui-model-card">
+            <div class="mui-card-content" style="text-align: center; padding: 24px;">
+                <div class="mui-model-icon">
+                    <span class="material-icons">speed</span>
+                </div>
+                <h3 style="margin: 16px 0; font-size: 1.25rem; font-weight: 500;">Mini-CNN (1D)</h3>
+                <p style="color: #666; margin-bottom: 8px;">Lightweight 1D CNN optimized for small datasets.</p>
+                <p class="small">Fast training, good for limited data.</p>
+                {# JS adds data-model-type="cnn1d" and removes onclick #}
+                <button class="mui-button" style="margin-top: 16px;" onclick="selectModel('cnn1d')">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">settings</span>
+                    Select Mini-CNN
+                </button>
+            </div>
+        </div>
+
+        <div class="mui-card mui-model-card">
+            <div class="mui-card-content" style="text-align: center; padding: 24px;">
+                <div class="mui-model-icon">
+                    <span class="material-icons">bubble_chart</span>
+                </div>
+                <h3 style="margin: 16px 0; font-size: 1.25rem; font-weight: 500;">SVM</h3>
+                <p style="color: #666; margin-bottom: 8px;">Support Vector Machine for classification.</p>
+                <p class="small">Fast, works well with small datasets.</p>
+                {# JS adds data-model-type="svm" and removes onclick #}
+                <button class="mui-button" style="margin-top: 16px;" onclick="selectModel('svm')">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">settings</span>
+                    Select SVM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# Include the form and status sections from the partial template #}
+    {% include '_training_form_status.html' %}
+
+</div> {# End container #}
+{% endblock %}
+
+{% block scripts %}
+<!-- Add Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<!-- Add Bootstrap JS Bundle (needed for tooltips, tabs, collapse) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{# Pass Flask URL routes needed by JS #}
+<script>
+  // Make base URL available to JS
+  const trainingPageUrlBase = "{{ url_for('training_web.training_page') }}";
+</script>
+
+{# Link to the NEW external JS files IN ORDER #}
+<script src="{{ url_for('static', filename='js/training_init_ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/training_progress_render.js') }}"></script>
+<script src="{{ url_for('static', filename='js/training_results_render.js') }}"></script>
+<script src="{{ url_for('static', filename='js/training_api_state.js') }}"></script>
+
+{# Add optimized training scripts #}
+<script src="{{ url_for('static', filename='js/training_improved.js') }}"></script>
+<script src="{{ url_for('static', filename='js/training_api_optimized.js') }}"></script>
+
+{# Initialize optimized training manager #}
+<script>
+  // Initialize the optimized training manager
+  window.trainingManager = new TrainingManager();
+  document.addEventListener('DOMContentLoaded', function() {
+      window.trainingManager.init();
+  });
+</script>
+
+{# Server-side script for initial check if dictionary pre-selected #}
+<script>
+  {% if selected_dict and request.args.get('check_features') != 'true' %}
+  (function() { // IIFE to avoid polluting global scope
+      const preselectedDict = "{{ selected_dict|e }}"; {# Use |e filter for safety #}
+      console.log('Checking features for preselected dictionary:', preselectedDict);
+      // Use optimized check instead of redirect
+      if (typeof checkFeatureStatusOptimized !== 'undefined') {
+          // Get dictionary ID from the select element
+          const dictSelect = document.getElementById('dictionarySelect');
+          if (dictSelect) {
+              const selectedOption = Array.from(dictSelect.options).find(opt => opt.value === preselectedDict);
+              if (selectedOption) {
+                  const dictId = selectedOption.getAttribute('data-id');
+                  if (dictId) {
+                      // Use optimized feature check - no redirect!
+                      setTimeout(() => checkFeatureStatusOptimized(dictId), 500);
+                  }
+              }
+          }
+      }
+  })();
+  {% endif %}
+</script>
+
+{% endblock %}

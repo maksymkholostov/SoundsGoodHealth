@@ -1,0 +1,32 @@
+{
+  "id": "cnn1d_dict_mohmoo_ronrubin_20250930_162133299",
+  "dictionary_id": "dict_mohmoo",
+  "feature_set_id": "v0.1",
+  "user_id": "ronrubin",
+  "name": "cnn1d_model",
+  "type": "cnn1d",
+  "version": "06",
+  "parameters": {
+    "model_type": "cnn1d",
+    "epochs": 100,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "n_estimators": 100,
+    "rf_weight": 0.5,
+    "use_class_weights": "on"
+  },
+  "metrics": {},
+  "filename": "cnn1d_v06",
+  "status": "failed",
+  "classes": [
+    "cls_moh",
+    "cls_moo"
+  ],
+  "training_ids": [],
+  "validation_ids": [],
+  "metadata": {
+    "error": "Cannot train model: Classes ['cls_moh'] have no training data. Check the logs above for specific reasons."
+  },
+  "created_at": "2025-09-30T16:21:33.299783",
+  "updated_at": "2025-09-30T16:21:52.275212"
+}

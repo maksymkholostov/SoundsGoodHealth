@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Sound Class Game - SoundsGood{% endblock %}
+
+{% block additional_head %}
+<!-- Include play-specific CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/play.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Sound Class Game</h1>
+    <p class="lead">Say the displayed sound class correctly to make the face smile!</p>
+    
+    <div class="mui-steps-grid">
+        <!-- STEP 1: Select Dictionary -->
+        <div class="mui-model-card">
+            <div class="mui-card-header">
+                <h2>
+                    <span class="material-icons">source</span>
+                    1. Select Dictionary
+                </h2>
+            </div>
+            <div class="mui-card-content">
+                <p class="mui-helper-text">Choose the dictionary containing the model you want to use.</p>
+                <div>
+                    <label for="dictionarySelect" class="mui-form-label">Dictionary:</label>
+                    <select class="mui-form-select" id="dictionarySelect" aria-label="Select Dictionary" onchange="if(window.handleDictionaryChange) window.handleDictionaryChange({target: this})">
+                        <option selected disabled value="">Loading dictionaries...</option>
+                    </select>
+                    <div id="dictionaryLoadingError" class="mui-error-text" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Select Model (Initially Hidden) -->
+        <div id="modelSelectionCard" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">memory</span>
+                        2. Select a Prediction Model
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <p class="mui-helper-text">Choose a trained model for sound prediction</p>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="modelSelect" class="mui-form-label">Model:</label>
+                        <select class="mui-form-select" id="modelSelect" aria-label="Select Model">
+                             <option selected disabled value="">Loading models...</option>
+                        </select>
+                         <div id="modelsLoadingMessage" style="display: none; text-align: center; padding: 10px 0;">
+                            <div class="mui-spinner" style="width: 16px; height: 16px; border-width: 2px; display: inline-block; margin-right: 5px;"></div>
+                            <span class="mui-loading-text" style="font-size: 0.9em;">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="modelInfo" style="display: none; padding: 1rem; background-color: rgba(63, 81, 181, 0.05); border-radius: 8px;">
+                        <h3 style="font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Selected Model Info:</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <p><strong>Learning Type:</strong> <span id="modelType">-</span></p>
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <p><strong>Trained on Dictionary:</strong> <span id="dictionaryName">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STEP 3: Available Sound Classes (Initially Hidden) -->
+        <div id="soundClassesCard" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">music_note</span>
+                        Available Sound Classes
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <p class="mui-helper-text">These are the sound classes the selected model can recognize</p>
+                    <div class="mui-sounds-list" id="soundsList">
+                        <!-- Sound classes will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STEP 4: Game Interface (Initially Hidden) -->
+        <div id="predictorInterfaceCard" class="mui-game-section mui-full-width" style="display: none;">
+            <div class="mui-model-card">
+                <div class="mui-card-header">
+                    <h2>
+                        <span class="material-icons">videogame_asset</span>
+                        3. Play the Game
+                    </h2>
+                </div>
+                <div class="mui-card-content">
+                    <div class="mui-controls-wrapper">
+                        <!-- Ambient Noise Toggle -->
+                        <div class="mui-control-option">
+                            <label class="mui-switch">
+                                <input type="checkbox" id="ambientNoiseSwitch" onchange="document.getElementById('ambientNoiseStatus').textContent = this.checked ? 'On' : 'Off'; document.getElementById('ambientNoiseStatus').className = this.checked ? 'mui-control-status active' : 'mui-control-status';">
+                                <span class="mui-switch-slider"></span>
+                            </label>
+                            <span class="mui-control-label">
+                                <span class="material-icons" style="font-size: 18px; vertical-align: text-bottom; margin-right: 6px;">tune</span>
+                                Check to measure ambient noise (recommended)
+                            </span>
+                            <span class="mui-control-status" id="ambientNoiseStatus">Off</span>
+                        </div>
+                        
+                        <button class="mui-button" id="startGameBtn">
+                            <span class="material-icons">play_arrow</span>
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Play Interface (Initially Hidden) -->
+    <div id="gamePlaySection" class="mui-game-section" style="display: none;">
+        <div class="mui-play-container">
+            <div class="mui-class-display" id="classToSay">
+                <!-- Class name will be displayed here -->
+            </div>
+            
+            <div class="mui-face-container" id="faceContainer">
+                <div class="mui-face mui-face-neutral" id="neutralFace">
+                    <div class="mui-eye mui-eye-left"></div>
+                    <div class="mui-eye mui-eye-right"></div>
+                    <div class="mui-mouth mui-mouth-neutral"></div>
+                </div>
+                <div class="mui-face mui-face-happy" id="happyFace">
+                    <div class="mui-eye mui-eye-left"></div>
+                    <div class="mui-eye mui-eye-right"></div>
+                    <div class="mui-mouth mui-mouth-happy"></div>
+                </div>
+                <div class="mui-face mui-face-grimace" id="grimaceFace">
+                    <div class="mui-eye mui-eye-left"></div>
+                    <div class="mui-eye mui-eye-right"></div>
+                    <div class="mui-mouth"></div>
+                </div>
+            </div>
+            
+            <div class="mui-sound-level">
+                <div class="mui-sound-level-indicator" id="soundLevelIndicator"></div>
+                <div id="soundLevelText" class="mui-sound-level-text">Audio level: 0%</div>
+            </div>
+            
+            <button class="mui-button" id="startAudioBtn">
+                <span class="material-icons" style="margin-right: 8px;">mic</span>
+                START GAME
+            </button>
+            
+            <div class="mui-prediction-info" id="predictionInfo" style="display: none;">
+                <div id="gameStatus" style="margin-bottom: 10px; font-weight: bold; color: #3f51b5;"></div>
+                <div id="predictionResults" style="display: none;">
+                    <p><strong>Predicted:</strong> <span id="predictedClass">-</span></p>
+                    <p><strong>Confidence:</strong> <span id="confidenceValue">-</span>%</p>
+                </div>
+                <div id="feedbackMessage" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div id="errorMessage">
+                <!-- Error messages will be displayed here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Initialize user ID for API calls -->
+<script>
+    window.currentUserId = "{{ current_user.id if current_user else '' }}";
+    console.log("Game2 - currentUserId initialized:", window.currentUserId); // Updated log
+    window.SoundsGoodGame = { 
+        currentClassId: null, 
+        classNames: [],     
+        waitingForSpacebarPress: false,
+        gameIsActive: false
+    };
+</script>
+
+<!-- Include Third-Party Libraries first -->
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+
+<!-- Include Utilities -->
+<script src="{{ url_for('static', filename='js/utils/idMapper.js') }}"></script> <!-- Re-enabled idMapper -->
+<script src="{{ url_for('static', filename='js/utils/audioUtils.js') }}"></script>
+
+<!-- Include Core Prediction Logic Scripts -->
+<script src="{{ url_for('static', filename='js/predict_api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_audio_core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_audio_processing.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_speech_detection.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict_ui_core.js') }}"></script>
+
+<!-- Include the Game-Specific UI Logic (RENAMED) -->
+<script src="{{ url_for('static', filename='js/game2.js') }}"></script> 
+
+{% endblock %} 

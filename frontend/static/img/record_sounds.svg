@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400">
+  <!-- Background -->
+  <rect x="0" y="0" width="500" height="400" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <text x="250" y="40" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#333">Record Sounds</text>
+  
+  <!-- Central Microphone -->
+  <g transform="translate(250, 200)">
+    <!-- Mic Stand -->
+    <rect x="-5" y="50" width="10" height="70" fill="#333" rx="2" ry="2"/>
+    <rect x="-25" y="120" width="50" height="10" fill="#333" rx="2" ry="2"/>
+    
+    <!-- Mic Body -->
+    <rect x="-25" y="-70" width="50" height="120" fill="#555" rx="25" ry="25"/>
+    
+    <!-- Mic Grille -->
+    <circle cx="0" cy="-30" r="20" fill="#777"/>
+    <rect x="-15" y="-45" width="30" height="30" fill="#777" rx="5" ry="5"/>
+    
+    <!-- Sound Waves -->
+    <circle cx="0" cy="-30" r="5" fill="#90F7EC" class="wave" style="--i: 0;"/>
+    <circle cx="0" cy="-30" r="15" fill="transparent" stroke="#90F7EC" stroke-width="2" class="wave" style="--i: 1;"/>
+    <circle cx="0" cy="-30" r="30" fill="transparent" stroke="#90F7EC" stroke-width="2" class="wave" style="--i: 2;"/>
+    <circle cx="0" cy="-30" r="45" fill="transparent" stroke="#90F7EC" stroke-width="2" class="wave" style="--i: 3;"/>
+    <circle cx="0" cy="-30" r="60" fill="transparent" stroke="#90F7EC" stroke-width="2" class="wave" style="--i: 4;"/>
+  </g>
+  
+  <!-- Record Button -->
+  <g transform="translate(250, 320)">
+    <circle cx="0" cy="0" r="25" fill="#FF5252" class="pulse"/>
+    <circle cx="0" cy="0" r="15" fill="white"/>
+    <circle cx="0" cy="0" r="10" fill="#FF5252"/>
+  </g>
+  
+  <!-- Sound Segments -->
+  <g transform="translate(80, 120)">
+    <!-- Sound Segment 1 -->
+    <rect x="0" y="0" width="80" height="40" fill="#4ECDC4" rx="5" ry="5" class="segment"/>
+    <text x="40" y="25" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">boo</text>
+  </g>
+  
+  <g transform="translate(180, 120)">
+    <!-- Sound Segment 2 -->
+    <rect x="0" y="0" width="80" height="40" fill="#4ECDC4" rx="5" ry="5" class="segment"/>
+    <text x="40" y="25" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">boo</text>
+  </g>
+  
+  <g transform="translate(280, 120)">
+    <!-- Sound Segment 3 -->
+    <rect x="0" y="0" width="80" height="40" fill="#4ECDC4" rx="5" ry="5" class="segment"/>
+    <text x="40" y="25" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">boo</text>
+  </g>
+  
+  <g transform="translate(380, 120)">
+    <!-- Sound Segment 4 -->
+    <rect x="0" y="0" width="80" height="40" fill="#4ECDC4" rx="5" ry="5" class="segment"/>
+    <text x="40" y="25" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="white">boo</text>
+  </g>
+  
+  <!-- Animation -->
+  <style>
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes wave {
+      0% { opacity: 0.8; transform: scale(0.5); }
+      100% { opacity: 0; transform: scale(1.2); }
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0); }
+    }
+    
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+    
+    .wave {
+      animation: wave 2s infinite;
+      transform-origin: center;
+      animation-delay: calc(var(--i) * 0.3s);
+      opacity: 0;
+    }
+    
+    .segment {
+      animation: float 3s infinite ease-in-out;
+      animation-delay: calc(var(--i) * 0.5s);
+    }
+    
+    .segment:nth-child(odd) { --i: 1; }
+    .segment:nth-child(even) { --i: 2; }
+  </style>
+</svg> 

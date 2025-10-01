@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400">
+  <!-- Background -->
+  <rect x="0" y="0" width="500" height="400" fill="#f8f9fa" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <text x="250" y="40" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#333">Train System</text>
+  
+  <!-- Central Neural Network -->
+  <g transform="translate(250, 200)">
+    <!-- Input Layer -->
+    <g class="layer input-layer">
+      <circle cx="-120" cy="-80" r="12" fill="#70F570" class="neuron" style="--i: 0;"/>
+      <circle cx="-120" cy="-40" r="12" fill="#70F570" class="neuron" style="--i: 1;"/>
+      <circle cx="-120" cy="0" r="12" fill="#70F570" class="neuron" style="--i: 2;"/>
+      <circle cx="-120" cy="40" r="12" fill="#70F570" class="neuron" style="--i: 3;"/>
+      <circle cx="-120" cy="80" r="12" fill="#70F570" class="neuron" style="--i: 4;"/>
+    </g>
+    
+    <!-- Hidden Layer 1 -->
+    <g class="layer hidden-layer-1">
+      <circle cx="-40" cy="-60" r="12" fill="#49C628" class="neuron" style="--i: 5;"/>
+      <circle cx="-40" cy="-20" r="12" fill="#49C628" class="neuron" style="--i: 6;"/>
+      <circle cx="-40" cy="20" r="12" fill="#49C628" class="neuron" style="--i: 7;"/>
+      <circle cx="-40" cy="60" r="12" fill="#49C628" class="neuron" style="--i: 8;"/>
+    </g>
+    
+    <!-- Hidden Layer 2 -->
+    <g class="layer hidden-layer-2">
+      <circle cx="40" cy="-40" r="12" fill="#39A217" class="neuron" style="--i: 9;"/>
+      <circle cx="40" cy="0" r="12" fill="#39A217" class="neuron" style="--i: 10;"/>
+      <circle cx="40" cy="40" r="12" fill="#39A217" class="neuron" style="--i: 11;"/>
+    </g>
+    
+    <!-- Output Layer -->
+    <g class="layer output-layer">
+      <circle cx="120" cy="-20" r="12" fill="#2C8011" class="neuron" style="--i: 12;"/>
+      <circle cx="120" cy="20" r="12" fill="#2C8011" class="neuron" style="--i: 13;"/>
+    </g>
+    
+    <!-- Connections from Input to Hidden Layer 1 -->
+    <g class="connections input-to-hidden1">
+      <!-- Connect each input neuron to each hidden1 neuron -->
+      <line x1="-120" y1="-80" x2="-40" y2="-60" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="-80" x2="-40" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="-80" x2="-40" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="-80" x2="-40" y2="60" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-120" y1="-40" x2="-40" y2="-60" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="-40" x2="-40" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="-40" x2="-40" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="-40" x2="-40" y2="60" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-120" y1="0" x2="-40" y2="-60" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="0" x2="-40" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="0" x2="-40" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="0" x2="-40" y2="60" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-120" y1="40" x2="-40" y2="-60" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="40" x2="-40" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="40" x2="-40" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="40" x2="-40" y2="60" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-120" y1="80" x2="-40" y2="-60" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="80" x2="-40" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="80" x2="-40" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-120" y1="80" x2="-40" y2="60" stroke="#ccc" stroke-width="1" class="connection"/>
+    </g>
+    
+    <!-- Connections from Hidden Layer 1 to Hidden Layer 2 -->
+    <g class="connections hidden1-to-hidden2">
+      <!-- Connect each hidden1 neuron to each hidden2 neuron -->
+      <line x1="-40" y1="-60" x2="40" y2="-40" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="-60" x2="40" y2="0" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="-60" x2="40" y2="40" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-40" y1="-20" x2="40" y2="-40" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="-20" x2="40" y2="0" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="-20" x2="40" y2="40" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-40" y1="20" x2="40" y2="-40" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="20" x2="40" y2="0" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="20" x2="40" y2="40" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="-40" y1="60" x2="40" y2="-40" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="60" x2="40" y2="0" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="-40" y1="60" x2="40" y2="40" stroke="#ccc" stroke-width="1" class="connection"/>
+    </g>
+    
+    <!-- Connections from Hidden Layer 2 to Output Layer -->
+    <g class="connections hidden2-to-output">
+      <!-- Connect each hidden2 neuron to each output neuron -->
+      <line x1="40" y1="-40" x2="120" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="40" y1="-40" x2="120" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="40" y1="0" x2="120" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="40" y1="0" x2="120" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+      
+      <line x1="40" y1="40" x2="120" y2="-20" stroke="#ccc" stroke-width="1" class="connection"/>
+      <line x1="40" y1="40" x2="120" y2="20" stroke="#ccc" stroke-width="1" class="connection"/>
+    </g>
+  </g>
+  
+  <!-- Labels -->
+  <text x="80" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">Input</text>
+  <text x="170" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">Hidden</text>
+  <text x="250" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">Hidden</text>
+  <text x="420" y="120" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#333">Output</text>
+  
+  <!-- Class Labels -->
+  <text x="370" y="180" font-family="Arial, sans-serif" font-size="14" text-anchor="start" fill="#333" class="class-label">"Ah"</text>
+  <text x="370" y="220" font-family="Arial, sans-serif" font-size="14" text-anchor="start" fill="#333" class="class-label">"Ee"</text>
+  
+  <!-- Animation -->
+  <style>
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+    
+    @keyframes signal {
+      0% { stroke-dashoffset: 100; stroke: #ccc; }
+      50% { stroke: #70F570; }
+      100% { stroke-dashoffset: 0; stroke: #ccc; }
+    }
+    
+    .neuron {
+      animation: pulse 3s infinite;
+      animation-delay: calc(var(--i) * 0.2s);
+    }
+    
+    .connection {
+      stroke-dasharray: 10;
+      animation: signal 3s infinite linear;
+      animation-delay: calc(var(--i) * 0.05s);
+    }
+    
+    .connections line:nth-child(3n+1) { --i: 1; }
+    .connections line:nth-child(3n+2) { --i: 2; }
+    .connections line:nth-child(3n+3) { --i: 3; }
+    
+    .class-label {
+      animation: pulse 3s infinite;
+    }
+  </style>
+</svg> 
