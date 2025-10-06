@@ -290,6 +290,7 @@
             <h2 class="profile-card-title">Account Information</h2>
         </div>
         <form method="POST" class="profile-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="hidden" name="form_type" value="profile_update"/>
             <div class="form-group">
                 <label for="username">Username</label>

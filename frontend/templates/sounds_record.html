@@ -747,6 +747,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ======================================
     //  DOM Element References
     // ======================================
+    const csrfToken = "{{ csrf_token() }}";
+    console.log("DEBUG csrfToken:", csrfToken);
     const form = document.getElementById('selectClassForm');
     const allOption = document.getElementById('allClassesOption');
     const dictOption = document.getElementById('dictClassesOption');
@@ -1284,11 +1286,20 @@ document.addEventListener('DOMContentLoaded', function() {
        if (isAmbientNoiseEnabled && noiseProfileBlob) {
            formData.append('noise_profile', noiseProfileBlob, 'noise_profile.wav');
        }
+
+        if (csrfToken) {
+           formData.append('csrf_token', csrfToken);
+       }
        
        try {
             if(progress) progress.style.width = '30%';
             if(status) status.textContent = 'Processing segments...';
-           const response = await fetch('/api/ml/record', { method: 'POST', body: formData });
+           const response = await fetch('/api/ml/record', { method: 'POST', body: formData, credentials:"include", headers: {
+                'X-CSRFToken': csrfToken || '',
+                'X-CSRF-Token': csrfToken || '',
+                'X-XSRF-TOKEN': csrfToken || '' // some setups use this
+            }});
+            
             if(progress) progress.style.width = '70%';
            const data = await response.json();
             if(progress) progress.style.width = '100%';
