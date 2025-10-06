@@ -164,6 +164,7 @@
     <div class="upload-card">
         <h3>Upload Audio File</h3>
         <form id="uploadSoundForm" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="soundClassSelectUpload">Target Sound Class:</label>
                 <select id="soundClassSelectUpload" name="sound_class_id" required>
@@ -369,6 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadButton.disabled = true;
         loadingIndicator.style.display = 'block';
         resultsCard.style.display = 'none';
+
+            // Grab CSRF token from hidden input
+        const csrfToken = uploadForm.querySelector('input[name="csrf_token"]').value;
         
         // Reset wavesurfer
         if (wavesurfer) {
@@ -379,11 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('audio_file', file); // Match the key expected by backend
         formData.append('sound_class_id', selectedClassId);
+        formData.append('csrf_token', csrfToken);
 
         try {
             const response = await fetch("{{ url_for('recording_web.api_upload_audio_sample') }}", {
                 method: 'POST',
                 body: formData,
+                credentials: 'include' 
                 // Headers are automatically set by browser for FormData
             });
 

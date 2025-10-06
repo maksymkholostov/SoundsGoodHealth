@@ -1,0 +1,32 @@
+{
+  "id": "rf_dict_ehoo_admin_20251003_182822133",
+  "dictionary_id": "dict_ehoo",
+  "feature_set_id": "v0.1",
+  "user_id": "admin",
+  "name": "rf_model",
+  "type": "rf",
+  "version": "01",
+  "parameters": {
+    "model_type": "rf",
+    "epochs": 50,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "n_estimators": 100,
+    "rf_weight": 0.5,
+    "use_class_weights": "on"
+  },
+  "metrics": {},
+  "filename": "rf_v01",
+  "status": "failed",
+  "classes": [
+    "cls_eh",
+    "cls_oo"
+  ],
+  "training_ids": [],
+  "validation_ids": [],
+  "metadata": {
+    "error": "No training data features loaded for dictionary dict_ehoo, version v0.1"
+  },
+  "created_at": "2025-10-03T18:28:22.133343",
+  "updated_at": "2025-10-03T18:28:22.139371"
+}

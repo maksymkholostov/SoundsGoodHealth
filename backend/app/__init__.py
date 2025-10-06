@@ -278,6 +278,14 @@ def create_app(config_name=None):
     
     # Initialize Flask-Moment
     moment = Moment(app) # Initialize Moment after app and other extensions
+
+    from flask_wtf.csrf import CSRFProtect
+    csrf = CSRFProtect(app)
+    
+    # Configure CSRF settings
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
+    app.config['WTF_CSRF_SSL_STRICT'] = False 
     
     @login_manager.user_loader
     # read user

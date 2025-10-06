@@ -436,7 +436,7 @@ class RecordingService:
             self.logger.warning(f"Recording {recording_id} not found for processing")
             return False
             
-        if recording.type != RecordingType.RAW:
+        if recording.recording_type not in [RecordingType.RAW_RECORDED, RecordingType.RAW_UPLOADED]:
             self.logger.warning(f"Recording {recording_id} is not a raw recording")
             return False
             

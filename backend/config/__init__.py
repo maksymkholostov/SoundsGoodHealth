@@ -25,6 +25,11 @@ class Config:
     DEBUG = False
     TESTING = False
     
+        # CSRF Protection
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
+    WTF_CSRF_SSL_STRICT = False  # Set to True in production with HTTPS
+    
     # Static and template folders
     STATIC_FOLDER = str(BASE_DIR / "frontend" / "static")
     TEMPLATE_FOLDER = str(BASE_DIR / "frontend" / "templates")

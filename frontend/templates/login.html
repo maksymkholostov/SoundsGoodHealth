@@ -227,6 +227,7 @@
                 {% endif %}
 
                 <form method="POST" action="{{ url_for('auth_web.login_page') }}" style="margin-top: 1rem;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mui-form-group">
                         <label for="username">Username</label>
                         <div class="mui-input-icon-wrapper">

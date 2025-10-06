@@ -124,9 +124,14 @@ def sound_class_view(class_name):
         all_recordings['gold'] = current_app.recording_service.find_recordings(
             class_id=class_id, recording_type=RecordingType.GOLD
         )
-        all_recordings['raw'] = current_app.recording_service.find_recordings(
-            class_id=class_id, recording_type=RecordingType.RAW
+        # Get both types of raw recordings
+        raw_recorded_recs = current_app.recording_service.find_recordings(
+            class_id=class_id, recording_type=RecordingType.RAW_RECORDED
         )
+        raw_uploaded_recs = current_app.recording_service.find_recordings(
+            class_id=class_id, recording_type=RecordingType.RAW_UPLOADED
+        )
+        all_recordings['raw'] = raw_recorded_recs + raw_uploaded_recs
         all_recordings['augmented'] = current_app.recording_service.find_recordings(
             class_id=class_id, recording_type=RecordingType.AUGMENTED
         )
@@ -144,12 +149,18 @@ def sound_class_view(class_name):
         for rec_list in [pending_for_template, gold_for_template, raw_for_template, augmented_for_template]:
             for rec_dict in rec_list:
                  try:
-                      # Ensure blueprint name 'recording_web_bp' matches definition in recording_routes.py
-                      stream_url = url_for('recording_web.api_stream_audio_file', path=rec_dict.get('absolute_wav_path'), _external=False)
-                      rec_dict['url'] = stream_url
+                      # FIXED: Use the correct field name and endpoint
+                      if rec_dict.get('relative_wav_path'):
+                          # Use the by_path endpoint with relative path
+                          stream_url = url_for('recording_web.api_stream_audio_file_by_path', path=rec_dict['relative_wav_path'], _external=False)
+                          rec_dict['url'] = stream_url
+                      else:
+                          # Fallback to using the ID-based endpoint if available
+                          stream_url = url_for('recording_web.api_stream_audio_file', id=rec_dict.get('id'), _external=False)
+                          rec_dict['url'] = stream_url
                  except Exception as url_e:
                       # Log the specific error during URL generation
-                      current_app.logger.error(f"Error generating stream URL for rec_id {rec_dict.get('id')} with path {rec_dict.get('absolute_wav_path')}: {url_e}", exc_info=True)
+                      current_app.logger.error(f"Error generating stream URL for rec_id {rec_dict.get('id')} with relative_path {rec_dict.get('relative_wav_path')}: {url_e}", exc_info=True)
                       # Fallback or leave URL empty? Using relative path as fallback query param
                       if rec_dict.get('relative_wav_path'):
                            rec_dict['url'] = f"/api/sounds/stream?path={rec_dict['relative_wav_path']}" # Fallback
@@ -338,9 +349,14 @@ def api_get_sample_count_for_class(class_name):
             pending_recs = current_app.recording_service.find_recordings(
                 class_id=sound_class.id, 
                 recording_type=RecordingType.PENDING)
-            raw_recs = current_app.recording_service.find_recordings(
+            # Get both types of raw recordings
+            raw_recorded_recs = current_app.recording_service.find_recordings(
                 class_id=sound_class.id, 
-                recording_type=RecordingType.RAW) 
+                recording_type=RecordingType.RAW_RECORDED)
+            raw_uploaded_recs = current_app.recording_service.find_recordings(
+                class_id=sound_class.id, 
+                recording_type=RecordingType.RAW_UPLOADED)
+            raw_recs = raw_recorded_recs + raw_uploaded_recs 
             pending_count = len(pending_recs)
             raw_count = len(raw_recs)
         else:

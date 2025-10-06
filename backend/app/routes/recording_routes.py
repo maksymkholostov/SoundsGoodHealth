@@ -247,7 +247,10 @@ def api_record_audio_sample():
              current_app.logger.error("ProcessingService not available during recording save.")
              return jsonify({"success": False, "error": "Server configuration error: Processing service unavailable."}), 500
              
-        pending_segments = current_app.processing_service.process_sound(raw_sound_instance)
+        processing_service = getattr(current_app, 'processing_service', None)
+        if not processing_service:
+            raise RuntimeError("ProcessingService not available.")
+        pending_segments = processing_service.process_sound(raw_sound_instance)
 
         if pending_segments is None: # Service might return None on internal error
             # Assume service logged the error
@@ -947,7 +950,11 @@ def api_upload_audio_sample():
              raise RuntimeError("RecordingService not available.")
         
         # Call save_raw_recording with source='upload'
-        raw_sound_instance = current_app.recording_service.save_raw_recording(
+        # Ensure recording_service is attached to current_app
+        recording_service = getattr(current_app, 'recording_service', None)
+        if not recording_service:
+            raise RuntimeError("RecordingService not available.")
+        raw_sound_instance = recording_service.save_raw_recording(
             user_id=user_id,
             username=username,
             class_id=sound_class_id, 
@@ -965,7 +972,11 @@ def api_upload_audio_sample():
              current_app.logger.error("ProcessingService not available during upload processing.")
              return jsonify({"success": False, "error": "Server configuration error: Processing service unavailable."}), 500
              
-        pending_segments = current_app.processing_service.process_sound(raw_sound_instance)
+        processing_service = getattr(current_app, 'processing_service', None)
+        if not processing_service:
+            current_app.logger.error("ProcessingService not available during upload processing.")
+            return jsonify({"success": False, "error": "Server configuration error: Processing service unavailable."}), 500
+        pending_segments = processing_service.process_sound(raw_sound_instance)
 
         if pending_segments is None:
             current_app.logger.error(f"Audio processing failed critically after saving uploaded raw file {raw_sound_instance.get('id')}.")
